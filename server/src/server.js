@@ -2,7 +2,6 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import morgan from "morgan";
-import { connectDB } from "./config/db.js"; // Remove if not using Mongo
 import { supabase } from "./config/supabase.js";
 
 import authRoutes from "./routes/auth.js";
