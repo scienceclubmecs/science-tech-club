@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import User from "../models/User.js";
+import { supabase } from "../config/supabase.js";
 
 export const auth = async (req, res, next) => {
   const header = req.headers.authorization;
@@ -8,10 +8,14 @@ export const auth = async (req, res, next) => {
   }
   const token = header.split(" ")[1];
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(payload.id);
-    if (!user) return res.status(401).json({ message: "User not found" });
-    req.user = user;
+    const payload = jwt.verify(token, process.env.SUPABASE_ANON_KEY || "fallback");
+    const { data, error } = await supabase
+      .from("users")
+      .select("*")
+      .eq("id", payload.id)
+      .single();
+    if (error || !data) return res.status(401).json({ message: "User not found" });
+    req.user = data;
     next();
   } catch {
     res.status(401).json({ message: "Invalid token" });
