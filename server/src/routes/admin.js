@@ -2,10 +2,10 @@ import express from "express";
 import multer from "multer";
 import { parse } from "csv-parse/sync";
 import bcrypt from "bcryptjs";
+import { supabase } from "../config/supabase.js";
+import { sendWelcomeMail } from "../utils/mail.js";
 import { auth } from "../middleware/auth.js";
-import User from "../models/User.js";
 import { buildStudentUsername, buildFacultyUsername } from "../utils/username.js";
-import { ROLES } from "../models/enums.js";
 
 const upload = multer();
 const router = express.Router();
@@ -13,9 +13,21 @@ const router = express.Router();
 router.use(auth);
 
 router.use((req, res, next) => {
-  if (req.user.role !== ROLES.ADMIN)
+  if (req.user.role !== "admin") {
     return res.status(403).json({ message: "Admin only" });
+  }
   next();
+});
+
+router.get("/dashboard", async (req, res) => {
+  const [{ data: s }, { data: f }] = await Promise.all([
+    supabase.from("users").select("id", { count: "exact", head: true }).eq("role", "student"),
+    supabase.from("users").select("id", { count: "exact", head: true }).eq("role", "faculty")
+  ]);
+  res.json({
+    students: s?.length || 0,
+    faculty: f?.length || 0
+  });
 });
 
 router.post("/upload-students", upload.single("file"), async (req, res) => {
@@ -23,22 +35,36 @@ router.post("/upload-students", upload.single("file"), async (req, res) => {
     columns: true,
     skip_empty_lines: true
   });
+
   for (const r of records) {
     const username = buildStudentUsername(r.surname.trim(), r.dob.trim());
-    const passwordHash = await bcrypt.hash(username, 10);
-    await User.create({
-      username,
-      passwordHash,
-      role: ROLES.STUDENT,
-      profile: {
+    const passwordPlain = username;
+    const password_hash = await bcrypt.hash(passwordPlain, 10);
+
+    const { data: user, error } = await supabase
+      .from("users")
+      .insert({
+        username,
+        email: r.email || null,
+        role: "student",
         department: r.department,
         year: Number(r.year || 1),
         interests: [],
-        photoUrl: r.photoUrl || "/default.png"
-      }
-    });
+        photo_url: r.photo_url || "/default.png"
+      })
+      .select("*")
+      .single();
+
+    if (!error && user) {
+      await supabase.from("user_passwords").insert({
+        user_id: user.id,
+        password_hash
+      });
+      await sendWelcomeMail(user.email, user.username);
+    }
   }
-  res.json({ message: "Students uploaded" });
+
+  res.json({ message: "Students uploaded and welcome mails sent (where email present)." });
 });
 
 router.post("/upload-faculty", upload.single("file"), async (req, res) => {
@@ -46,45 +72,77 @@ router.post("/upload-faculty", upload.single("file"), async (req, res) => {
     columns: true,
     skip_empty_lines: true
   });
+
   for (const r of records) {
     const username = buildFacultyUsername(r.email.trim());
-    const passwordHash = await bcrypt.hash(r.employmentId.trim(), 10);
-    await User.create({
-      username,
-      passwordHash,
-      email: r.email.trim(),
-      role: ROLES.FACULTY,
-      profile: {
+    const passwordPlain = r.employmentId.trim();
+    const password_hash = await bcrypt.hash(passwordPlain, 10);
+
+    const { data: user, error } = await supabase
+      .from("users")
+      .insert({
+        username,
+        email: r.email.trim(),
+        role: "faculty",
         department: r.department,
         year: 0,
         interests: [],
-        photoUrl: r.photoUrl || "/default.png"
-      }
-    });
+        photo_url: r.photo_url || "/default.png"
+      })
+      .select("*")
+      .single();
+
+    if (!error && user) {
+      await supabase.from("user_passwords").insert({
+        user_id: user.id,
+        password_hash
+      });
+      await sendWelcomeMail(user.email, user.username);
+    }
   }
-  res.json({ message: "Faculty uploaded" });
+
+  res.json({ message: "Faculty uploaded and welcome mails sent." });
 });
 
-router.post("/assign-role", async (req, res) => {
-  const { userId, role, flags } = req.body;
-  const user = await User.findById(userId);
-  if (!user) return res.status(404).json({ message: "User not found" });
-
-  user.role = role || user.role;
-  if (flags) {
-    if (typeof flags.isCommittee === "boolean") user.isCommittee = flags.isCommittee;
-    if (typeof flags.isExecutive === "boolean") user.isExecutive = flags.isExecutive;
-    if (typeof flags.isRepresentative === "boolean") user.isRepresentative = flags.isRepresentative;
-    if (typeof flags.isDeveloper === "boolean") user.isDeveloper = flags.isDeveloper;
-  }
-  await user.save();
-  res.json(user);
+// Select faculty coordinator/manager/advisor/incharge
+router.post("/set-faculty-roles", async (req, res) => {
+  const { faculty_coordinator, faculty_manager, faculty_advisor, incharge } = req.body;
+  const { error } = await supabase
+    .from("config")
+    .update({
+      faculty_coordinator,
+      faculty_manager,
+      faculty_advisor,
+      incharge
+    })
+    .eq("id", 1);
+  if (error) return res.status(400).json({ message: "Failed to update config" });
+  res.json({ message: "Faculty roles updated" });
 });
 
-router.get("/dashboard", async (req, res) => {
-  const students = await User.countDocuments({ role: ROLES.STUDENT });
-  const faculty = await User.countDocuments({ role: ROLES.FACULTY });
-  res.json({ students, faculty });
+// Config: site name, logo, git repo
+router.get("/config", async (req, res) => {
+  const { data, error } = await supabase.from("config").select("*").eq("id", 1).single();
+  if (error || !data) return res.status(404).json({ message: "Config not found" });
+  res.json(data);
+});
+
+router.post("/config", async (req, res) => {
+  const { site_name, logo_url, git_repo_url, primary_color, background_color } = req.body;
+  const { data, error } = await supabase
+    .from("config")
+    .update({
+      site_name,
+      logo_url,
+      git_repo_url,
+      primary_color,
+      background_color
+    })
+    .eq("id", 1)
+    .select("*")
+    .single();
+  if (error) return res.status(400).json({ message: "Failed to update config" });
+  res.json(data);
 });
 
 export default router;
