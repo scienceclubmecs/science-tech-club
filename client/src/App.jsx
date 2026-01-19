@@ -11,11 +11,11 @@ import RepDashboard from "./pages/RepDashboard";
 import DeveloperDashboard from "./pages/DeveloperDashboard";
 import { useAuth } from "./context/AuthContext";
 
-const RoleRoute = ({ roleCheck, element }) => {
+const RoleRoute = ({ roleCheck, element: Element }) => {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" replace />;
   if (!roleCheck(user)) return <Navigate to="/" replace />;
-  return element;
+  return Element;
 };
 
 const App = () => {
@@ -103,3 +103,4 @@ const App = () => {
 };
 
 export default App;
+
