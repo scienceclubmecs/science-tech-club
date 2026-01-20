@@ -11,7 +11,9 @@ const signToken = (userId) =>
 
 router.post("/login", async (req, res) => {
   try {
-    const { username, password } = req.body || {};
+    const username = (req.body?.username || "").trim();
+    const password = (req.body?.password || "").trim();
+
     if (!username || !password) {
       return res.status(400).json({ message: "username and password required" });
     }
@@ -25,7 +27,8 @@ router.post("/login", async (req, res) => {
       .single();
 
     if (userErr || !user) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      // Debug tip: user not found in DB
+      return res.status(400).json({ message: "Invalid credentials (user not found)" });
     }
 
     const { data: passRow, error: passErr } = await supabase
@@ -35,11 +38,14 @@ router.post("/login", async (req, res) => {
       .single();
 
     if (passErr || !passRow?.password_hash) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      // Debug tip: password row missing
+      return res.status(400).json({ message: "Invalid credentials (password not set)" });
     }
 
     const ok = await bcrypt.compare(password, passRow.password_hash);
-    if (!ok) return res.status(400).json({ message: "Invalid credentials" });
+    if (!ok) {
+      return res.status(400).json({ message: "Invalid credentials (wrong password)" });
+    }
 
     const token = signToken(user.id);
 
@@ -68,18 +74,15 @@ router.post("/login", async (req, res) => {
   }
 });
 
-/**
- * Admin changes OWN password
- * POST /api/auth/change-password
- * Body: { oldPassword, newPassword }
- */
+// Admin changes own password
 router.post("/change-password", auth, async (req, res) => {
   try {
     if (req.user.role !== "admin") {
       return res.status(403).json({ message: "Only admin can change password" });
     }
 
-    const { oldPassword, newPassword } = req.body || {};
+    const oldPassword = (req.body?.oldPassword || "").trim();
+    const newPassword = (req.body?.newPassword || "").trim();
     if (!oldPassword || !newPassword) {
       return res.status(400).json({ message: "oldPassword and newPassword required" });
     }
