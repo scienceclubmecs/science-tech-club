@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Science & Tech Club</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="navbar">
+      <div class="navbar-inner">
+        <a href="index.html" class="nav-logo">
+          <img src="https://via.placeholder.com/32" alt="Logo" />
+          <span>Science & Tech Club</span>
+        </a>
+        <nav class="nav-links">
+          <a href="index.html">Home</a>
+          <a href="login.html" class="btn">Login</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="section grid grid-2">
+        <div>
+          <h1 class="title">Science & Tech Club</h1>
+          <p class="subtitle">
+            A black & white hub for students and faculty to build real projects, explore research, and turn ideas into working prototypes.
+          </p>
+          <div class="stats">
+            <div class="stat-box">
+              <div class="stat-label">Students</div>
+              <div class="stat-value" id="studentCount">0</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">Faculty</div>
+              <div class="stat-value" id="facultyCount">0</div>
+            </div>
+          </div>
+          <a href="https://ndl.iitkgp.ac.in/" target="_blank" class="btn">Visit NDLI</a>
+        </div>
+
+        <div class="card">
+          <h2>Events Calendar</h2>
+          <p>Upcoming workshops, project demos, hackathons and seminars.</p>
+          <ul class="list" id="eventsList">
+            <li style="color:#666;">No events scheduled yet.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2 class="section-title">Club Teams</h2>
+        <div class="grid grid-4">
+          <div class="card">
+            <h3>Committee</h3>
+            <p>Chair, vice chair, secretaries, heads and vice heads.</p>
+          </div>
+          <div class="card">
+            <h3>Executives</h3>
+            <p>Event execution: photos, posters, banners, reports.</p>
+          </div>
+          <div class="card">
+            <h3>Representatives</h3>
+            <p>Announcements, permissions, query handling.</p>
+          </div>
+          <div class="card">
+            <h3>Developers</h3>
+            <p>Customize website, Git repo, build features.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      Science & Tech Club • Built by Developers team
+    </footer>
+
+    <div class="chatbot">
+      <div class="chatbot-window" id="chatbotWindow">
+        <div class="chatbot-header">
+          <span class="chatbot-title">Club Guide</span>
+          <button class="chatbot-close" id="chatbotClose">×</button>
+        </div>
+        <div class="chatbot-messages" id="chatbotMessages">
+          <div class="chatbot-msg">
+            <strong>Guide:</strong> Hi! Ask about projects, quizzes, or navigation.
+          </div>
+        </div>
+        <form class="chatbot-input-wrap" id="chatbotForm">
+          <input type="text" class="chatbot-input" id="chatbotInput" placeholder="Ask a question..." />
+          <button type="submit" class="chatbot-send">Send</button>
+        </form>
+      </div>
+      <button class="btn" id="chatbotToggle">Help</button>
+    </div>
+  </div>
+
+  <script src="js/chatbot.js"></script>
+  <script>
+    // Load stats
+    fetch(window.API_BASE + "/admin/dashboard")
+      .then(r => r.json())
+      .then(d => {
+        document.getElementById("studentCount").textContent = d.students || 0;
+        document.getElementById("facultyCount").textContent = d.faculty || 0;
+      })
+      .catch(() => {});
+
+    // Load events
+    fetch(window.API_BASE + "/events")
+      .then(r => r.json())
+      .then(events => {
+        const list = document.getElementById("eventsList");
+        if (events.length) {
+          list.innerHTML = events.map(e => 
+            `<li>${e.title} - ${new Date(e.date).toLocaleDateString()}</li>`
+          ).join("");
+        }
+      })
+      .catch(() => {});
+  </script>
+</body>
+</html>
