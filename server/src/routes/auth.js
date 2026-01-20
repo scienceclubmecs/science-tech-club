@@ -5,83 +5,137 @@ import { supabase } from "../config/supabase.js";
 
 const router = express.Router();
 
-const signToken = (userId) =>
-  jwt.sign({ id: userId }, process.env.JWT_SECRET || "jwt-secret", {
-    expiresIn: "7d"
-  });
+const signToken = (userId) => {
+  return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
+};
 
+// POST /api/auth/login
 router.post("/login", async (req, res) => {
-  const { username, password } = req.body;
-  const { data: user, error } = await supabase
-    .from("users")
-    .select("*")
-    .eq("username", username)
-    .single();
-  if (error || !user) return res.status(400).json({ message: "Invalid credentials" });
-
-  const { data: pwRow } = await supabase
-    .from("user_passwords")
-    .select("password_hash")
-    .eq("user_id", user.id)
-    .single();
-
-  if (!pwRow) return res.status(400).json({ message: "Invalid credentials" });
-
-  const ok = await bcrypt.compare(password, pwRow.password_hash);
-  if (!ok) return res.status(400).json({ message: "Invalid credentials" });
-
-  const token = signToken(user.id);
-  res.json({
-    token,
-    user: {
-      id: user.id,
-      username: user.username,
-      role: user.role,
-      isExecutive: user.is_executive,
-      isRepresentative: user.is_representative,
-      isDeveloper: user.is_developer,
-      profile: {
-        department: user.department,
-        interests: user.interests,
-        year: user.year,
-        photoUrl: user.photo_url
-      }
+  try {
+    const { username, password } = req.body || {};
+    if (!username || !password) {
+      return res.status(400).json({ message: "username and password required" });
     }
-  });
+
+    // 1) Fetch user
+    const { data: user, error: userErr } = await supabase
+      .from("users")
+      .select(
+        "id, username, email, role, is_committee, is_executive, is_representative, is_developer, department, interests, year, photo_url"
+      )
+      .eq("username", username)
+      .single();
+
+    if (userErr || !user) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    // 2) Fetch password hash
+    const { data: passRow, error: passErr } = await supabase
+      .from("user_passwords")
+      .select("password_hash")
+      .eq("user_id", user.id)
+      .single();
+
+    if (passErr || !passRow?.password_hash) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    // 3) Compare
+    const ok = await bcrypt.compare(password, passRow.password_hash);
+    if (!ok) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    // 4) Issue token
+    const token = signToken(user.id);
+
+    return res.json({
+      token,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        isCommittee: !!user.is_committee,
+        isExecutive: !!user.is_executive,
+        isRepresentative: !!user.is_representative,
+        isDeveloper: !!user.is_developer,
+        profile: {
+          department: user.department,
+          interests: user.interests || [],
+          year: user.year,
+          photoUrl: user.photo_url
+        }
+      }
+    });
+  } catch (e) {
+    console.error("Login error:", e);
+    return res.status(500).json({ message: "Server error" });
+  }
 });
 
-// Admin change password for admin only
-router.post("/change-admin-password", async (req, res) => {
-  const { username, oldPassword, newPassword } = req.body;
+// POST /api/auth/change-password
+// Allows admin to change their own password (or later extend to change any user password).
+router.post("/change-password", async (req, res) => {
+  try {
+    const { username, oldPassword, newPassword } = req.body || {};
+    if (!username || !oldPassword || !newPassword) {
+      return res
+        .status(400)
+        .json({ message: "username, oldPassword, newPassword required" });
+    }
 
-  const { data: user } = await supabase
-    .from("users")
-    .select("*")
-    .eq("username", username)
-    .eq("role", "admin")
-    .single();
+    // Fetch user
+    const { data: user, error: userErr } = await supabase
+      .from("users")
+      .select("id, username, role")
+      .eq("username", username)
+      .single();
 
-  if (!user) return res.status(400).json({ message: "Admin not found" });
+    if (userErr || !user) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
 
-  const { data: pwRow } = await supabase
-    .from("user_passwords")
-    .select("password_hash")
-    .eq("user_id", user.id)
-    .single();
+    // Only admin can use this endpoint (for now)
+    if (user.role !== "admin") {
+      return res.status(403).json({ message: "Only admin can change password" });
+    }
 
-  if (!pwRow) return res.status(400).json({ message: "Password not set" });
+    // Fetch password hash
+    const { data: passRow, error: passErr } = await supabase
+      .from("user_passwords")
+      .select("password_hash")
+      .eq("user_id", user.id)
+      .single();
 
-  const ok = await bcrypt.compare(oldPassword, pwRow.password_hash);
-  if (!ok) return res.status(400).json({ message: "Old password incorrect" });
+    if (passErr || !passRow?.password_hash) {
+      return res.status(400).json({ message: "Password record missing" });
+    }
 
-  const newHash = await bcrypt.hash(newPassword, 10);
-  const { error } = await supabase
-    .from("user_passwords")
-    .update({ password_hash: newHash })
-    .eq("user_id", user.id);
-  if (error) return res.status(400).json({ message: "Failed to update" });
+    // Compare old password
+    const ok = await bcrypt.compare(oldPassword, passRow.password_hash);
+    if (!ok) {
+      return res.status(400).json({ message: "Old password incorrect" });
+    }
 
-  res.json({ message: "Admin password updated" });
+    // Set new password
+    const newHash = await bcrypt.hash(newPassword, 10);
+
+    const { error: updErr } = await supabase
+      .from("user_passwords")
+      .update({ password_hash: newHash })
+      .eq("user_id", user.id);
+
+    if (updErr) {
+      return res.status(400).json({ message: "Failed to update password" });
+    }
+
+    return res.json({ message: "Password updated successfully" });
+  } catch (e) {
+    console.error("Change password error:", e);
+    return res.status(500).json({ message: "Server error" });
+  }
 });
 
 export default router;
