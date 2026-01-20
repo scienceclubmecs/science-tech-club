@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login - Science & Tech Club</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="navbar">
+      <div class="navbar-inner">
+        <a href="index.html" class="nav-logo">
+          <img src="https://via.placeholder.com/32" alt="Logo" />
+          <span>Science & Tech Club</span>
+        </a>
+        <nav class="nav-links">
+          <a href="index.html">Home</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="section">
+        <h1 class="section-title">Club Login</h1>
+        <form class="form" id="loginForm">
+          <div class="form-group">
+            <label class="form-label">Username</label>
+            <input type="text" name="username" class="form-input" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input type="password" name="password" class="form-input" required />
+          </div>
+          <button type="submit" class="btn">Login</button>
+          <p class="error-msg" id="loginError"></p>
+        </form>
+        <p style="font-size:0.75rem; color:#666; margin-top:1rem;">
+          Passwords are fixed and managed by admin only.
+        </p>
+      </section>
+    </main>
+
+    <footer class="footer">
+      Science & Tech Club • Built by Developers team
+    </footer>
+
+    <div class="chatbot">
+      <div class="chatbot-window" id="chatbotWindow">
+        <div class="chatbot-header">
+          <span class="chatbot-title">Club Guide</span>
+          <button class="chatbot-close" id="chatbotClose">×</button>
+        </div>
+        <div class="chatbot-messages" id="chatbotMessages">
+          <div class="chatbot-msg">
+            <strong>Guide:</strong> Use assigned username and password from admin.
+          </div>
+        </div>
+        <form class="chatbot-input-wrap" id="chatbotForm">
+          <input type="text" class="chatbot-input" id="chatbotInput" placeholder="Ask..." />
+          <button type="submit" class="chatbot-send">Send</button>
+        </form>
+      </div>
+      <button class="btn" id="chatbotToggle">Help</button>
+    </div>
+  </div>
+
+  <script src="js/chatbot.js"></script>
+  <script>
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const error = document.getElementById("loginError");
+      error.textContent = "";
+
+      const fd = new FormData(e.target);
+      const body = {
+        username: fd.get("username"),
+        password: fd.get("password")
+      };
+
+      try {
+        const res = await fetch(window.API_BASE + "/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+
+        if (!res.ok) {
+          error.textContent = "Invalid credentials";
+          return;
+        }
+
+        const data = await res.json();
+        localStorage.setItem("club_token", data.token);
+        localStorage.setItem("club_user", JSON.stringify(data.user));
+
+        const role = data.user.role;
+        if (role === "student") location.href = "student.html";
+        else if (role === "faculty") location.href = "faculty.html";
+        else if (role === "admin") location.href = "admin.html";
+        else if (["committee_chair","committee_vice_chair","secretary","vice_secretary","executive_head","representative_head"].includes(role))
+          location.href = "committee.html";
+        else if (data.user.isExecutive) location.href = "executives.html";
+        else if (data.user.isRepresentative) location.href = "representatives.html";
+        else if (data.user.isDeveloper) location.href = "developers.html";
+        else location.href = "index.html";
+      } catch (err) {
+        error.textContent = "Network error";
+      }
+    });
+  </script>
+</body>
+</html>
+S
