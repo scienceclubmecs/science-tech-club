@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="navbar">
+      <div class="navbar-inner">
+        <a href="index.html" class="nav-logo">
+          <img src="https://via.placeholder.com/32" alt="Logo" />
+          <span>Science & Tech Club</span>
+        </a>
+        <nav class="nav-links">
+          <a href="index.html">Home</a>
+          <button class="btn" onclick="logout()">Logout</button>
+        </nav>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="section">
+        <h1 class="title">Admin Dashboard</h1>
+      </section>
+
+      <section class="section grid grid-2">
+        <div class="card">
+          <h2>Upload Students (CSV)</h2>
+          <input type="file" accept=".csv" id="studentsFile" style="margin:1rem 0;" />
+          <button class="btn" onclick="uploadStudents()">Upload</button>
+        </div>
+
+        <div class="card">
+          <h2>Upload Faculty (CSV)</h2>
+          <input type="file" accept=".csv" id="facultyFile" style="margin:1rem 0;" />
+          <button class="btn" onclick="uploadFaculty()">Upload</button>
+        </div>
+      </section>
+
+      <section class="section grid grid-2">
+        <div class="card">
+          <h2>Promote Students</h2>
+          <p>Move all students to next year.</p>
+          <button class="btn" style="margin-top:1rem;" onclick="promoteAll()">Promote All</button>
+        </div>
+
+        <div class="card">
+          <h2>Site Config</h2>
+          <p>Logo, site name, faculty roles.</p>
+          <button class="btn" style="margin-top:1rem;">Configure</button>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      Science & Tech Club • Built by Developers team
+    </footer>
+
+    <div class="chatbot">
+      <div class="chatbot-window" id="chatbotWindow">
+        <div class="chatbot-header">
+          <span class="chatbot-title">Club Guide</span>
+          <button class="chatbot-close" id="chatbotClose">×</button>
+        </div>
+        <div class="chatbot-messages" id="chatbotMessages">
+          <div class="chatbot-msg"><strong>Guide:</strong> Manage uploads and configurations.</div>
+        </div>
+        <form class="chatbot-input-wrap" id="chatbotForm">
+          <input type="text" class="chatbot-input" id="chatbotInput" placeholder="Ask..." />
+          <button type="submit" class="chatbot-send">Send</button>
+        </form>
+      </div>
+      <button class="btn" id="chatbotToggle">Help</button>
+    </div>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script src="js/chatbot.js"></script>
+  <script>
+    checkAuth();
+
+    async function uploadStudents() {
+      const file = document.getElementById("studentsFile").files[0];
+      if (!file) return alert("Select a file");
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch(window.API_BASE + "/admin/upload-students", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${localStorage.getItem("club_token")}` },
+        body: fd
+      });
+      const data = await res.json();
+      alert(data.message || "Uploaded!");
+    }
+
+    async function uploadFaculty() {
+      const file = document.getElementById("facultyFile").files[0];
+      if (!file) return alert("Select a file");
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch(window.API_BASE + "/admin/upload-faculty", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${localStorage.getItem("club_token")}` },
+        body: fd
+      });
+      const data = await res.json();
+      alert(data.message || "Uploaded!");
+    }
+
+    async function promoteAll() {
+      const res = await fetch(window.API_BASE + "/users/promote", {
+        method: "POST",
+        headers: getAuthHeaders()
+      });
+      const data = await res.json();
+      alert(data.message || "Students promoted!");
+    }
+  </script>
+</body>
+</html>
