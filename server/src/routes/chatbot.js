@@ -29,23 +29,42 @@ router.post("/", async (req, res) => {
       return res.json({ answer: "Hi! Ask me about the club, roles, events, or NDLI! 😊" });
     }
 
-    // FIXED: Use gemini-1.5-flash (current model)
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // TRY MULTIPLE MODEL NAMES (fallback approach)
+    let model;
+    try {
+      model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+    } catch {
+      try {
+        model = genAI.getGenerativeModel({ model: "gemini-1.0-pro" });
+      } catch {
+        model = genAI.getGenerativeModel({ model: "models/gemini-pro" });
+      }
+    }
 
-    const prompt = `${CLUB_CONTEXT}\n\nQ: ${question}\nA:`;
+    const prompt = `${CLUB_CONTEXT}\n\nUser: ${question}\nAssistant:`;
 
     const result = await model.generateContent(prompt);
     const answer = result.response.text().trim();
 
-    console.log(`🤖 Chat: "${question.substring(0,30)}..." → "${answer.substring(0,50)}..."`);
+    console.log(`🤖 Chat OK: "${question.substring(0,30)}..."`);
 
     res.json({ answer });
     
   } catch (error) {
     console.error("Chatbot error:", error.message);
-    res.json({ 
-      answer: `Oops! Try: "What teams exist?" or "Tell me about NDLI" 😅\nError: ${error.status || error.message}` 
-    });
+    
+    // Fallback response
+    const fallbacks = {
+      "club": "Science & Tech Club organizes workshops, hackathons, and projects. We have Committee leaders and department heads (Executive/Representative). Visit NDLI: https://club.ndl.iitkgp.ac.in/club-home",
+      "role": "We have Committee (Chair, Vice Chair, Secretary), department-specific Executive Heads and Representative Heads for CSE, EE, ME, CE, ECE, plus Developers team.",
+      "ndli": "Access National Digital Library at: https://club.ndl.iitkgp.ac.in/club-home with tons of academic resources!",
+      "team": "Teams: Committee (leadership), Executives (events), Representatives (communications), Developers (tech)."
+    };
+    
+    const keyword = Object.keys(fallbacks).find(k => question.toLowerCase().includes(k));
+    const fallbackAnswer = fallbacks[keyword] || "Try asking: 'What is the club?' or 'What teams exist?' or 'Tell me about NDLI'";
+    
+    res.json({ answer: fallbackAnswer });
   }
 });
 
