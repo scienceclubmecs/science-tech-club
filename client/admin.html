@@ -6,7 +6,6 @@
   <title>Admin • Science & Tech Club</title>
   <link rel="stylesheet" href="css/styles.css" />
   <style>
-    /* Small extra styling only for admin page */
     .admin-topbar {
       display: flex;
       gap: 1rem;
@@ -67,7 +66,7 @@
       gap: 0.75rem;
     }
     @media (min-width: 768px) {
-      .row-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .row-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
   </style>
 </head>
@@ -90,7 +89,7 @@
     <main class="main">
       <div class="admin-topbar">
         <div>
-          <h1 class="title" style="margin-bottom:0.25rem;">Admin</h1>
+          <h1 class="title" style="margin-bottom:0.25rem;">Admin Dashboard</h1>
           <div class="subtitle" style="margin-bottom:0;">Control center: users, roles, uploads, config.</div>
         </div>
         <div class="pill">Logged in as: <span id="adminName">admin</span></div>
@@ -111,7 +110,7 @@
             <input type="file" accept=".csv" id="studentsFile" style="margin:1rem 0;" />
             <button class="btn" type="button" onclick="uploadStudents()">Upload Students</button>
             <div class="hint">
-              Required headers: <code>username,email,department,year,password</code>
+              Required headers: <code>username,email,department,year,password,interests</code>
             </div>
           </div>
 
@@ -128,76 +127,80 @@
 
         <div class="card" style="margin-top:1rem;">
           <h2>Promote Students</h2>
-          <p>Moves all students to the next academic year.</p>
-          <button class="btn" type="button" onclick="promoteAll()">Promote All</button>
+          <p>Moves all students to the next academic year (1→2, 2→3, 3→4, 4→graduated).</p>
+          <button class="btn" type="button" onclick="promoteAll()">Promote All Students</button>
         </div>
       </section>
 
       <!-- ROLES -->
-<section class="panel" id="panel-roles">
-  <div class="card">
-    <h2>Set User Role</h2>
-    <p>Update user roles including department-specific heads.</p>
+      <section class="panel" id="panel-roles">
+        <div class="card">
+          <h2>Set User Role</h2>
+          <p>Update user roles including department-specific heads (Executive/Representative).</p>
 
-    <form id="roleForm" class="row row-3" style="margin-top:1rem;">
-      <div class="form-group">
-        <label class="form-label">Username</label>
-        <input class="form-input" id="roleUsername" placeholder="e.g. student1" required />
-      </div>
+          <form id="roleForm" class="row row-4" style="margin-top:1rem;">
+            <div class="form-group">
+              <label class="form-label">Username</label>
+              <input class="form-input" id="roleUsername" placeholder="e.g. student1" required />
+            </div>
 
-      <div class="form-group">
-        <label class="form-label">Role</label>
-        <select class="form-select" id="roleValue" required>
-          <option value="student">Student</option>
-          <option value="faculty">Faculty</option>
-          <option value="admin">Admin</option>
-          <option value="committee_chair">Committee Chair</option>
-          <option value="committee_vice_chair">Committee Vice Chair</option>
-          <option value="secretary">Secretary</option>
-          <option value="vice_secretary">Vice Secretary</option>
-          <option value="executive_head">Executive Head</option>
-          <option value="executive_vice_head">Executive Vice Head</option>
-          <option value="representative_head">Representative Head</option>
-          <option value="representative_vice_head">Representative Vice Head</option>
-        </select>
-      </div>
+            <div class="form-group">
+              <label class="form-label">Role</label>
+              <select class="form-select" id="roleValue" required>
+                <option value="student">Student</option>
+                <option value="faculty">Faculty</option>
+                <option value="admin">Admin</option>
+                <option value="committee_chair">Committee Chair</option>
+                <option value="committee_vice_chair">Committee Vice Chair</option>
+                <option value="secretary">Secretary</option>
+                <option value="vice_secretary">Vice Secretary</option>
+                <option value="executive_head">Executive Head</option>
+                <option value="executive_vice_head">Executive Vice Head</option>
+                <option value="representative_head">Representative Head</option>
+                <option value="representative_vice_head">Representative Vice Head</option>
+              </select>
+            </div>
 
-      <div class="form-group">
-        <label class="form-label">Department (for heads)</label>
-        <select class="form-select" id="roleDepartment">
-          <option value="">None</option>
-          <option value="Computer Science">Computer Science</option>
-          <option value="Electrical">Electrical</option>
-          <option value="Mechanical">Mechanical</option>
-          <option value="Civil">Civil</option>
-          <option value="ECE">Electronics & Communication</option>
-        </select>
-      </div>
+            <div class="form-group">
+              <label class="form-label">Department (for heads)</label>
+              <select class="form-select" id="roleDepartment">
+                <option value="">None</option>
+                <option value="Computer Science">Computer Science</option>
+                <option value="Electrical">Electrical</option>
+                <option value="Mechanical">Mechanical</option>
+                <option value="Civil">Civil</option>
+                <option value="ECE">Electronics & Communication</option>
+              </select>
+            </div>
 
-      <div class="form-group">
-        <label class="form-label">Additional Flags</label>
-        <select class="form-select" id="roleFlags">
-          <option value="">None</option>
-          <option value="isCommittee">Committee Member</option>
-          <option value="isExecutive">Executive</option>
-          <option value="isRepresentative">Representative</option>
-          <option value="isDeveloper">Developer</option>
-        </select>
-      </div>
+            <div class="form-group">
+              <label class="form-label">Additional Flags</label>
+              <select class="form-select" id="roleFlags">
+                <option value="">None</option>
+                <option value="isCommittee">Committee Member</option>
+                <option value="isExecutive">Executive</option>
+                <option value="isRepresentative">Representative</option>
+                <option value="isDeveloper">Developer</option>
+              </select>
+            </div>
 
-      <div class="form-group" style="grid-column:1/-1;">
-        <button class="btn" type="submit">Save Role</button>
-        <span id="roleMsg" class="hint" style="margin-left:0.75rem;"></span>
-      </div>
-    </form>
-  </div>
-</section>
+            <div class="form-group" style="grid-column:1/-1;">
+              <button class="btn" type="submit">Save Role</button>
+              <span id="roleMsg" class="hint" style="margin-left:0.75rem;"></span>
+            </div>
+          </form>
+
+          <div class="hint">
+            Example: Set username "john_doe" to "Executive Head" for "Computer Science" department + flag "isExecutive"
+          </div>
+        </div>
+      </section>
 
       <!-- CONFIG -->
       <section class="panel" id="panel-config">
         <div class="card">
           <h2>Site Configuration</h2>
-          <p>Change logo + site name + Git repo URL.</p>
+          <p>Change logo, site name, and Git repository URL.</p>
 
           <form id="siteConfigForm" style="margin-top:1rem;">
             <div class="form-group">
@@ -215,13 +218,12 @@
               <input id="cfgGitRepoUrl" class="form-input" placeholder="https://github.com/..." />
             </div>
 
-            <button class="btn" type="submit">Save Config</button>
+            <button class="btn" type="submit">Save Configuration</button>
             <span id="cfgMsg" class="hint" style="margin-left:0.75rem;"></span>
           </form>
 
           <div class="hint">
-            If this doesn’t save, open DevTools → Network and check the request uses
-            <code>Authorization: Bearer &lt;token&gt;</code>. [web:323]
+            Logo updates globally after page refresh. Use direct image URLs (PNG/SVG/JPG).
           </div>
         </div>
       </section>
@@ -235,18 +237,16 @@
     <div class="chatbot">
       <div class="chatbot-window" id="chatbotWindow">
         <div class="chatbot-header">
-          <span class="chatbot-title">Club Guide</span>
+          <span class="chatbot-title">🤖 Club Chatbot</span>
           <button class="chatbot-close" id="chatbotClose">×</button>
         </div>
-        <div class="chatbot-messages" id="chatbotMessages">
-          <div class="chatbot-msg"><strong>Guide:</strong> Use Uploads, Roles, and Config tabs.</div>
-        </div>
+        <div class="chatbot-messages" id="chatbotMessages"></div>
         <form class="chatbot-input-wrap" id="chatbotForm">
-          <input type="text" class="chatbot-input" id="chatbotInput" placeholder="Ask..." />
+          <input type="text" class="chatbot-input" id="chatbotInput" placeholder="Ask me anything..." />
           <button type="submit" class="chatbot-send">Send</button>
         </form>
       </div>
-      <button class="btn" id="chatbotToggle" type="button">Help</button>
+      <button class="btn" id="chatbotToggle" type="button">💬 Chat</button>
     </div>
   </div>
 
@@ -270,7 +270,7 @@
     document.getElementById("adminName").textContent = user.username || "admin";
     if (user.role !== "admin") location.href = "login.html";
 
-    // Existing endpoints (keep as you have)
+    // Upload Students
     async function uploadStudents() {
       const file = document.getElementById("studentsFile").files[0];
       if (!file) return alert("Select a CSV file");
@@ -287,6 +287,7 @@
       alert(data.message || (res.ok ? "Uploaded!" : "Upload failed"));
     }
 
+    // Upload Faculty
     async function uploadFaculty() {
       const file = document.getElementById("facultyFile").files[0];
       if (!file) return alert("Select a CSV file");
@@ -303,7 +304,10 @@
       alert(data.message || (res.ok ? "Uploaded!" : "Upload failed"));
     }
 
+    // Promote Students
     async function promoteAll() {
+      if (!confirm("Promote all students to next year?")) return;
+      
       const res = await fetch(window.API_BASE + "/users/promote", {
         method: "POST",
         headers: getAuthHeaders()
@@ -312,7 +316,7 @@
       alert(data.message || (res.ok ? "Promoted!" : "Promote failed"));
     }
 
-    // Config: /api/config (must exist on backend)
+    // Load Config
     async function loadConfigIntoForm() {
       const res = await fetch(window.API_BASE + "/config");
       const cfg = await res.json().catch(() => ({}));
@@ -321,6 +325,7 @@
       document.getElementById("cfgGitRepoUrl").value = cfg?.git_repo_url || "";
     }
 
+    // Save Config
     document.getElementById("siteConfigForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const msg = document.getElementById("cfgMsg");
@@ -338,11 +343,11 @@
         body: JSON.stringify(body)
       });
 
-      msg.textContent = res.ok ? "Saved." : "Failed.";
+      msg.textContent = res.ok ? "✅ Saved. Refresh to see logo update." : "❌ Failed.";
       if (res.ok) await loadConfigIntoForm();
     });
 
-    // Roles: needs /api/admin/set-role
+    // Save Role
     document.getElementById("roleForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const msg = document.getElementById("roleMsg");
@@ -350,9 +355,10 @@
 
       const username = document.getElementById("roleUsername").value.trim();
       const role = document.getElementById("roleValue").value;
+      const department = document.getElementById("roleDepartment").value;
       const flag = document.getElementById("roleFlags").value;
 
-      const body = { username, role, flag };
+      const body = { username, role, department, flag };
 
       const res = await fetch(window.API_BASE + "/admin/set-role", {
         method: "PUT",
@@ -360,7 +366,11 @@
         body: JSON.stringify(body)
       });
 
-      msg.textContent = res.ok ? "Updated." : "Failed (check API route).";
+      msg.textContent = res.ok ? "✅ Role updated." : "❌ Failed (check backend).";
+      
+      if (res.ok) {
+        document.getElementById("roleForm").reset();
+      }
     });
 
     loadConfigIntoForm();
