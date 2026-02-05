@@ -27,6 +27,108 @@ router.get("/dashboard", auth, async (req, res) => {
   }
 });
 
+// Manually add single student
+router.post("/add-student", auth, async (req, res) => {
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ message: "Admin only" });
+  }
+
+  const { username, email, department, year, password, interests } = req.body;
+
+  if (!username || !email || !password) {
+    return res.status(400).json({ message: "username, email, password required" });
+  }
+
+  try {
+    const { data: existing } = await supabase
+      .from("users")
+      .select("id")
+      .eq("username", username)
+      .single();
+
+    if (existing) {
+      return res.status(400).json({ message: "Username already exists" });
+    }
+
+    const { data: newUser, error: userError } = await supabase
+      .from("users")
+      .insert({
+        username,
+        email,
+        role: "student",
+        department: department || null,
+        year: parseInt(year) || 1,
+        interests: interests ? interests.split(",").map(s => s.trim()) : []
+      })
+      .select("id, username, email")
+      .single();
+
+    if (userError) {
+      return res.status(400).json({ message: "Failed to create user", error: userError.message });
+    }
+
+    const hash = await bcrypt.hash(password, 10);
+    await supabase
+      .from("user_passwords")
+      .insert({ user_id: newUser.id, password_hash: hash });
+
+    res.json({ message: "Student created successfully", user: newUser });
+  } catch (err) {
+    console.error("Add student error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Manually add single faculty
+router.post("/add-faculty", auth, async (req, res) => {
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ message: "Admin only" });
+  }
+
+  const { username, email, department, password } = req.body;
+
+  if (!username || !email || !password) {
+    return res.status(400).json({ message: "username, email, password required" });
+  }
+
+  try {
+    const { data: existing } = await supabase
+      .from("users")
+      .select("id")
+      .eq("username", username)
+      .single();
+
+    if (existing) {
+      return res.status(400).json({ message: "Username already exists" });
+    }
+
+    const { data: newUser, error: userError } = await supabase
+      .from("users")
+      .insert({
+        username,
+        email,
+        role: "faculty",
+        department: department || null
+      })
+      .select("id, username, email")
+      .single();
+
+    if (userError) {
+      return res.status(400).json({ message: "Failed to create user", error: userError.message });
+    }
+
+    const hash = await bcrypt.hash(password, 10);
+    await supabase
+      .from("user_passwords")
+      .insert({ user_id: newUser.id, password_hash: hash });
+
+    res.json({ message: "Faculty created successfully", user: newUser });
+  } catch (err) {
+    console.error("Add faculty error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 // Upload students CSV
 router.post("/upload-students", auth, upload.single("file"), async (req, res) => {
   if (req.user.role !== "admin") {
@@ -172,12 +274,8 @@ router.put("/set-role", auth, async (req, res) => {
       .select("id, username, role, department")
       .single();
 
-    if (error) {
-      return res.status(400).json({ message: "Update failed", error: error.message });
-    }
-
-    if (!data) {
-      return res.status(404).json({ message: "User not found" });
+    if (error || !data) {
+      return res.status(400).json({ message: "Update failed or user not found" });
     }
 
     res.json({ message: "Role updated", user: data });
@@ -186,7 +284,7 @@ router.put("/set-role", auth, async (req, res) => {
   }
 });
 
-// NEW: Reset single user password
+// Reset single user password
 router.put("/reset-password", auth, async (req, res) => {
   if (req.user.role !== "admin") {
     return res.status(403).json({ message: "Admin only" });
@@ -226,7 +324,7 @@ router.put("/reset-password", auth, async (req, res) => {
   }
 });
 
-// NEW: Bulk password reset from CSV
+// Bulk password reset from CSV
 router.post("/bulk-passwords", auth, upload.single("file"), async (req, res) => {
   if (req.user.role !== "admin") {
     return res.status(403).json({ message: "Admin only" });
