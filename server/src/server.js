@@ -6,6 +6,8 @@ import configRoutes from "./routes/config.js";
 
 
 import authRoutes from "./routes/auth.js";
+import adminRoutes from "./routes/admin.js";
+app.use("/api/admin", adminRoutes);
 
 dotenv.config();
 
