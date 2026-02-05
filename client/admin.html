@@ -52,87 +52,122 @@
       </div>
 
       <!-- UPLOADS -->
-      <section class="panel active" id="panel-uploads">
-        <div class="two-col">
-          <div class="card">
-            <h2>Upload Students CSV</h2>
-            <input type="file" accept=".csv" id="studentsFile" style="margin:1rem 0;">
-            <button class="btn" onclick="uploadStudents()">Upload Students</button>
-            <div class="hint">Headers: username,email,department,year,password,interests</div>
-          </div>
-
-          <div class="card">
-            <h2>Upload Faculty CSV</h2>
-            <input type="file" accept=".csv" id="facultyFile" style="margin:1rem 0;">
-            <button class="btn" onclick="uploadFaculty()">Upload Faculty</button>
-            <div class="hint">Headers: username,email,department,password</div>
-          </div>
+<section class="panel active" id="panel-uploads">
+  <h2 style="margin-bottom:1rem;">Add Users</h2>
+  
+  <!-- Manual Add Forms -->
+  <div class="two-col" style="margin-bottom:2rem;">
+    <div class="card">
+      <h3>Add Student Manually</h3>
+      <form id="addStudentForm" style="margin-top:1rem;">
+        <div class="form-group">
+          <label class="form-label">Username *</label>
+          <input class="form-input" id="stuUsername" required>
         </div>
-
-        <div class="card" style="margin-top:1rem;">
-          <h2>Promote Students</h2>
-          <p>Moves all students to next year (1→2, 2→3, 3→4, 4→graduated).</p>
-          <button class="btn" onclick="promoteAll()">Promote All</button>
+        
+        <div class="form-group">
+          <label class="form-label">Email *</label>
+          <input type="email" class="form-input" id="stuEmail" required>
         </div>
-      </section>
-
-      <!-- ROLES -->
-      <section class="panel" id="panel-roles">
-        <div class="card">
-          <h2>Set User Role</h2>
-          <form id="roleForm" class="row row-2" style="margin-top:1rem;">
-            <div class="form-group">
-              <label class="form-label">Username</label>
-              <input class="form-input" id="roleUsername" placeholder="student1" required>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Role</label>
-              <select class="form-select" id="roleValue" required>
-                <option value="student">Student</option>
-                <option value="faculty">Faculty</option>
-                <option value="admin">Admin</option>
-                <option value="committee_chair">Committee Chair</option>
-                <option value="committee_vice_chair">Committee Vice Chair</option>
-                <option value="secretary">Secretary</option>
-                <option value="vice_secretary">Vice Secretary</option>
-                <option value="executive_head">Executive Head</option>
-                <option value="executive_vice_head">Executive Vice Head</option>
-                <option value="representative_head">Representative Head</option>
-                <option value="representative_vice_head">Representative Vice Head</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Department (for heads)</label>
-              <select class="form-select" id="roleDepartment">
-                <option value="">None</option>
-                <option value="Computer Science">Computer Science</option>
-                <option value="Electrical">Electrical</option>
-                <option value="Mechanical">Mechanical</option>
-                <option value="Civil">Civil</option>
-                <option value="ECE">Electronics & Communication</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Additional Flags</label>
-              <select class="form-select" id="roleFlags">
-                <option value="">None</option>
-                <option value="isCommittee">Committee Member</option>
-                <option value="isExecutive">Executive</option>
-                <option value="isRepresentative">Representative</option>
-                <option value="isDeveloper">Developer</option>
-              </select>
-            </div>
-
-            <div class="form-group" style="grid-column:1/-1;">
-              <button class="btn" type="submit">Save Role</button>
-              <span id="roleMsg" class="hint" style="margin-left:0.75rem;"></span>
-            </div>
-          </form>
+        
+        <div class="form-group">
+          <label class="form-label">Department</label>
+          <select class="form-select" id="stuDepartment">
+            <option value="">Select Department</option>
+            <option value="Computer Science">Computer Science</option>
+            <option value="Electrical">Electrical</option>
+            <option value="Mechanical">Mechanical</option>
+            <option value="Civil">Civil</option>
+            <option value="ECE">Electronics & Communication</option>
+          </select>
         </div>
-      </section>
+        
+        <div class="form-group">
+          <label class="form-label">Year</label>
+          <select class="form-select" id="stuYear">
+            <option value="1">1st Year</option>
+            <option value="2">2nd Year</option>
+            <option value="3">3rd Year</option>
+            <option value="4">4th Year</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Password *</label>
+          <input type="password" class="form-input" id="stuPassword" placeholder="Min 6 chars" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Interests (comma-separated)</label>
+          <input class="form-input" id="stuInterests" placeholder="AI, Web Dev, Robotics">
+        </div>
+        
+        <button class="btn" type="submit">Add Student</button>
+        <span id="stuMsg" class="hint" style="margin-left:0.75rem;"></span>
+      </form>
+    </div>
+
+    <div class="card">
+      <h3>Add Faculty Manually</h3>
+      <form id="addFacultyForm" style="margin-top:1rem;">
+        <div class="form-group">
+          <label class="form-label">Username *</label>
+          <input class="form-input" id="facUsername" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Email *</label>
+          <input type="email" class="form-input" id="facEmail" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Department</label>
+          <select class="form-select" id="facDepartment">
+            <option value="">Select Department</option>
+            <option value="Computer Science">Computer Science</option>
+            <option value="Electrical">Electrical</option>
+            <option value="Mechanical">Mechanical</option>
+            <option value="Civil">Civil</option>
+            <option value="ECE">Electronics & Communication</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Password *</label>
+          <input type="password" class="form-input" id="facPassword" placeholder="Min 6 chars" required>
+        </div>
+        
+        <button class="btn" type="submit">Add Faculty</button>
+        <span id="facMsg" class="hint" style="margin-left:0.75rem;"></span>
+      </form>
+    </div>
+  </div>
+
+  <!-- CSV Upload -->
+  <h2 style="margin-bottom:1rem;">Bulk Upload (CSV)</h2>
+  <div class="two-col">
+    <div class="card">
+      <h3>Upload Students CSV</h3>
+      <input type="file" accept=".csv" id="studentsFile" style="margin:1rem 0;">
+      <button class="btn" onclick="uploadStudents()">Upload Students</button>
+      <div class="hint">Headers: username,email,department,year,password,interests</div>
+    </div>
+
+    <div class="card">
+      <h3>Upload Faculty CSV</h3>
+      <input type="file" accept=".csv" id="facultyFile" style="margin:1rem 0;">
+      <button class="btn" onclick="uploadFaculty()">Upload Faculty</button>
+      <div class="hint">Headers: username,email,department,password</div>
+    </div>
+  </div>
+
+  <!-- Promote -->
+  <div class="card" style="margin-top:1rem;">
+    <h2>Promote Students</h2>
+    <p>Moves all students to next year (1→2, 2→3, 3→4, 4→graduated).</p>
+    <button class="btn" onclick="promoteAll()">Promote All</button>
+  </div>
+</section>
 
       <!-- PASSWORDS -->
       <section class="panel" id="panel-passwords">
@@ -218,6 +253,62 @@
 
   <script>
   // Tab switching
+  // Add Student Manually
+document.getElementById("addStudentForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const msg = document.getElementById("stuMsg");
+  msg.textContent = "Adding...";
+
+  const body = {
+    username: document.getElementById("stuUsername").value.trim(),
+    email: document.getElementById("stuEmail").value.trim(),
+    department: document.getElementById("stuDepartment").value,
+    year: document.getElementById("stuYear").value,
+    password: document.getElementById("stuPassword").value,
+    interests: document.getElementById("stuInterests").value.trim()
+  };
+
+  const res = await fetch(window.API_BASE + "/admin/add-student", {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(body)
+  });
+
+  const data = await res.json().catch(() => ({}));
+  msg.textContent = res.ok ? "✅ " + data.message : "❌ " + (data.message || "Failed");
+  
+  if (res.ok) {
+    document.getElementById("addStudentForm").reset();
+  }
+});
+
+// Add Faculty Manually
+document.getElementById("addFacultyForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const msg = document.getElementById("facMsg");
+  msg.textContent = "Adding...";
+
+  const body = {
+    username: document.getElementById("facUsername").value.trim(),
+    email: document.getElementById("facEmail").value.trim(),
+    department: document.getElementById("facDepartment").value,
+    password: document.getElementById("facPassword").value
+  };
+
+  const res = await fetch(window.API_BASE + "/admin/add-faculty", {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(body)
+  });
+
+  const data = await res.json().catch(() => ({}));
+  msg.textContent = res.ok ? "✅ " + data.message : "❌ " + (data.message || "Failed");
+  
+  if (res.ok) {
+    document.getElementById("addFacultyForm").reset();
+  }
+});
+
   document.querySelectorAll(".tab").forEach(btn => {
     btn.addEventListener("click", () => {
       document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
