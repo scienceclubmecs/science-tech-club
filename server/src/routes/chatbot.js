@@ -29,42 +29,47 @@ router.post("/", async (req, res) => {
       return res.json({ answer: "Hi! Ask me about the club, roles, events, or NDLI! 😊" });
     }
 
-    // TRY MULTIPLE MODEL NAMES (fallback approach)
+    // Try Gemini (stable model names)
     let model;
-    try {
-      model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
-    } catch {
+    const modelNames = ["gemini-pro", "gemini-1.0-pro"];
+    
+    for (const modelName of modelNames) {
       try {
-        model = genAI.getGenerativeModel({ model: "gemini-1.0-pro" });
-      } catch {
-        model = genAI.getGenerativeModel({ model: "models/gemini-pro" });
+        model = genAI.getGenerativeModel({ model: modelName });
+        const result = await model.generateContent(`${CLUB_CONTEXT}\n\nQ: ${question}\nA:`);
+        const answer = result.response.text().trim();
+        
+        console.log(`🤖 Gemini SUCCESS (${modelName}): "${question.substring(0,30)}..."`);
+        return res.json({ answer });
+      } catch (modelError) {
+        console.log(`🤖 Model ${modelName} failed:`, modelError.message);
       }
     }
 
-    const prompt = `${CLUB_CONTEXT}\n\nUser: ${question}\nAssistant:`;
-
-    const result = await model.generateContent(prompt);
-    const answer = result.response.text().trim();
-
-    console.log(`🤖 Chat OK: "${question.substring(0,30)}..."`);
-
-    res.json({ answer });
+    // Gemini failed → Smart fallback
+    throw new Error("All models failed");
     
   } catch (error) {
-    console.error("Chatbot error:", error.message);
+    console.error("🤖 Chatbot using FALLBACK:", error.message);
     
-    // Fallback response
-    const fallbacks = {
-      "club": "Science & Tech Club organizes workshops, hackathons, and projects. We have Committee leaders and department heads (Executive/Representative). Visit NDLI: https://club.ndl.iitkgp.ac.in/club-home",
-      "role": "We have Committee (Chair, Vice Chair, Secretary), department-specific Executive Heads and Representative Heads for CSE, EE, ME, CE, ECE, plus Developers team.",
-      "ndli": "Access National Digital Library at: https://club.ndl.iitkgp.ac.in/club-home with tons of academic resources!",
-      "team": "Teams: Committee (leadership), Executives (events), Representatives (communications), Developers (tech)."
-    };
+    // FIXED: Use req.body.question (not undefined 'question')
+    const q = (req.body.question || "").toLowerCase();
     
-    const keyword = Object.keys(fallbacks).find(k => question.toLowerCase().includes(k));
-    const fallbackAnswer = fallbacks[keyword] || "Try asking: 'What is the club?' or 'What teams exist?' or 'Tell me about NDLI'";
+    let answer = "Science & Tech Club: workshops, hackathons, projects, NDLI access! Ask about roles, events, or teams 😊";
     
-    res.json({ answer: fallbackAnswer });
+    if (q.includes("club") || q.includes("about")) {
+      answer = "Science & Tech Club organizes workshops, hackathons, projects, and provides NDLI access: https://club.ndl.iitkgp.ac.in/club-home";
+    } else if (q.includes("role") || q.includes("team") || q.includes("head") || q.includes("committee")) {
+      answer = "Teams: Committee (Chair, Secretary), Department Heads (Executive/Representative for CSE, EE, ME, CE, ECE), Executives, Developers.";
+    } else if (q.includes("ndl") || q.includes("library")) {
+      answer = "NDLI: https://club.ndl.iitkgp.ac.in/club-home - academic books, journals, resources!";
+    } else if (q.includes("event") || q.includes("workshop") || q.includes("hack")) {
+      answer = "Events: tech workshops, hackathons, project showcases, seminars. Check announcements!";
+    } else if (/^(hi|hello|hey)/i.test(q)) {
+      answer = "Hi! I'm the Science & Tech Club assistant. Ask about roles, events, NDLI, or how to join! 😊";
+    }
+
+    res.json({ answer });
   }
 });
 
