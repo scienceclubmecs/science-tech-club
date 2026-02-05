@@ -134,53 +134,64 @@
       </section>
 
       <!-- ROLES -->
-      <section class="panel" id="panel-roles">
-        <div class="card">
-          <h2>Set User Role</h2>
-          <p>Update a user role/flags (admin-only).</p>
+<section class="panel" id="panel-roles">
+  <div class="card">
+    <h2>Set User Role</h2>
+    <p>Update user roles including department-specific heads.</p>
 
-          <form id="roleForm" class="row row-3" style="margin-top:1rem;">
-            <div class="form-group">
-              <label class="form-label">Username</label>
-              <input class="form-input" id="roleUsername" placeholder="e.g. student1" required />
-            </div>
+    <form id="roleForm" class="row row-3" style="margin-top:1rem;">
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <input class="form-input" id="roleUsername" placeholder="e.g. student1" required />
+      </div>
 
-            <div class="form-group">
-              <label class="form-label">Role</label>
-              <select class="form-select" id="roleValue" required>
-                <option value="student">student</option>
-                <option value="faculty">faculty</option>
-                <option value="admin">admin</option>
-                <option value="committee_chair">committee_chair</option>
-                <option value="committee_vice_chair">committee_vice_chair</option>
-                <option value="secretary">secretary</option>
-                <option value="vice_secretary">vice_secretary</option>
-                <option value="executive_head">executive_head</option>
-                <option value="representative_head">representative_head</option>
-              </select>
-            </div>
+      <div class="form-group">
+        <label class="form-label">Role</label>
+        <select class="form-select" id="roleValue" required>
+          <option value="student">Student</option>
+          <option value="faculty">Faculty</option>
+          <option value="admin">Admin</option>
+          <option value="committee_chair">Committee Chair</option>
+          <option value="committee_vice_chair">Committee Vice Chair</option>
+          <option value="secretary">Secretary</option>
+          <option value="vice_secretary">Vice Secretary</option>
+          <option value="executive_head">Executive Head</option>
+          <option value="executive_vice_head">Executive Vice Head</option>
+          <option value="representative_head">Representative Head</option>
+          <option value="representative_vice_head">Representative Vice Head</option>
+        </select>
+      </div>
 
-            <div class="form-group">
-              <label class="form-label">Flags</label>
-              <select class="form-select" id="roleFlags">
-                <option value="">None</option>
-                <option value="isExecutive">isExecutive</option>
-                <option value="isRepresentative">isRepresentative</option>
-                <option value="isDeveloper">isDeveloper</option>
-              </select>
-            </div>
+      <div class="form-group">
+        <label class="form-label">Department (for heads)</label>
+        <select class="form-select" id="roleDepartment">
+          <option value="">None</option>
+          <option value="Computer Science">Computer Science</option>
+          <option value="Electrical">Electrical</option>
+          <option value="Mechanical">Mechanical</option>
+          <option value="Civil">Civil</option>
+          <option value="ECE">Electronics & Communication</option>
+        </select>
+      </div>
 
-            <div class="form-group" style="grid-column:1/-1;">
-              <button class="btn" type="submit">Save Role</button>
-              <span id="roleMsg" class="hint" style="margin-left:0.75rem;"></span>
-            </div>
-          </form>
+      <div class="form-group">
+        <label class="form-label">Additional Flags</label>
+        <select class="form-select" id="roleFlags">
+          <option value="">None</option>
+          <option value="isCommittee">Committee Member</option>
+          <option value="isExecutive">Executive</option>
+          <option value="isRepresentative">Representative</option>
+          <option value="isDeveloper">Developer</option>
+        </select>
+      </div>
 
-          <div class="hint">
-            This needs a backend endpoint: <code>PUT /api/admin/set-role</code> (added below).
-          </div>
-        </div>
-      </section>
+      <div class="form-group" style="grid-column:1/-1;">
+        <button class="btn" type="submit">Save Role</button>
+        <span id="roleMsg" class="hint" style="margin-left:0.75rem;"></span>
+      </div>
+    </form>
+  </div>
+</section>
 
       <!-- CONFIG -->
       <section class="panel" id="panel-config">
