@@ -162,20 +162,24 @@ router.post("/upload-faculty", auth, upload.single("file"), async (req, res) => 
   }
 });
 
-// Set user role (admin only)
+// Set user role (admin only) - with department support for heads
 router.put("/set-role", auth, async (req, res) => {
   if (req.user.role !== "admin") {
     return res.status(403).json({ message: "Forbidden" });
   }
 
-  const { username, role, flag } = req.body || {};
+  const { username, role, department, flag } = req.body || {};
   if (!username || !role) {
     return res.status(400).json({ message: "username and role required" });
   }
 
   const patch = { role };
+  
+  // Set department if provided (for heads)
+  if (department) patch.department = department;
 
   // Optional flag updates
+  if (flag === "isCommittee") patch.is_committee = true;
   if (flag === "isExecutive") patch.is_executive = true;
   if (flag === "isRepresentative") patch.is_representative = true;
   if (flag === "isDeveloper") patch.is_developer = true;
@@ -184,11 +188,11 @@ router.put("/set-role", auth, async (req, res) => {
     .from("users")
     .update(patch)
     .eq("username", username)
-    .select("id, username, role, is_executive, is_representative, is_developer")
+    .select("id, username, role, department, is_committee, is_executive, is_representative, is_developer")
     .single();
 
-  if (error) return res.status(400).json({ message: "Update failed" });
-  res.json({ message: "Role updated", user: data });
+  if (error) return res.status(400).json({ message: "Update failed", error: error.message });
+  res.json({ message: "Role updated successfully", user: data });
 });
 
 export default router;
