@@ -1,19 +1,13 @@
 {
   "name": "science-tech-club-backend",
   "version": "1.0.0",
-  "description": "Science & Tech Club API with Gemini Chatbot",
-  "main": "src/server.js",
   "type": "module",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
-    "test": "node src/test-gemini.js"
+    "dev": "nodemon src/server.js"
   },
-  "keywords": ["club", "chatbot", "supabase", "gemini"],
-  "author": "Science Tech Club Devs",
-  "license": "MIT",
   "dependencies": {
-    "@google/generative-ai": "0.8.1",
+    "@google/generative-ai": "^0.21.0",
     "@supabase/supabase-js": "^2.45.4",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
@@ -27,8 +21,5 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.7"
-  },
-  "engines": {
-    "node": ">=20.0.0"
   }
 }
