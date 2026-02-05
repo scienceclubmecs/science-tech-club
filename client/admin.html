@@ -217,168 +217,169 @@
   <script src="js/site.js"></script>
 
   <script>
-    // Tab switching
-    document.querySelectorAll(".tab").forEach(btn => {
-      btn.addEventListener("click", () => {
-        document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
-        document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
-        btn.classList.add("active");
-        document.getElementById("panel-" + btn.dataset.tab).classList.add("active");
-      });
+  // Tab switching
+  document.querySelectorAll(".tab").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("panel-" + btn.dataset.tab).classList.add("active");
+    });
+  });
+
+  // Auth guard
+  const user = checkAuth();
+  document.getElementById("adminName").textContent = user.username || "admin";
+  if (user.role !== "admin") location.href = "login.html";
+
+  // Upload Students
+  async function uploadStudents() {
+    const file = document.getElementById("studentsFile").files[0];
+    if (!file) return alert("Select CSV file");
+    
+    const fd = new FormData();
+    fd.append("file", file);
+
+    const res = await fetch(window.API_BASE + "/admin/upload-students", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${localStorage.getItem("club_token")}` },
+      body: fd
     });
 
-    // Auth guard
-    const user = checkAuth();
-    document.getElementById("adminName").textContent = user.username || "admin";
-    if (user.role !== "admin") location.href = "login.html";
+    const data = await res.json().catch(() => ({}));
+    alert(data.message || (res.ok ? "Uploaded!" : "Upload failed"));
+  }
 
-    // Upload Students
-    async function uploadStudents() {
-      const file = document.getElementById("studentsFile").files[0];
-      if (!file) return alert("Select CSV file");
-      
-      const fd = new FormData();
-      fd.append("file", file);
+  // Upload Faculty
+  async function uploadFaculty() {
+    const file = document.getElementById("facultyFile").files[0];
+    if (!file) return alert("Select CSV file");
+    
+    const fd = new FormData();
+    fd.append("file", file);
 
-      const res = await fetch(window.API_BASE + "/admin/upload-students", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${localStorage.getItem("club_token")}` },
-        body: fd
-      });
-
-      const data = await res.json().catch(() => ({}));
-      alert(data.message || (res.ok ? "Uploaded!" : "Upload failed"));
-    }
-
-    // Upload Faculty
-    async function uploadFaculty() {
-      const file = document.getElementById("facultyFile").files[0];
-      if (!file) return alert("Select CSV file");
-      
-      const fd = new FormData();
-      fd.append("file", file);
-
-      const res = await fetch(window.API_BASE + "/admin/upload-faculty", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${localStorage.getItem("club_token")}` },
-        body: fd
-      });
-
-      const data = await res.json().catch(() => ({}));
-      alert(data.message || (res.ok ? "Uploaded!" : "Upload failed"));
-    }
-
-    // Promote Students
-    async function promoteAll() {
-      if (!confirm("Promote all students to next year?")) return;
-      
-      const res = await fetch(window.API_BASE + "/users/promote", {
-        method: "POST",
-        headers: getAuthHeaders()
-      });
-      
-      const data = await res.json().catch(() => ({}));
-      alert(data.message || (res.ok ? "Promoted!" : "Failed"));
-    }
-
-    // Set Role
-    document.getElementById("roleForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const msg = document.getElementById("roleMsg");
-      msg.textContent = "Saving...";
-
-      const body = {
-        username: document.getElementById("roleUsername").value.trim(),
-        role: document.getElementById("roleValue").value,
-        department: document.getElementById("roleDepartment").value,
-        flag: document.getElementById("roleFlags").value
-      };
-
-      const res = await fetch(window.API_BASE + "/admin/set-role", {
-        method: "PUT",
-        headers: getAuthHeaders(),
-        body: JSON.stringify(body)
-      });
-
-      msg.textContent = res.ok ? "✅ Role updated" : "❌ Failed";
-      if (res.ok) document.getElementById("roleForm").reset();
+    const res = await fetch(window.API_BASE + "/admin/upload-faculty", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${localStorage.getItem("club_token")}` },
+      body: fd
     });
 
-    // Reset Password
-    document.getElementById("passwordForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const msg = document.getElementById("pwdMsg");
-      msg.textContent = "Resetting...";
+    const data = await res.json().catch(() => ({}));
+    alert(data.message || (res.ok ? "Uploaded!" : "Upload failed"));
+  }
 
-      const body = {
-        username: document.getElementById("pwdUsername").value.trim(),
-        password: document.getElementById("pwdPassword").value
-      };
+  // Promote Students
+  async function promoteAll() {
+    if (!confirm("Promote all students to next year?")) return;
+    
+    const res = await fetch(window.API_BASE + "/users/promote", {
+      method: "POST",
+      headers: getAuthHeaders()
+    });
+    
+    const data = await res.json().catch(() => ({}));
+    alert(data.message || (res.ok ? "Promoted!" : "Failed"));
+  }
 
-      const res = await fetch(window.API_BASE + "/admin/reset-password", {
-        method: "PUT",
-        headers: getAuthHeaders(),
-        body: JSON.stringify(body)
-      };
+  // Set Role
+  document.getElementById("roleForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const msg = document.getElementById("roleMsg");
+    msg.textContent = "Saving...";
 
-      const data = await res.json().catch(() => ({}));
-      msg.textContent = res.ok ? "✅ " + data.message : "❌ " + (data.message || "Failed");
-      
-      if (res.ok) document.getElementById("passwordForm").reset();
+    const body = {
+      username: document.getElementById("roleUsername").value.trim(),
+      role: document.getElementById("roleValue").value,
+      department: document.getElementById("roleDepartment").value,
+      flag: document.getElementById("roleFlags").value
+    };
+
+    const res = await fetch(window.API_BASE + "/admin/set-role", {
+      method: "PUT",
+      headers: getAuthHeaders(),
+      body: JSON.stringify(body)
     });
 
-    // Bulk Passwords
-    async function bulkPasswords() {
-      const file = document.getElementById("bulkPasswordFile").files[0];
-      if (!file) return alert("Select CSV file");
-      
-      const fd = new FormData();
-      fd.append("file", file);
+    msg.textContent = res.ok ? "✅ Role updated" : "❌ Failed";
+    if (res.ok) document.getElementById("roleForm").reset();
+  });
 
-      const res = await fetch(window.API_BASE + "/admin/bulk-passwords", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${localStorage.getItem("club_token")}` },
-        body: fd
-      });
+  // Reset Password (FIXED - added closing parenthesis)
+  document.getElementById("passwordForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const msg = document.getElementById("pwdMsg");
+    msg.textContent = "Resetting...";
 
-      const data = await res.json().catch(() => ({}));
-      let msg = data.message || (res.ok ? "Updated!" : "Failed");
-      if (data.errors) msg += "\nErrors: " + data.errors.join(", ");
-      alert(msg);
-    }
+    const body = {
+      username: document.getElementById("pwdUsername").value.trim(),
+      password: document.getElementById("pwdPassword").value
+    };
 
-    // Load Config
-    async function loadConfigIntoForm() {
-      const res = await fetch(window.API_BASE + "/config");
-      const cfg = await res.json().catch(() => ({}));
-      document.getElementById("cfgSiteName").value = cfg?.site_name || "";
-      document.getElementById("cfgLogoUrl").value = cfg?.logo_url || "";
-      document.getElementById("cfgGitRepoUrl").value = cfg?.git_repo_url || "";
-    }
+    const res = await fetch(window.API_BASE + "/admin/reset-password", {
+      method: "PUT",
+      headers: getAuthHeaders(),
+      body: JSON.stringify(body)
+    });  // ← FIXED: Added closing parenthesis
 
-    // Save Config
-    document.getElementById("siteConfigForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const msg = document.getElementById("cfgMsg");
-      msg.textContent = "Saving...";
+    const data = await res.json().catch(() => ({}));
+    msg.textContent = res.ok ? "✅ " + data.message : "❌ " + (data.message || "Failed");
+    
+    if (res.ok) document.getElementById("passwordForm").reset();
+  });
 
-      const body = {
-        siteName: document.getElementById("cfgSiteName").value.trim(),
-        logoUrl: document.getElementById("cfgLogoUrl").value.trim(),
-        gitRepoUrl: document.getElementById("cfgGitRepoUrl").value.trim()
-      };
+  // Bulk Passwords
+  async function bulkPasswords() {
+    const file = document.getElementById("bulkPasswordFile").files[0];
+    if (!file) return alert("Select CSV file");
+    
+    const fd = new FormData();
+    fd.append("file", file);
 
-      const res = await fetch(window.API_BASE + "/config", {
-        method: "PUT",
-        headers: getAuthHeaders(),
-        body: JSON.stringify(body)
-      });
-
-      msg.textContent = res.ok ? "✅ Saved. Refresh to see logo." : "❌ Failed";
-      if (res.ok) await loadConfigIntoForm();
+    const res = await fetch(window.API_BASE + "/admin/bulk-passwords", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${localStorage.getItem("club_token")}` },
+      body: fd
     });
 
-    loadConfigIntoForm();
-  </script>
+    const data = await res.json().catch(() => ({}));
+    let msg = data.message || (res.ok ? "Updated!" : "Failed");
+    if (data.errors) msg += "\nErrors: " + data.errors.join(", ");
+    alert(msg);
+  }
+
+  // Load Config
+  async function loadConfigIntoForm() {
+    const res = await fetch(window.API_BASE + "/config");
+    const cfg = await res.json().catch(() => ({}));
+    document.getElementById("cfgSiteName").value = cfg?.site_name || "";
+    document.getElementById("cfgLogoUrl").value = cfg?.logo_url || "";
+    document.getElementById("cfgGitRepoUrl").value = cfg?.git_repo_url || "";
+  }
+
+  // Save Config
+  document.getElementById("siteConfigForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const msg = document.getElementById("cfgMsg");
+    msg.textContent = "Saving...";
+
+    const body = {
+      siteName: document.getElementById("cfgSiteName").value.trim(),
+      logoUrl: document.getElementById("cfgLogoUrl").value.trim(),
+      gitRepoUrl: document.getElementById("cfgGitRepoUrl").value.trim()
+    };
+
+    const res = await fetch(window.API_BASE + "/config", {
+      method: "PUT",
+      headers: getAuthHeaders(),
+      body: JSON.stringify(body)
+    });
+
+    msg.textContent = res.ok ? "✅ Saved. Refresh to see logo." : "❌ Failed";
+    if (res.ok) await loadConfigIntoForm();
+  });
+
+  loadConfigIntoForm();
+</script>
+
 </body>
 </html>
