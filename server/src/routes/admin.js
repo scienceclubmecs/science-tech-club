@@ -6,6 +6,37 @@ import { supabase } from "../config/supabase.js";
 import { sendWelcomeMail } from "../utils/mail.js";
 import { auth } from "../middleware/auth.js";
 import { buildStudentUsername, buildFacultyUsername } from "../utils/username.js";
+import express from "express";
+import { supabase } from "../config/supabase.js";
+import { auth } from "../middleware/auth.js";
+
+const router = express.Router();
+
+router.put("/set-role", auth, async (req, res) => {
+  if (req.user.role !== "admin") return res.status(403).json({ message: "Forbidden" });
+
+  const { username, role, flag } = req.body || {};
+  if (!username || !role) return res.status(400).json({ message: "username and role required" });
+
+  const patch = { role };
+
+  // optional flag updates
+  if (flag === "isExecutive") patch.is_executive = true;
+  if (flag === "isRepresentative") patch.is_representative = true;
+  if (flag === "isDeveloper") patch.is_developer = true;
+
+  const { data, error } = await supabase
+    .from("users")
+    .update(patch)
+    .eq("username", username)
+    .select("id, username, role, is_executive, is_representative, is_developer")
+    .single();
+
+  if (error) return res.status(400).json({ message: "Update failed" });
+  res.json({ message: "Role updated", user: data });
+});
+
+export default router;
 
 const upload = multer();
 const router = express.Router();
