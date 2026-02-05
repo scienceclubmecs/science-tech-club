@@ -3,54 +3,215 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin Dashboard</title>
+  <title>Admin • Science & Tech Club</title>
   <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    /* Small extra styling only for admin page */
+    .admin-topbar {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+    }
+    .pill {
+      border: 1px solid var(--border);
+      padding: 0.35rem 0.7rem;
+      font-size: 0.75rem;
+      color: var(--muted);
+      background: var(--bg-alt);
+    }
+    .tabs {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    .tab {
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--fg);
+      padding: 0.45rem 0.9rem;
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+    .tab.active {
+      background: var(--accent);
+      color: #000;
+    }
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    .two-col {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 900px) {
+      .two-col { grid-template-columns: 1.2fr 1fr; }
+    }
+
+    .hint {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 0.6rem;
+      line-height: 1.35;
+    }
+    .ok { color: #7CFF7C; }
+    .bad { color: #FF7C7C; }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+    }
+    @media (min-width: 768px) {
+      .row-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+  </style>
 </head>
+
 <body>
   <div class="page">
     <header class="navbar">
       <div class="navbar-inner">
         <a href="index.html" class="nav-logo">
-          <img src="https://via.placeholder.com/32" alt="Logo" />
-          <span>Science & Tech Club</span>
+          <img id="siteLogo" src="https://via.placeholder.com/32" alt="Logo" />
+          <span id="siteName">Science & Tech Club</span>
         </a>
         <nav class="nav-links">
           <a href="index.html">Home</a>
-          <button class="btn" onclick="logout()">Logout</button>
+          <button class="btn" type="button" onclick="logout()">Logout</button>
         </nav>
       </div>
     </header>
 
     <main class="main">
-      <section class="section">
-        <h1 class="title">Admin Dashboard</h1>
-      </section>
+      <div class="admin-topbar">
+        <div>
+          <h1 class="title" style="margin-bottom:0.25rem;">Admin</h1>
+          <div class="subtitle" style="margin-bottom:0;">Control center: users, roles, uploads, config.</div>
+        </div>
+        <div class="pill">Logged in as: <span id="adminName">admin</span></div>
+      </div>
 
-      <section class="section grid grid-2">
-        <div class="card">
-          <h2>Upload Students (CSV)</h2>
-          <input type="file" accept=".csv" id="studentsFile" style="margin:1rem 0;" />
-          <button class="btn" onclick="uploadStudents()">Upload</button>
+      <div class="tabs">
+        <button class="tab active" type="button" data-tab="uploads">Uploads</button>
+        <button class="tab" type="button" data-tab="roles">Roles</button>
+        <button class="tab" type="button" data-tab="config">Site Config</button>
+      </div>
+
+      <!-- UPLOADS -->
+      <section class="panel active" id="panel-uploads">
+        <div class="two-col">
+          <div class="card">
+            <h2>Upload Students (CSV)</h2>
+            <p>Creates/updates student accounts from a CSV file.</p>
+            <input type="file" accept=".csv" id="studentsFile" style="margin:1rem 0;" />
+            <button class="btn" type="button" onclick="uploadStudents()">Upload Students</button>
+            <div class="hint">
+              Required headers: <code>username,email,department,year,password</code>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Upload Faculty (CSV)</h2>
+            <p>Creates/updates faculty accounts from a CSV file.</p>
+            <input type="file" accept=".csv" id="facultyFile" style="margin:1rem 0;" />
+            <button class="btn" type="button" onclick="uploadFaculty()">Upload Faculty</button>
+            <div class="hint">
+              Required headers: <code>username,email,department,password</code>
+            </div>
+          </div>
         </div>
 
-        <div class="card">
-          <h2>Upload Faculty (CSV)</h2>
-          <input type="file" accept=".csv" id="facultyFile" style="margin:1rem 0;" />
-          <button class="btn" onclick="uploadFaculty()">Upload</button>
-        </div>
-      </section>
-
-      <section class="section grid grid-2">
-        <div class="card">
+        <div class="card" style="margin-top:1rem;">
           <h2>Promote Students</h2>
-          <p>Move all students to next year.</p>
-          <button class="btn" style="margin-top:1rem;" onclick="promoteAll()">Promote All</button>
+          <p>Moves all students to the next academic year.</p>
+          <button class="btn" type="button" onclick="promoteAll()">Promote All</button>
         </div>
+      </section>
 
+      <!-- ROLES -->
+      <section class="panel" id="panel-roles">
         <div class="card">
-          <h2>Site Config</h2>
-          <p>Logo, site name, faculty roles.</p>
-          <button class="btn" style="margin-top:1rem;">Configure</button>
+          <h2>Set User Role</h2>
+          <p>Update a user role/flags (admin-only).</p>
+
+          <form id="roleForm" class="row row-3" style="margin-top:1rem;">
+            <div class="form-group">
+              <label class="form-label">Username</label>
+              <input class="form-input" id="roleUsername" placeholder="e.g. student1" required />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Role</label>
+              <select class="form-select" id="roleValue" required>
+                <option value="student">student</option>
+                <option value="faculty">faculty</option>
+                <option value="admin">admin</option>
+                <option value="committee_chair">committee_chair</option>
+                <option value="committee_vice_chair">committee_vice_chair</option>
+                <option value="secretary">secretary</option>
+                <option value="vice_secretary">vice_secretary</option>
+                <option value="executive_head">executive_head</option>
+                <option value="representative_head">representative_head</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Flags</label>
+              <select class="form-select" id="roleFlags">
+                <option value="">None</option>
+                <option value="isExecutive">isExecutive</option>
+                <option value="isRepresentative">isRepresentative</option>
+                <option value="isDeveloper">isDeveloper</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="grid-column:1/-1;">
+              <button class="btn" type="submit">Save Role</button>
+              <span id="roleMsg" class="hint" style="margin-left:0.75rem;"></span>
+            </div>
+          </form>
+
+          <div class="hint">
+            This needs a backend endpoint: <code>PUT /api/admin/set-role</code> (added below).
+          </div>
+        </div>
+      </section>
+
+      <!-- CONFIG -->
+      <section class="panel" id="panel-config">
+        <div class="card">
+          <h2>Site Configuration</h2>
+          <p>Change logo + site name + Git repo URL.</p>
+
+          <form id="siteConfigForm" style="margin-top:1rem;">
+            <div class="form-group">
+              <label class="form-label">Site Name</label>
+              <input id="cfgSiteName" class="form-input" placeholder="Science & Tech Club" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Logo URL</label>
+              <input id="cfgLogoUrl" class="form-input" placeholder="https://..." />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Git Repo URL</label>
+              <input id="cfgGitRepoUrl" class="form-input" placeholder="https://github.com/..." />
+            </div>
+
+            <button class="btn" type="submit">Save Config</button>
+            <span id="cfgMsg" class="hint" style="margin-left:0.75rem;"></span>
+          </form>
+
+          <div class="hint">
+            If this doesn’t save, open DevTools → Network and check the request uses
+            <code>Authorization: Bearer &lt;token&gt;</code>. [web:323]
+          </div>
         </div>
       </section>
     </main>
@@ -59,6 +220,7 @@
       Science & Tech Club • Built by Developers team
     </footer>
 
+    <!-- Chatbot -->
     <div class="chatbot">
       <div class="chatbot-window" id="chatbotWindow">
         <div class="chatbot-header">
@@ -66,49 +228,68 @@
           <button class="chatbot-close" id="chatbotClose">×</button>
         </div>
         <div class="chatbot-messages" id="chatbotMessages">
-          <div class="chatbot-msg"><strong>Guide:</strong> Manage uploads and configurations.</div>
+          <div class="chatbot-msg"><strong>Guide:</strong> Use Uploads, Roles, and Config tabs.</div>
         </div>
         <form class="chatbot-input-wrap" id="chatbotForm">
           <input type="text" class="chatbot-input" id="chatbotInput" placeholder="Ask..." />
           <button type="submit" class="chatbot-send">Send</button>
         </form>
       </div>
-      <button class="btn" id="chatbotToggle">Help</button>
+      <button class="btn" id="chatbotToggle" type="button">Help</button>
     </div>
   </div>
 
   <script src="js/auth.js"></script>
   <script src="js/chatbot.js"></script>
   <script src="js/site.js"></script>
-  <script>
-    checkAuth();
 
+  <script>
+    // Tabs
+    document.querySelectorAll(".tab").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach((b) => b.classList.remove("active"));
+        document.querySelectorAll(".panel").forEach((p) => p.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById("panel-" + btn.dataset.tab).classList.add("active");
+      });
+    });
+
+    // Auth guard
+    const user = checkAuth();
+    document.getElementById("adminName").textContent = user.username || "admin";
+    if (user.role !== "admin") location.href = "login.html";
+
+    // Existing endpoints (keep as you have)
     async function uploadStudents() {
       const file = document.getElementById("studentsFile").files[0];
-      if (!file) return alert("Select a file");
+      if (!file) return alert("Select a CSV file");
       const fd = new FormData();
       fd.append("file", file);
+
       const res = await fetch(window.API_BASE + "/admin/upload-students", {
         method: "POST",
         headers: { Authorization: `Bearer ${localStorage.getItem("club_token")}` },
         body: fd
       });
-      const data = await res.json();
-      alert(data.message || "Uploaded!");
+
+      const data = await res.json().catch(() => ({}));
+      alert(data.message || (res.ok ? "Uploaded!" : "Upload failed"));
     }
 
     async function uploadFaculty() {
       const file = document.getElementById("facultyFile").files[0];
-      if (!file) return alert("Select a file");
+      if (!file) return alert("Select a CSV file");
       const fd = new FormData();
       fd.append("file", file);
+
       const res = await fetch(window.API_BASE + "/admin/upload-faculty", {
         method: "POST",
         headers: { Authorization: `Bearer ${localStorage.getItem("club_token")}` },
         body: fd
       });
-      const data = await res.json();
-      alert(data.message || "Uploaded!");
+
+      const data = await res.json().catch(() => ({}));
+      alert(data.message || (res.ok ? "Uploaded!" : "Upload failed"));
     }
 
     async function promoteAll() {
@@ -116,9 +297,62 @@
         method: "POST",
         headers: getAuthHeaders()
       });
-      const data = await res.json();
-      alert(data.message || "Students promoted!");
+      const data = await res.json().catch(() => ({}));
+      alert(data.message || (res.ok ? "Promoted!" : "Promote failed"));
     }
+
+    // Config: /api/config (must exist on backend)
+    async function loadConfigIntoForm() {
+      const res = await fetch(window.API_BASE + "/config");
+      const cfg = await res.json().catch(() => ({}));
+      document.getElementById("cfgSiteName").value = cfg?.site_name || "";
+      document.getElementById("cfgLogoUrl").value = cfg?.logo_url || "";
+      document.getElementById("cfgGitRepoUrl").value = cfg?.git_repo_url || "";
+    }
+
+    document.getElementById("siteConfigForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById("cfgMsg");
+      msg.textContent = "Saving...";
+
+      const body = {
+        siteName: document.getElementById("cfgSiteName").value.trim(),
+        logoUrl: document.getElementById("cfgLogoUrl").value.trim(),
+        gitRepoUrl: document.getElementById("cfgGitRepoUrl").value.trim()
+      };
+
+      const res = await fetch(window.API_BASE + "/config", {
+        method: "PUT",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(body)
+      });
+
+      msg.textContent = res.ok ? "Saved." : "Failed.";
+      if (res.ok) await loadConfigIntoForm();
+    });
+
+    // Roles: needs /api/admin/set-role
+    document.getElementById("roleForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById("roleMsg");
+      msg.textContent = "Saving...";
+
+      const username = document.getElementById("roleUsername").value.trim();
+      const role = document.getElementById("roleValue").value;
+      const flag = document.getElementById("roleFlags").value;
+
+      const body = { username, role, flag };
+
+      const res = await fetch(window.API_BASE + "/admin/set-role", {
+        method: "PUT",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(body)
+      });
+
+      msg.textContent = res.ok ? "Updated." : "Failed (check API route).";
+    });
+
+    loadConfigIntoForm();
   </script>
 </body>
 </html>
