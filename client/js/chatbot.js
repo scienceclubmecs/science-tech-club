@@ -26,24 +26,46 @@ document.addEventListener("DOMContentLoaded", function () {
     addMessage("You", q);
     input.value = "";
 
+    // Show typing indicator
+    const typingId = addMessage("Bot", "Typing...", true);
+
     try {
       const res = await fetch(window.API_BASE + "/chatbot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: q })
       });
+      
       const data = await res.json();
-      addMessage("Guide", data.answer || "Check dashboard sections.");
+      
+      // Remove typing indicator
+      const typingMsg = document.getElementById(typingId);
+      if (typingMsg) typingMsg.remove();
+      
+      addMessage("Bot", data.answer || "I'm here to help! Ask me about the club.");
     } catch (err) {
-      addMessage("Guide", "Network issue. Try again.");
+      const typingMsg = document.getElementById(typingId);
+      if (typingMsg) typingMsg.remove();
+      addMessage("Bot", "Network error. Try: 'Tell me about the club' or 'What teams exist?'");
     }
   });
 
-  function addMessage(from, text) {
+  function addMessage(from, text, isTyping = false) {
     const div = document.createElement("div");
+    const id = `msg-${Date.now()}`;
+    div.id = id;
     div.className = "chatbot-msg";
-    div.innerHTML = `<strong>${from}:</strong> ${text}`;
+    
+    const icon = from === "You" ? "👤" : "🤖";
+    const color = from === "You" ? "#fff" : "#7CFF7C";
+    
+    div.innerHTML = `<strong style="color:${color};">${icon} ${from}:</strong> ${text}`;
     messages.appendChild(div);
     messages.scrollTop = messages.scrollHeight;
+    
+    return id;
   }
+
+  // Welcome message
+  addMessage("Bot", "Hi! I'm your Club Assistant 🎓 Ask me about projects, teams, events, or the club!");
 });
