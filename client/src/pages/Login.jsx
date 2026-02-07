@@ -31,7 +31,6 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-black px-4">
       <div className="w-full max-w-md">
-        {/* Back to Home */}
         <Link
           to="/"
           className="inline-flex items-center gap-2 text-sm text-neutral-400 hover:text-white mb-8 transition"
@@ -40,9 +39,7 @@ export default function Login() {
           <span>Back to home</span>
         </Link>
 
-        {/* Login Card */}
         <div className="bg-neutral-950 border border-neutral-800 rounded-2xl p-8 shadow-2xl">
-          {/* Header */}
           <div className="text-center mb-8">
             <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 via-cyan-400 to-purple-500 mb-4">
               <LogIn className="w-6 h-6 text-white" />
@@ -55,16 +52,13 @@ export default function Login() {
             </p>
           </div>
 
-          {/* Error Message */}
           {error && (
             <div className="mb-6 p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm">
               {error}
             </div>
           )}
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Username */}
             <div>
               <label className="block text-sm font-medium text-neutral-300 mb-2">
                 Username
@@ -80,7 +74,6 @@ export default function Login() {
               />
             </div>
 
-            {/* Password */}
             <div>
               <label className="block text-sm font-medium text-neutral-300 mb-2">
                 Password
@@ -96,7 +89,6 @@ export default function Login() {
               />
             </div>
 
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={loading}
@@ -116,7 +108,6 @@ export default function Login() {
             </button>
           </form>
 
-          {/* Footer Info */}
           <div className="mt-6 pt-6 border-t border-neutral-800 text-center">
             <p className="text-xs text-neutral-500">
               Need help? Contact{' '}
@@ -124,21 +115,6 @@ export default function Login() {
                 scienceclubmecs@gmail.com
               </a>
             </p>
-          </div>
-        </div>
-
-        {/* Test Credentials (Remove in production) */}
-        <div className="mt-6 p-4 bg-neutral-900/50 border border-neutral-800 rounded-xl">
-          <p className="text-xs text-neutral-500 mb-2 font-medium">Test Credentials:</p>
-          <div className="text-xs text-neutral-400 space-y-1">
-            <div className="flex items-center justify-between">
-              <span>Username:</span>
-              <code className="text-white bg-black px-2 py-1 rounded">admin</code>
-            </div>
-            <div className="flex items-center justify-between">
-              <span>Password:</span>
-              <code className="text-white bg-black px-2 py-1 rounded">admin123</code>
-            </div>
           </div>
         </div>
       </div>
