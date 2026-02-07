@@ -15,6 +15,11 @@ import CommitteeDashboard from './pages/CommitteeDashboard'
 import ProjectsPage from './pages/ProjectsPage'
 import CreateProjectPage from './pages/CreateProjectPage'
 import QuizzesPage from './pages/QuizzesPage'
+import EventsPage from './pages/EventsPage'
+import CreateEventPage from './pages/CreateEventPage'
+import TeamViewPage from './pages/TeamViewPage'
+import TakeQuizPage from './pages/TakeQuizPage'
+import DeveloperPanel from './pages/DeveloperPanel'
 
 function App() {
   const { user } = useAuthStore()
@@ -44,6 +49,12 @@ function App() {
           <Route path="/projects" element={user ? <ProjectsPage /> : <Navigate to="/login" />} />
           <Route path="/projects/create" element={user ? <CreateProjectPage /> : <Navigate to="/login" />} />
           <Route path="/quizzes" element={user ? <QuizzesPage /> : <Navigate to="/login" />} />
+          <Route path="/events" element={user ? <EventsPage /> : <Navigate to="/login" />} />
+          <Route path="/events/create" element={user ? <CreateEventPage /> : <Navigate to="/login" />} />
+          <Route path="/committee/team" element={user?.is_committee ? <TeamViewPage /> : <Navigate to="/dashboard" />} />
+          <Route path="/quizzes/:id" element={user ? <TakeQuizPage /> : <Navigate to="/login" />} />
+          <Route path="/developer" element={user?.committee_post === 'Developer' ? <DeveloperPanel /> : <Navigate to="/dashboard" />} />
+
         </Routes>
         
         <FloatingChatbot />
