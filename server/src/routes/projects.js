@@ -3,10 +3,12 @@ const router = express.Router();
 const supabase = require('../config/supabase');
 const auth = require('../middleware/auth');
 
-// Get all projects
+// Update the get all projects route
 router.get('/', auth, async (req, res) => {
   try {
-    const { data, error } = await supabase
+    const { status } = req.query;
+    
+    let query = supabase
       .from('projects')
       .select(`
         *,
@@ -14,6 +16,12 @@ router.get('/', auth, async (req, res) => {
         guide:guide_id(id, username, email)
       `)
       .order('created_at', { ascending: false });
+    
+    if (status) {
+      query = query.eq('status', status);
+    }
+    
+    const { data, error } = await query;
     
     if (error) throw error;
     res.json(data || []);
