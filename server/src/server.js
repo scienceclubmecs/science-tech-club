@@ -1,17 +1,3 @@
-mport express from "express";
-import { createServer } from "http";
-import { Server } from "socket.io";
-import dotenv from "dotenv";
-import cors from "cors";
-import morgan from "morgan";
-
-// Routes
-import authRoutes from "./routes/auth.js";
-import adminRoutes from "./routes/admin.js";
-import configRoutes from "./routes/config.js";
-import chatbotRoutes from "./routes/chatbot.js";
-import coursesRoutes from "./routes/courses.js";
-import chatRoutes from "./routes/chat.js";
 require('dotenv').config();
 const express = require('express');
 const http = require('http');
@@ -21,7 +7,6 @@ const cors = require('cors');
 const app = express();
 const httpServer = http.createServer(app);
 
-// Socket.IO setup
 const io = new Server(httpServer, {
   cors: {
     origin: [
@@ -35,7 +20,6 @@ const io = new Server(httpServer, {
   }
 });
 
-// Middleware
 app.use(cors({
   origin: [
     'http://localhost:5173',
@@ -51,21 +35,10 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Logging middleware
-app.use((req, res, next) => {
-  console.log(`${req.method} ${req.path}`);
-  next();
-});
-
-// Log environment variables on startup
-console.log('\n=== Environment Check ===');
+console.log('Environment Check:');
 console.log('SUPABASE_URL:', process.env.SUPABASE_URL || 'MISSING');
-console.log('SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? `Set (${process.env.SUPABASE_SERVICE_ROLE_KEY.length} chars)` : 'MISSING');
 console.log('JWT_SECRET:', process.env.JWT_SECRET ? 'Set' : 'MISSING');
-console.log('PORT:', process.env.PORT || 5000);
-console.log('=========================\n');
 
-// Health check endpoint
 app.get('/', (req, res) => {
   res.json({
     ok: true,
@@ -75,89 +48,38 @@ app.get('/', (req, res) => {
   });
 });
 
-// Test database connection endpoint
 app.get('/api/test/db', async (req, res) => {
   try {
-    console.log('\n=== Database Test ===');
     const supabase = require('./config/supabase');
-    
-    console.log('Querying users table...');
     const { data, error } = await supabase
       .from('users')
       .select('username, email, role')
       .limit(10);
     
-    if (error) {
-      console.error('Database error:', error);
-      throw error;
-    }
-    
-    console.log('Query successful. Users found:', data?.length);
-    console.log('=====================\n');
+    if (error) throw error;
     
     res.json({
       success: true,
-      message: 'Database connected successfully',
+      message: 'Database connected',
       usersCount: data?.length || 0,
-      users: data || [],
-      timestamp: new Date().toISOString()
+      users: data || []
     });
   } catch (error) {
-    console.error('Database connection failed:', error.message);
-    console.log('=====================\n');
     res.status(500).json({
       success: false,
       message: 'Database connection failed',
-      error: error.message,
-      timestamp: new Date().toISOString()
+      error: error.message
     });
   }
 });
 
-// API Routes
-try {
-  app.use('/api/auth', require('./routes/auth'));
-  console.log('✓ Auth routes loaded');
-} catch (err) {
-  console.error('✗ Failed to load auth routes:', err.message);
-}
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/courses', require('./routes/courses'));
+app.use('/api/chat', require('./routes/chat'));
+app.use('/api/admin', require('./routes/admin'));
+app.use('/api/config', require('./routes/config'));
+app.use('/api/chatbot', require('./routes/chatbot'));
 
-try {
-  app.use('/api/courses', require('./routes/courses'));
-  console.log('✓ Courses routes loaded');
-} catch (err) {
-  console.error('✗ Failed to load courses routes:', err.message);
-}
-
-try {
-  app.use('/api/chat', require('./routes/chat'));
-  console.log('✓ Chat routes loaded');
-} catch (err) {
-  console.error('✗ Failed to load chat routes:', err.message);
-}
-
-try {
-  app.use('/api/admin', require('./routes/admin'));
-  console.log('✓ Admin routes loaded');
-} catch (err) {
-  console.error('✗ Failed to load admin routes:', err.message);
-}
-
-try {
-  app.use('/api/config', require('./routes/config'));
-  console.log('✓ Config routes loaded');
-} catch (err) {
-  console.error('✗ Failed to load config routes:', err.message);
-}
-
-try {
-  app.use('/api/chatbot', require('./routes/chatbot'));
-  console.log('✓ Chatbot routes loaded');
-} catch (err) {
-  console.error('✗ Failed to load chatbot routes:', err.message);
-}
-
-// Socket.IO connection handling
 io.on('connection', (socket) => {
   console.log('Socket connected:', socket.id);
 
@@ -171,7 +93,6 @@ io.on('connection', (socket) => {
       const { room, message, userId, username } = data;
       const supabase = require('./config/supabase');
       
-      // Save message to database
       const { data: newMessage, error } = await supabase
         .from('messages')
         .insert([{ room, message, user_id: userId, username }])
@@ -179,18 +100,15 @@ io.on('connection', (socket) => {
         .single();
       
       if (error) throw error;
-      
-      // Broadcast to room
       io.to(room).emit('new-message', newMessage);
     } catch (error) {
-      console.error('Message send error:', error);
+      console.error('Message error:', error);
       socket.emit('message-error', { message: 'Failed to send message' });
     }
   });
 
   socket.on('leave-room', (room) => {
     socket.leave(room);
-    console.log(`Socket ${socket.id} left room: ${room}`);
   });
 
   socket.on('disconnect', () => {
@@ -198,38 +116,19 @@ io.on('connection', (socket) => {
   });
 });
 
-// 404 handler
 app.use((req, res) => {
-  console.log('404 - Route not found:', req.path);
-  res.status(404).json({ 
-    message: 'Route not found',
-    path: req.path,
-    method: req.method
-  });
+  res.status(404).json({ message: 'Route not found' });
 });
 
-// Error handler
 app.use((err, req, res, next) => {
-  console.error('\n=== Server Error ===');
-  console.error('Path:', req.path);
-  console.error('Method:', req.method);
-  console.error('Error:', err.message);
-  console.error('Stack:', err.stack);
-  console.log('====================\n');
-  
-  res.status(500).json({ 
-    message: 'Internal server error', 
-    error: err.message 
-  });
+  console.error('Server error:', err);
+  res.status(500).json({ message: 'Internal server error', error: err.message });
 });
 
-// Start server
 const PORT = process.env.PORT || 5000;
 httpServer.listen(PORT, () => {
-  console.log('\n=================================');
   console.log(`Server running on port ${PORT}`);
   console.log('Socket.IO initialized');
-  console.log('=================================\n');
 });
 
 module.exports = { app, io };
