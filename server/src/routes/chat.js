@@ -1,89 +1,71 @@
-import express from "express";
-import { supabase } from "../config/supabase.js";
-import { auth } from "../middleware/auth.js";
-
+const express = require('express');
 const router = express.Router();
+const supabase = require('../config/supabase');
+const auth = require('../middleware/auth');
 
 // Get messages for a room
-router.get("/:room", auth, async (req, res) => {
+router.get('/:room', auth, async (req, res) => {
   try {
     const { data, error } = await supabase
-      .from("messages")
-      .select(`
-        *,
-        user:users!messages_user_id_fkey(id, username, role)
-      `)
-      .eq("room", req.params.room)
-      .order("created_at", { ascending: true })
+      .from('messages')
+      .select('*')
+      .eq('room', req.params.room)
+      .order('created_at', { ascending: true })
       .limit(100);
-
+    
     if (error) throw error;
-    res.json(data || []);
-  } catch (err) {
-    console.error("Get messages error:", err);
-    res.status(500).json({ message: "Failed to fetch messages" });
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch messages', error: error.message });
   }
 });
 
 // Send message
-router.post("/", auth, async (req, res) => {
-  const { room, message } = req.body;
-
-  if (!room || !message?.trim()) {
-    return res.status(400).json({ message: "room and message required" });
-  }
-
+router.post('/', auth, async (req, res) => {
   try {
+    const { room, message } = req.body;
+    
     const { data, error } = await supabase
-      .from("messages")
-      .insert({
+      .from('messages')
+      .insert([{
         room,
+        message,
         user_id: req.user.id,
-        message: message.trim()
-      })
-      .select(`
-        *,
-        user:users!messages_user_id_fkey(id, username, role)
-      `)
+        username: req.user.username
+      }])
+      .select()
       .single();
-
+    
     if (error) throw error;
+    
+    // Emit via Socket.IO
+    const { io } = require('../server');
+    io.to(room).emit('new-message', data);
+    
     res.json(data);
-  } catch (err) {
-    console.error("Send message error:", err);
-    res.status(500).json({ message: "Failed to send message" });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to send message', error: error.message });
   }
 });
 
-// Delete message (admin/sender only)
-router.delete("/:id", auth, async (req, res) => {
+// Delete message
+router.delete('/:id', auth, async (req, res) => {
   try {
-    const { data: message } = await supabase
-      .from("messages")
-      .select("user_id")
-      .eq("id", req.params.id)
-      .single();
-
-    if (!message) {
-      return res.status(404).json({ message: "Message not found" });
-    }
-
-    // Only message sender or admin can delete
-    if (message.user_id !== req.user.id && req.user.role !== "admin") {
-      return res.status(403).json({ message: "Permission denied" });
-    }
-
     const { error } = await supabase
-      .from("messages")
+      .from('messages')
       .delete()
-      .eq("id", req.params.id);
-
+      .eq('id', req.params.id)
+      .eq('user_id', req.user.id);
+    
     if (error) throw error;
-    res.json({ message: "Message deleted successfully" });
-  } catch (err) {
-    console.error("Delete message error:", err);
-    res.status(500).json({ message: "Delete failed" });
+    
+    const { io } = require('../server');
+    io.emit('message-deleted', req.params.id);
+    
+    res.json({ message: 'Message deleted' });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to delete message', error: error.message });
   }
 });
 
-export default router;
+module.exports = router;
