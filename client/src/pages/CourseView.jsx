@@ -40,7 +40,7 @@ export default function CourseView() {
         <span>Back to Courses</span>
       </button>
 
-      <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+      <div className="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
         <div className="aspect-video bg-black">
           <ReactPlayer
             url={course.video_url}
