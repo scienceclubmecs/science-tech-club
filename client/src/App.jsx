@@ -7,8 +7,8 @@ import Courses from './pages/Courses'
 import CourseView from './pages/CourseView'
 import Chat from './pages/Chat'
 import AdminPanel from './pages/AdminPanel'
-import Chatbot from './pages/Chatbot'   // NEW
 import Navbar from './components/Navbar'
+import FloatingChatbot from './components/FloatingChatbot'
 
 function App() {
   const { user } = useAuthStore()
@@ -24,9 +24,11 @@ function App() {
           <Route path="/courses" element={user ? <Courses /> : <Navigate to="/login" />} />
           <Route path="/courses/:id" element={user ? <CourseView /> : <Navigate to="/login" />} />
           <Route path="/chat" element={user ? <Chat /> : <Navigate to="/login" />} />
-          <Route path="/chatbot" element={<Chatbot />} />  {/* public chatbot */}
           <Route path="/admin" element={user?.role === 'admin' ? <AdminPanel /> : <Navigate to="/dashboard" />} />
         </Routes>
+        
+        {/* Floating Chatbot on all pages */}
+        <FloatingChatbot />
       </div>
     </Router>
   )
