@@ -34,6 +34,10 @@ app.use(cors({
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use('/api/projects', require('./routes/projects'));
+app.use('/api/events', require('./routes/events'));
+app.use('/api/queries', require('./routes/queries'));
+
 
 console.log('Environment Check:');
 console.log('SUPABASE_URL:', process.env.SUPABASE_URL || 'MISSING');
