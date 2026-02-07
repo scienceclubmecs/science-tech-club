@@ -1,61 +1,46 @@
 import { useEffect, useState, useRef } from 'react'
 import { useAuthStore } from '../store/authStore'
-import { chat } from '../services/api'
-import socketService from '../services/socket'
-import { Send, Trash2, Users, MessageSquare } from 'lucide-react'
+import api from '../services/api'
+import socket from '../services/socket'
+import { Send, Trash2 } from 'lucide-react'
 
 export default function Chat() {
-  const { user, token } = useAuthStore()
+  const { user } = useAuthStore()
+  const [room, setRoom] = useState('general')
   const [messages, setMessages] = useState([])
   const [newMessage, setNewMessage] = useState('')
-  const [currentRoom, setCurrentRoom] = useState('general')
-  const [loading, setLoading] = useState(true)
   const messagesEndRef = useRef(null)
 
-  const rooms = [
-    { id: 'general', name: 'General', icon: MessageSquare },
-    { id: 'committee', name: 'Committee', icon: Users, requireCommittee: true },
-    { id: 'developers', name: 'Developers', icon: MessageSquare, requireDev: true },
-  ]
-
-  const availableRooms = rooms.filter(room => {
-    if (room.requireCommittee && !user.is_committee && user.role !== 'admin') return false
-    if (room.requireDev && !user.is_developer && user.role !== 'admin') return false
-    return true
-  })
-
   useEffect(() => {
-    // Connect socket
-    socketService.connect(token)
-    loadMessages()
+    socket.connect()
+    socket.emit('join-room', room)
+    fetchMessages()
 
-    // Join room
-    socketService.joinRoom(currentRoom)
+    socket.on('new-message', (message) => {
+      setMessages((prev) => [...prev, message])
+    })
 
-    // Listen for new messages
-    socketService.onMessage((message) => {
-      setMessages(prev => [...prev, message])
+    socket.on('message-deleted', (messageId) => {
+      setMessages((prev) => prev.filter((m) => m.id !== messageId))
     })
 
     return () => {
-      socketService.leaveRoom(currentRoom)
-      socketService.offMessage()
+      socket.emit('leave-room', room)
+      socket.off('new-message')
+      socket.off('message-deleted')
     }
-  }, [currentRoom, token])
+  }, [room])
 
   useEffect(() => {
     scrollToBottom()
   }, [messages])
 
-  const loadMessages = async () => {
-    setLoading(true)
+  const fetchMessages = async () => {
     try {
-      const { data } = await chat.getMessages(currentRoom)
+      const { data } = await api.get(`/chat/${room}`)
       setMessages(data)
-    } catch (err) {
-      console.error('Load messages error:', err)
-    } finally {
-      setLoading(false)
+    } catch (error) {
+      console.error('Failed to fetch messages:', error)
     }
   }
 
@@ -63,167 +48,96 @@ export default function Chat() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
-  const handleSend = async (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault()
     if (!newMessage.trim()) return
 
-    const messageData = {
-      room: currentRoom,
-      message: newMessage.trim(),
-      username: user.username,
-      user: {
-        id: user.id,
-        username: user.username,
-        role: user.role
-      }
-    }
-
     try {
-      // Send via API and Socket
-      await chat.sendMessage({ room: currentRoom, message: newMessage.trim() })
-      socketService.sendMessage(messageData)
+      await api.post('/chat', { room, message: newMessage })
       setNewMessage('')
-    } catch (err) {
-      console.error('Send message error:', err)
+    } catch (error) {
       alert('Failed to send message')
     }
   }
 
-  const handleDelete = async (messageId) => {
-    if (!confirm('Delete this message?')) return
-
+  const handleDeleteMessage = async (messageId) => {
     try {
-      await chat.deleteMessage(messageId)
-      setMessages(prev => prev.filter(m => m.id !== messageId))
-    } catch (err) {
-      alert(err.response?.data?.message || 'Delete failed')
+      await api.delete(`/chat/${messageId}`)
+    } catch (error) {
+      alert('Failed to delete message')
     }
   }
 
-  const switchRoom = (roomId) => {
-    socketService.leaveRoom(currentRoom)
-    setCurrentRoom(roomId)
-  }
-
   return (
-    <div className="min-h-screen bg-darker">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-120px)]">
-          {/* Sidebar - Rooms */}
-          <div className="lg:w-64 flex-shrink-0">
-            <div className="card h-full">
-              <h2 className="text-xl font-bold mb-4 flex items-center space-x-2">
-                <MessageSquare className="text-primary" size={24} />
-                <span>Rooms</span>
-              </h2>
-              <div className="space-y-2">
-                {availableRooms.map((room) => {
-                  const Icon = room.icon
-                  return (
+    <div className="container mx-auto px-4 py-8 max-w-5xl">
+      <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden" style={{ height: 'calc(100vh - 200px)' }}>
+        <div className="bg-slate-900 p-4 border-b border-slate-700">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-white">Chat Room: {room}</h2>
+            <select
+              value={room}
+              onChange={(e) => setRoom(e.target.value)}
+              className="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+            >
+              <option value="general">General</option>
+              <option value="technical">Technical</option>
+              <option value="projects">Projects</option>
+              <option value="events">Events</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="h-full overflow-y-auto p-6 space-y-4" style={{ maxHeight: 'calc(100% - 140px)' }}>
+          {messages.map((msg) => (
+            <div
+              key={msg.id}
+              className={`flex ${msg.user_id === user.id ? 'justify-end' : 'justify-start'}`}
+            >
+              <div
+                className={`max-w-md px-4 py-3 rounded-lg ${
+                  msg.user_id === user.id
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-700 text-gray-200'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-semibold">{msg.username}</span>
+                  {(user.id === msg.user_id || user.role === 'admin') && (
                     <button
-                      key={room.id}
-                      onClick={() => switchRoom(room.id)}
-                      className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
-                        currentRoom === room.id
-                          ? 'bg-primary/10 text-primary border border-primary/20'
-                          : 'text-gray-400 hover:text-gray-100 hover:bg-dark-card'
-                      }`}
+                      onClick={() => handleDeleteMessage(msg.id)}
+                      className="ml-2 p-1 hover:bg-red-500 rounded"
                     >
-                      <Icon size={20} />
-                      <span className="font-medium">{room.name}</span>
+                      <Trash2 className="w-3 h-3" />
                     </button>
-                  )
-                })}
+                  )}
+                </div>
+                <p className="text-sm break-words">{msg.message}</p>
+                <span className="text-xs opacity-70 mt-1 block">
+                  {new Date(msg.created_at).toLocaleTimeString()}
+                </span>
               </div>
             </div>
-          </div>
-
-          {/* Chat Area */}
-          <div className="flex-1 card flex flex-col">
-            {/* Header */}
-            <div className="pb-4 border-b border-border mb-4">
-              <h2 className="text-2xl font-bold gradient-text capitalize">
-                #{currentRoom}
-              </h2>
-              <p className="text-gray-400 text-sm">{messages.length} messages</p>
-            </div>
-
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto space-y-4 mb-4">
-              {loading ? (
-                <div className="text-center text-gray-400 py-8">Loading messages...</div>
-              ) : messages.length === 0 ? (
-                <div className="text-center text-gray-400 py-8">
-                  <MessageSquare className="mx-auto mb-2 text-gray-600" size={48} />
-                  <p>No messages yet. Start the conversation!</p>
-                </div>
-              ) : (
-                messages.map((msg) => (
-                  <MessageBubble
-                    key={msg.id}
-                    message={msg}
-                    isOwn={msg.user?.id === user.id || msg.user_id === user.id}
-                    onDelete={handleDelete}
-                    canDelete={user.role === 'admin' || msg.user?.id === user.id || msg.user_id === user.id}
-                  />
-                ))
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-
-            {/* Input */}
-            <form onSubmit={handleSend} className="flex space-x-3">
-              <input
-                type="text"
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                placeholder={`Message #${currentRoom}...`}
-                className="input flex-1"
-                maxLength={500}
-              />
-              <button type="submit" disabled={!newMessage.trim()} className="btn-primary">
-                <Send size={20} />
-              </button>
-            </form>
-          </div>
+          ))}
+          <div ref={messagesEndRef} />
         </div>
-      </div>
-    </div>
-  )
-}
 
-function MessageBubble({ message, isOwn, onDelete, canDelete }) {
-  const username = message.user?.username || message.username || 'Unknown'
-  const role = message.user?.role || 'student'
-  const timestamp = new Date(message.created_at || message.timestamp).toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-
-  return (
-    <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
-      <div className={`max-w-md ${isOwn ? 'order-2' : 'order-1'}`}>
-        <div className="flex items-center space-x-2 mb-1">
-          <span className="text-sm font-semibold text-gray-300">{username}</span>
-          <span className="text-xs text-gray-500 capitalize">{role}</span>
-          <span className="text-xs text-gray-600">{timestamp}</span>
+        <div className="p-4 border-t border-slate-700">
+          <form onSubmit={handleSendMessage} className="flex items-center space-x-2">
+            <input
+              type="text"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              placeholder="Type a message..."
+              className="flex-1 px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <button
+              type="submit"
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg transition"
+            >
+              <Send className="w-5 h-5" />
+            </button>
+          </form>
         </div>
-        <div className={`rounded-lg px-4 py-2 ${
-          isOwn 
-            ? 'bg-primary text-black' 
-            : 'bg-dark-card text-gray-100'
-        }`}>
-          <p className="break-words">{message.message}</p>
-        </div>
-        {canDelete && (
-          <button
-            onClick={() => onDelete(message.id)}
-            className="text-red-500 text-xs hover:underline mt-1"
-          >
-            <Trash2 size={12} className="inline mr-1" />
-            Delete
-          </button>
-        )}
       </div>
     </div>
   )
