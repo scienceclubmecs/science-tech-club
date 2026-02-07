@@ -92,27 +92,27 @@ export default function AdminPanel() {
       <h1 className="text-3xl font-bold text-white mb-8">Admin Panel</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-slate-800 p-6 rounded-xl border border-slate-700">
+        <div className="bg-gray-900 p-6 rounded-xl border border-gray-800">
           <Users className="w-8 h-8 text-blue-400 mb-4" />
           <h3 className="text-2xl font-bold text-white">{stats?.totalUsers || 0}</h3>
           <p className="text-gray-400">Total Users</p>
         </div>
 
-        <div className="bg-slate-800 p-6 rounded-xl border border-slate-700">
+        <div className="bg-gray-900 p-6 rounded-xl border border-gray-800">
           <BookOpen className="w-8 h-8 text-green-400 mb-4" />
           <h3 className="text-2xl font-bold text-white">{stats?.totalCourses || 0}</h3>
           <p className="text-gray-400">Total Courses</p>
         </div>
 
-        <div className="bg-slate-800 p-6 rounded-xl border border-slate-700">
+        <div className="bg-gray-900 p-6 rounded-xl border border-gray-800">
           <Users className="w-8 h-8 text-purple-400 mb-4" />
           <h3 className="text-2xl font-bold text-white">{stats?.students || 0}</h3>
           <p className="text-gray-400">Students</p>
         </div>
       </div>
 
-      <div className="bg-slate-800 rounded-xl border border-slate-700">
-        <div className="flex border-b border-slate-700">
+      <div className="bg-gray-900 rounded-xl border border-gray-800">
+        <div className="flex border-b border-gray-800">
           <button
             onClick={() => setActiveTab('overview')}
             className={`px-6 py-4 font-medium ${
@@ -166,7 +166,7 @@ export default function AdminPanel() {
                       type="text"
                       value={newStudent.username}
                       onChange={(e) => setNewStudent({ ...newStudent, username: e.target.value })}
-                      className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                      className="w-full px-4 py-2 bg-gray-800 border border-slate-600 rounded-lg text-white"
                       required
                     />
                   </div>
@@ -176,7 +176,7 @@ export default function AdminPanel() {
                       type="email"
                       value={newStudent.email}
                       onChange={(e) => setNewStudent({ ...newStudent, email: e.target.value })}
-                      className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                      className="w-full px-4 py-2 bg-gray-800 border border-slate-600 rounded-lg text-white"
                       required
                     />
                   </div>
@@ -188,7 +188,7 @@ export default function AdminPanel() {
                       type="text"
                       value={newStudent.department}
                       onChange={(e) => setNewStudent({ ...newStudent, department: e.target.value })}
-                      className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                      className="w-full px-4 py-2 bg-gray-800 border border-slate-600 rounded-lg text-white"
                     />
                   </div>
                   <div>
@@ -196,7 +196,7 @@ export default function AdminPanel() {
                     <select
                       value={newStudent.year}
                       onChange={(e) => setNewStudent({ ...newStudent, year: parseInt(e.target.value) })}
-                      className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                      className="w-full px-4 py-2 bg-gray-800 border border-slate-600 rounded-lg text-white"
                     >
                       <option value={1}>1</option>
                       <option value={2}>2</option>
@@ -211,7 +211,7 @@ export default function AdminPanel() {
                     type="password"
                     value={newStudent.password}
                     onChange={(e) => setNewStudent({ ...newStudent, password: e.target.value })}
-                    className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                    className="w-full px-4 py-2 bg-gray-800 border border-slate-600 rounded-lg text-white"
                     required
                   />
                 </div>
@@ -237,7 +237,7 @@ export default function AdminPanel() {
                       type="text"
                       value={newFaculty.username}
                       onChange={(e) => setNewFaculty({ ...newFaculty, username: e.target.value })}
-                      className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                      className="w-full px-4 py-2 bg-gray-800 border border-slate-600 rounded-lg text-white"
                       required
                     />
                   </div>
@@ -247,7 +247,7 @@ export default function AdminPanel() {
                       type="email"
                       value={newFaculty.email}
                       onChange={(e) => setNewFaculty({ ...newFaculty, email: e.target.value })}
-                      className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                      className="w-full px-4 py-2 bg-gray-800 border border-slate-600 rounded-lg text-white"
                       required
                     />
                   </div>
@@ -258,7 +258,7 @@ export default function AdminPanel() {
                     type="text"
                     value={newFaculty.department}
                     onChange={(e) => setNewFaculty({ ...newFaculty, department: e.target.value })}
-                    className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                    className="w-full px-4 py-2 bg-gray-800 border border-slate-600 rounded-lg text-white"
                   />
                 </div>
                 <div>
@@ -267,7 +267,7 @@ export default function AdminPanel() {
                     type="password"
                     value={newFaculty.password}
                     onChange={(e) => setNewFaculty({ ...newFaculty, password: e.target.value })}
-                    className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                    className="w-full px-4 py-2 bg-gray-800 border border-slate-600 rounded-lg text-white"
                     required
                   />
                 </div>
@@ -286,7 +286,7 @@ export default function AdminPanel() {
             <div>
               <h2 className="text-xl font-bold text-white mb-6">Upload CSV Files</h2>
               <div className="space-y-6 max-w-2xl">
-                <div className="bg-slate-700 p-6 rounded-lg">
+                <div className="bg-gray-800 p-6 rounded-lg">
                   <h3 className="text-lg font-semibold text-white mb-4">Upload Students CSV</h3>
                   <p className="text-gray-400 text-sm mb-4">
                     CSV format: username,email,department,year,password,interests
@@ -298,7 +298,7 @@ export default function AdminPanel() {
                   </label>
                 </div>
 
-                <div className="bg-slate-700 p-6 rounded-lg">
+                <div className="bg-gray-800 p-6 rounded-lg">
                   <h3 className="text-lg font-semibold text-white mb-4">Upload Faculty CSV</h3>
                   <p className="text-gray-400 text-sm mb-4">
                     CSV format: username,email,department,password
