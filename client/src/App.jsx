@@ -12,6 +12,9 @@ import Navbar from './components/Navbar'
 import FloatingChatbot from './components/FloatingChatbot'
 import ProfilePage from './pages/ProfilePage'
 import CommitteeDashboard from './pages/CommitteeDashboard'
+import ProjectsPage from './pages/ProjectsPage'
+import CreateProjectPage from './pages/CreateProjectPage'
+import QuizzesPage from './pages/QuizzesPage'
 
 function App() {
   const { user } = useAuthStore()
@@ -38,6 +41,9 @@ function App() {
           <Route path="/admin" element={user?.role === 'admin' ? <AdminPanel /> : <Navigate to="/dashboard" />} />
           <Route path="/profile" element={user ? <ProfilePage /> : <Navigate to="/login" />} />
           <Route path="/committee" element={user?.is_committee ? <CommitteeDashboard /> : <Navigate to="/dashboard" />} />
+          <Route path="/projects" element={user ? <ProjectsPage /> : <Navigate to="/login" />} />
+          <Route path="/projects/create" element={user ? <CreateProjectPage /> : <Navigate to="/login" />} />
+          <Route path="/quizzes" element={user ? <QuizzesPage /> : <Navigate to="/login" />} />
         </Routes>
         
         <FloatingChatbot />
