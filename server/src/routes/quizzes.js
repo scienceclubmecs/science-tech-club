@@ -3,22 +3,22 @@ const router = express.Router();
 const supabase = require('../config/supabase');
 const auth = require('../middleware/auth');
 
-// Get all quizzes
+// Get all published quizzes
 router.get('/', auth, async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('quizzes')
-      .select('*')
+      .select('id, title, description, department, year, time_limit, status, created_at')
       .order('created_at', { ascending: false });
     
     if (error) throw error;
     res.json(data || []);
   } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch quizzes', error: error.message });
+    res.status(500).json({ message: 'Failed to fetch quizzes' });
   }
 });
 
-// Get single quiz
+// Get single quiz with questions
 router.get('/:id', auth, async (req, res) => {
   try {
     const { data, error } = await supabase
@@ -30,27 +30,45 @@ router.get('/:id', auth, async (req, res) => {
     if (error) throw error;
     res.json(data);
   } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch quiz', error: error.message });
+    res.status(500).json({ message: 'Failed to fetch quiz' });
   }
 });
 
-// Create quiz (admin/committee only)
+// Get my submissions
+router.get('/my-submissions', auth, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('quiz_submissions')
+      .select('*')
+      .eq('user_id', req.user.id);
+    
+    if (error) throw error;
+    res.json(data || []);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch submissions' });
+  }
+});
+
+// Create quiz (faculty only)
 router.post('/', auth, async (req, res) => {
   try {
-    if (req.user.role !== 'admin' && !req.user.is_committee) {
-      return res.status(403).json({ message: 'Access denied' });
+    if (req.user.role !== 'faculty' && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Only faculty can create quizzes' });
     }
 
-    const { title, description, questions, time_limit } = req.body;
+    const { title, description, department, year, questions, time_limit } = req.body;
     
     const { data, error } = await supabase
       .from('quizzes')
       .insert([{
         title,
         description,
+        department,
+        year,
         questions,
         time_limit,
-        created_by: req.user.id
+        created_by: req.user.id,
+        status: 'draft'
       }])
       .select()
       .single();
@@ -58,7 +76,7 @@ router.post('/', auth, async (req, res) => {
     if (error) throw error;
     res.json(data);
   } catch (error) {
-    res.status(500).json({ message: 'Failed to create quiz', error: error.message });
+    res.status(500).json({ message: 'Failed to create quiz' });
   }
 });
 
@@ -67,12 +85,27 @@ router.post('/:id/submit', auth, async (req, res) => {
   try {
     const { answers } = req.body;
     
+    // Get quiz with correct answers
+    const { data: quiz } = await supabase
+      .from('quizzes')
+      .select('questions')
+      .eq('id', req.params.id)
+      .single();
+    
+    // Calculate score
+    let correct = 0;
+    quiz.questions.forEach((q, idx) => {
+      if (answers[idx] === q.correctAnswer) correct++;
+    });
+    const score = Math.round((correct / quiz.questions.length) * 100);
+    
     const { data, error } = await supabase
       .from('quiz_submissions')
       .insert([{
         quiz_id: req.params.id,
         user_id: req.user.id,
-        answers
+        answers,
+        score
       }])
       .select()
       .single();
@@ -80,26 +113,31 @@ router.post('/:id/submit', auth, async (req, res) => {
     if (error) throw error;
     res.json(data);
   } catch (error) {
-    res.status(500).json({ message: 'Failed to submit quiz', error: error.message });
+    res.status(500).json({ message: 'Failed to submit quiz' });
   }
 });
 
-// Delete quiz
-router.delete('/:id', auth, async (req, res) => {
+// Approve quiz (admin only)
+router.put('/:id/approve', auth, async (req, res) => {
   try {
     if (req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Access denied' });
     }
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('quizzes')
-      .delete()
-      .eq('id', req.params.id);
+      .update({
+        status: 'published',
+        approved_by: req.user.id
+      })
+      .eq('id', req.params.id)
+      .select()
+      .single();
     
     if (error) throw error;
-    res.json({ message: 'Quiz deleted' });
+    res.json(data);
   } catch (error) {
-    res.status(500).json({ message: 'Failed to delete quiz', error: error.message });
+    res.status(500).json({ message: 'Failed to approve quiz' });
   }
 });
 
