@@ -1,76 +1,32 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from './store/authStore'
-import Navbar from './components/Navbar'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Courses from './pages/Courses'
 import CourseView from './pages/CourseView'
 import Chat from './pages/Chat'
 import AdminPanel from './pages/AdminPanel'
+import Navbar from './components/Navbar'
 
-function PrivateRoute({ children, adminOnly = false, committeeOnly = false }) {
-  const { user } = useAuthStore()
-  
-  if (!user) return <Navigate to="/login" replace />
-  
-  if (adminOnly && user.role !== 'admin') {
-    return <Navigate to="/" replace />
-  }
-  
-  if (committeeOnly && !['admin', 'committee_chair', 'committee_vice_chair', 'secretary', 'vice_secretary'].includes(user.role) && !user.is_committee) {
-    return <Navigate to="/" replace />
-  }
-  
-  return children
-}
-
-export default function App() {
+function App() {
   const { user } = useAuthStore()
 
   return (
-    <BrowserRouter>
-      {user && <Navbar />}
-      <Routes>
-        {/* Public Routes */}
-        <Route 
-          path="/login" 
-          element={user ? <Navigate to="/" replace /> : <Login />} 
-        />
-        
-        {/* Protected Routes */}
-        <Route path="/" element={
-          <PrivateRoute>
-            <Dashboard />
-          </PrivateRoute>
-        } />
-        
-        <Route path="/courses" element={
-          <PrivateRoute>
-            <Courses />
-          </PrivateRoute>
-        } />
-        
-        <Route path="/courses/:id" element={
-          <PrivateRoute>
-            <CourseView />
-          </PrivateRoute>
-        } />
-        
-        <Route path="/chat" element={
-          <PrivateRoute>
-            <Chat />
-          </PrivateRoute>
-        } />
-        
-        <Route path="/admin" element={
-          <PrivateRoute adminOnly>
-            <AdminPanel />
-          </PrivateRoute>
-        } />
-        
-        {/* 404 */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+    <Router>
+      <div className="min-h-screen bg-slate-900">
+        {user && <Navbar />}
+        <Routes>
+          <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" />} />
+          <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" />} />
+          <Route path="/courses" element={user ? <Courses /> : <Navigate to="/login" />} />
+          <Route path="/courses/:id" element={user ? <CourseView /> : <Navigate to="/login" />} />
+          <Route path="/chat" element={user ? <Chat /> : <Navigate to="/login" />} />
+          <Route path="/admin" element={user?.role === 'admin' ? <AdminPanel /> : <Navigate to="/dashboard" />} />
+          <Route path="/" element={<Navigate to={user ? "/dashboard" : "/login"} />} />
+        </Routes>
+      </div>
+    </Router>
   )
 }
+
+export default App
