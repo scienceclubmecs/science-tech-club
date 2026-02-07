@@ -42,7 +42,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {user.role === 'admin' && (
           <>
-            <div className="bg-slate-800 p-6 rounded-xl border border-slate-700">
+            <div className="bg-gray-900 p-6 rounded-xl border border-gray-800">
               <div className="flex items-center justify-between mb-4">
                 <Users className="w-8 h-8 text-blue-400" />
               </div>
@@ -50,7 +50,7 @@ export default function Dashboard() {
               <p className="text-gray-400">Total Users</p>
             </div>
 
-            <div className="bg-slate-800 p-6 rounded-xl border border-slate-700">
+            <div className="bg-gray-900 p-6 rounded-xl border border-gray-800">
               <div className="flex items-center justify-between mb-4">
                 <BookOpen className="w-8 h-8 text-green-400" />
               </div>
@@ -60,7 +60,7 @@ export default function Dashboard() {
           </>
         )}
 
-        <div className="bg-slate-800 p-6 rounded-xl border border-slate-700">
+        <div className="bg-gray-900 p-6 rounded-xl border border-gray-800">
           <div className="flex items-center justify-between mb-4">
             <BookOpen className="w-8 h-8 text-purple-400" />
           </div>
@@ -68,7 +68,7 @@ export default function Dashboard() {
           <p className="text-gray-400">Available Courses</p>
         </div>
 
-        <div className="bg-slate-800 p-6 rounded-xl border border-slate-700">
+        <div className="bg-gray-900 p-6 rounded-xl border border-gray-800">
           <div className="flex items-center justify-between mb-4">
             <MessageCircle className="w-8 h-8 text-yellow-400" />
           </div>
