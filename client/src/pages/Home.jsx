@@ -1,156 +1,124 @@
 import { Link } from 'react-router-dom'
-import { BookOpen, Users, MessageCircle, Sparkles, ArrowRight, Github } from 'lucide-react'
+import { ArrowRight, Sparkles, MessageCircle, BookOpen, Users } from 'lucide-react'
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-black">
-      {/* Navigation */}
-      <nav className="fixed top-0 w-full bg-black/80 backdrop-blur-lg border-b border-gray-800 z-50">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-2">
-              <Sparkles className="w-8 h-8 text-blue-500" />
-              <span className="text-xl font-bold text-white">Science & Tech Club</span>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link
-                to="/login"
-                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition"
-              >
-                Login
-              </Link>
-            </div>
+    <div className="min-h-screen bg-black text-gray-200">
+      {/* Top nav */}
+      <header className="fixed top-0 inset-x-0 z-30 border-b border-neutral-800 bg-black/80 backdrop-blur">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="h-7 w-7 rounded-full bg-gradient-to-br from-blue-500 via-cyan-400 to-purple-500" />
+            <span className="font-semibold text-white">Science & Tech Club</span>
           </div>
-        </div>
-      </nav>
-
-      {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4">
-        <div className="container mx-auto text-center">
-          <div className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-500/10 border border-blue-500/20 rounded-full text-blue-400 text-sm mb-8">
-            <Sparkles className="w-4 h-4" />
-            <span>Welcome to the Future of Learning</span>
-          </div>
-          
-          <h1 className="text-5xl md:text-7xl font-bold text-white mb-6">
-            Science & Tech Club
-          </h1>
-          
-          <p className="text-xl text-gray-400 mb-12 max-w-2xl mx-auto">
-            Join our community of innovators, learners, and tech enthusiasts. 
-            Access courses, connect with peers, and build the future together.
-          </p>
-
-          <div className="flex items-center justify-center space-x-4">
+          <div className="flex items-center gap-3">
             <Link
               to="/login"
-              className="flex items-center space-x-2 px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-lg transition transform hover:scale-105"
+              className="px-4 py-2 text-sm rounded-full border border-neutral-700 hover:border-neutral-500 hover:bg-neutral-900 transition"
             >
-              <span>Get Started</span>
-              <ArrowRight className="w-5 h-5" />
+              Login
             </Link>
-            
-            <a
-              href="https://github.com/scienceclubmecs/science-tech-club"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center space-x-2 px-8 py-4 bg-gray-900 hover:bg-gray-800 text-white border border-gray-800 rounded-lg font-medium text-lg transition"
-            >
-              <Github className="w-5 h-5" />
-              <span>View on GitHub</span>
-            </a>
           </div>
         </div>
-      </section>
+      </header>
 
-      {/* Features Section */}
-      <section className="py-20 px-4 bg-gradient-to-b from-black to-gray-900">
-        <div className="container mx-auto">
-          <h2 className="text-4xl font-bold text-white text-center mb-16">
-            Everything You Need to Learn & Connect
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Feature 1 */}
-            <div className="bg-gray-900 border border-gray-800 p-8 rounded-2xl hover:border-blue-500 transition group">
-              <div className="w-14 h-14 bg-blue-500/10 rounded-xl flex items-center justify-center mb-6 group-hover:bg-blue-500/20 transition">
-                <BookOpen className="w-7 h-7 text-blue-500" />
-              </div>
-              <h3 className="text-2xl font-bold text-white mb-3">Video Courses</h3>
-              <p className="text-gray-400">
-                Access a library of curated video courses on programming, AI, robotics, and more.
-              </p>
+      {/* Hero */}
+      <main className="pt-28 pb-20">
+        <section className="max-w-6xl mx-auto px-4 flex flex-col lg:flex-row items-center gap-10">
+          <div className="flex-1">
+            <div className="inline-flex items-center gap-2 rounded-full border border-neutral-800 bg-neutral-950 px-3 py-1 mb-6 text-xs text-neutral-300">
+              <Sparkles className="w-3 h-3 text-blue-400" />
+              <span>Campus Science & Tech Community</span>
             </div>
 
-            {/* Feature 2 */}
-            <div className="bg-gray-900 border border-gray-800 p-8 rounded-2xl hover:border-purple-500 transition group">
-              <div className="w-14 h-14 bg-purple-500/10 rounded-xl flex items-center justify-center mb-6 group-hover:bg-purple-500/20 transition">
-                <MessageCircle className="w-7 h-7 text-purple-500" />
-              </div>
-              <h3 className="text-2xl font-bold text-white mb-3">Real-time Chat</h3>
-              <p className="text-gray-400">
-                Connect with committee members and peers in dedicated chat rooms.
-              </p>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight text-white mb-4">
+              Where ideas meet{' '}
+              <span className="bg-gradient-to-r from-blue-400 via-cyan-300 to-purple-400 bg-clip-text text-transparent">
+                engineering.
+              </span>
+            </h1>
+
+            <p className="text-neutral-400 text-base md:text-lg max-w-xl mb-8">
+              Learn, build and collaborate with students who love hardware, software and research.
+              Watch curated courses, join live discussions and ask doubts to our AI assistant.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-3 mb-10">
+              <Link
+                to="/login"
+                className="inline-flex items-center gap-2 rounded-full bg-white text-black px-5 py-2.5 text-sm font-medium hover:bg-neutral-200 transition"
+              >
+                Get started
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+
+              <Link
+                to="/chatbot"
+                className="inline-flex items-center gap-2 rounded-full border border-neutral-700 px-4 py-2 text-sm text-neutral-200 hover:border-neutral-500 hover:bg-neutral-900 transition"
+              >
+                <MessageCircle className="w-4 h-4 text-cyan-400" />
+                Ask the club chatbot
+              </Link>
             </div>
 
-            {/* Feature 3 */}
-            <div className="bg-gray-900 border border-gray-800 p-8 rounded-2xl hover:border-green-500 transition group">
-              <div className="w-14 h-14 bg-green-500/10 rounded-xl flex items-center justify-center mb-6 group-hover:bg-green-500/20 transition">
-                <Users className="w-7 h-7 text-green-500" />
+            <div className="flex flex-wrap gap-6 text-xs text-neutral-500">
+              <div>
+                <div className="text-white font-semibold text-lg">Courses</div>
+                <div>Video sessions, roadmaps, projects.</div>
               </div>
-              <h3 className="text-2xl font-bold text-white mb-3">Community</h3>
-              <p className="text-gray-400">
-                Join a vibrant community of students, faculty, and tech enthusiasts.
-              </p>
+              <div>
+                <div className="text-white font-semibold text-lg">Community</div>
+                <div>Events, talks, project collabs.</div>
+              </div>
+              <div>
+                <div className="text-white font-semibold text-lg">Chatbot</div>
+                <div>Quick answers to tech & club queries.</div>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* Stats Section */}
-      <section className="py-20 px-4 bg-gray-900">
-        <div className="container mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-            <div>
-              <div className="text-5xl font-bold text-blue-500 mb-2">500+</div>
-              <div className="text-gray-400">Active Members</div>
-            </div>
-            <div>
-              <div className="text-5xl font-bold text-purple-500 mb-2">50+</div>
-              <div className="text-gray-400">Video Courses</div>
-            </div>
-            <div>
-              <div className="text-5xl font-bold text-green-500 mb-2">24/7</div>
-              <div className="text-gray-400">Community Support</div>
+          {/* Right side cards */}
+          <div className="flex-1 w-full">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="rounded-2xl border border-neutral-800 bg-neutral-950 p-5">
+                <BookOpen className="w-6 h-6 text-blue-400 mb-3" />
+                <div className="text-sm font-semibold text-white mb-1">Learning tracks</div>
+                <div className="text-xs text-neutral-400">
+                  Hand‑picked videos and notes for AI, Web, Embedded, RF and more.
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-neutral-800 bg-neutral-950 p-5">
+                <MessageCircle className="w-6 h-6 text-cyan-400 mb-3" />
+                <div className="text-sm font-semibold text-white mb-1">Realtime chat</div>
+                <div className="text-xs text-neutral-400">
+                  Discuss ideas with committee and members in focused channels.
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-neutral-800 bg-neutral-950 p-5">
+                <Users className="w-6 h-6 text-purple-400 mb-3" />
+                <div className="text-sm font-semibold text-white mb-1">Events & projects</div>
+                <div className="text-xs text-neutral-400">
+                  Hackathons, workshops and long‑term club projects to join.
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-neutral-800 bg-gradient-to-br from-blue-600/20 via-cyan-500/10 to-purple-600/20 p-5">
+                <Sparkles className="w-6 h-6 text-blue-300 mb-3" />
+                <div className="text-sm font-semibold text-white mb-1">AI assistant</div>
+                <div className="text-xs text-neutral-300">
+                  Ask doubts about courses, events or tech. Available 24/7 on the chatbot page.
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </main>
 
-      {/* CTA Section */}
-      <section className="py-20 px-4 bg-gradient-to-b from-gray-900 to-black">
-        <div className="container mx-auto text-center">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            Ready to Start Learning?
-          </h2>
-          <p className="text-xl text-gray-400 mb-12 max-w-2xl mx-auto">
-            Join hundreds of students and faculty already learning and growing together.
-          </p>
-          <Link
-            to="/login"
-            className="inline-flex items-center space-x-2 px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-lg transition transform hover:scale-105"
-          >
-            <span>Sign In Now</span>
-            <ArrowRight className="w-5 h-5" />
-          </Link>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="py-8 px-4 border-t border-gray-800 bg-black">
-        <div className="container mx-auto text-center text-gray-500">
-          <p>&copy; 2026 Science & Tech Club. Built with ❤️ by the community.</p>
-        </div>
+      {/* Simple footer */}
+      <footer className="border-t border-neutral-900 py-6 text-xs text-neutral-500 text-center">
+        Science & Tech Club · {new Date().getFullYear()}
       </footer>
     </div>
   )
