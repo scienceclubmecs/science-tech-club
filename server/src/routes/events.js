@@ -1,50 +1,108 @@
-import express from "express";
-import { supabase } from "../config/supabase.js";
-import { auth } from "../middleware/auth.js";
-
+const express = require('express');
 const router = express.Router();
+const supabase = require('../config/supabase');
+const auth = require('../middleware/auth');
 
-router.post("/", auth, async (req, res) => {
-  if (!["executive_head", "admin"].includes(req.user.role)) {
-    return res.status(403).json({ message: "Forbidden" });
+// Get all events
+router.get('/', auth, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('events')
+      .select('*')
+      .order('event_date', { ascending: true });
+    
+    if (error) throw error;
+    res.json(data || []);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch events', error: error.message });
   }
-
-  const { title, description, date } = req.body;
-  const { data, error } = await supabase
-    .from("events")
-    .insert({
-      title,
-      description,
-      date,
-      created_by: req.user.id
-    })
-    .select()
-    .single();
-  if (error) return res.status(400).json({ error });
-  res.json(data);
 });
 
-router.post("/:id/approve", auth, async (req, res) => {
-  if (req.user.role !== "committee_chair") {
-    return res.status(403).json({ message: "Only chair" });
+// Get single event
+router.get('/:id', auth, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('events')
+      .select('*')
+      .eq('id', req.params.id)
+      .single();
+    
+    if (error) throw error;
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch event', error: error.message });
   }
-  const { data, error } = await supabase
-    .from("events")
-    .update({ approved_by_chair: true })
-    .eq("id", req.params.id)
-    .select()
-    .single();
-  if (error) return res.status(404).json({ error });
-  res.json(data);
 });
 
-router.get("/", async (req, res) => {
-  const { data, error } = await supabase
-    .from("events")
-    .select("*")
-    .eq("approved_by_chair", true);
-  if (error) return res.status(500).json({ error });
-  res.json(data || []);
+// Create event (admin/committee only)
+router.post('/', auth, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin' && !req.user.is_committee) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    const { title, description, event_date, location, image_url } = req.body;
+    
+    const { data, error } = await supabase
+      .from('events')
+      .insert([{
+        title,
+        description,
+        event_date,
+        location,
+        image_url,
+        created_by: req.user.id
+      }])
+      .select()
+      .single();
+    
+    if (error) throw error;
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to create event', error: error.message });
+  }
 });
 
-export default router;
+// Update event
+router.put('/:id', auth, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin' && !req.user.is_committee) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    const { title, description, event_date, location, image_url } = req.body;
+    
+    const { data, error } = await supabase
+      .from('events')
+      .update({ title, description, event_date, location, image_url })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to update event', error: error.message });
+  }
+});
+
+// Delete event
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    const { error } = await supabase
+      .from('events')
+      .delete()
+      .eq('id', req.params.id);
+    
+    if (error) throw error;
+    res.json({ message: 'Event deleted' });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to delete event', error: error.message });
+  }
+});
+
+module.exports = router;
