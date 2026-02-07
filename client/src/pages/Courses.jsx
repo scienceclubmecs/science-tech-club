@@ -99,7 +99,7 @@ export default function Courses() {
             placeholder="Search courses..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full pl-10 pr-4 py-3 bg-gray-900 border border-gray-800 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
       </div>
@@ -112,7 +112,7 @@ export default function Courses() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCourses.map((course) => (
-            <div key={course.id} className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden hover:border-blue-500 transition">
+            <div key={course.id} className="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden hover:border-blue-500 transition">
               {course.thumbnail_url && (
                 <img src={course.thumbnail_url} alt={course.title} className="w-full h-48 object-cover" />
               )}
@@ -153,7 +153,7 @@ export default function Courses() {
 
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-slate-800 p-8 rounded-xl w-full max-w-2xl border border-slate-700">
+          <div className="bg-gray-900 p-8 rounded-xl w-full max-w-2xl border border-gray-800">
             <h2 className="text-2xl font-bold text-white mb-6">Add New Course</h2>
             <form onSubmit={handleAddCourse} className="space-y-4">
               <div>
@@ -162,7 +162,7 @@ export default function Courses() {
                   type="text"
                   value={newCourse.title}
                   onChange={(e) => setNewCourse({ ...newCourse, title: e.target.value })}
-                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                  className="w-full px-4 py-2 bg-gray-800 border border-slate-600 rounded-lg text-white"
                   required
                 />
               </div>
@@ -171,7 +171,7 @@ export default function Courses() {
                 <textarea
                   value={newCourse.description}
                   onChange={(e) => setNewCourse({ ...newCourse, description: e.target.value })}
-                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                  className="w-full px-4 py-2 bg-gray-800 border border-slate-600 rounded-lg text-white"
                   rows="3"
                 />
               </div>
@@ -181,7 +181,7 @@ export default function Courses() {
                   type="url"
                   value={newCourse.video_url}
                   onChange={(e) => setNewCourse({ ...newCourse, video_url: e.target.value })}
-                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                  className="w-full px-4 py-2 bg-gray-800 border border-slate-600 rounded-lg text-white"
                   required
                 />
               </div>
@@ -191,7 +191,7 @@ export default function Courses() {
                   type="url"
                   value={newCourse.thumbnail_url}
                   onChange={(e) => setNewCourse({ ...newCourse, thumbnail_url: e.target.value })}
-                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                  className="w-full px-4 py-2 bg-gray-800 border border-slate-600 rounded-lg text-white"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -200,7 +200,7 @@ export default function Courses() {
                   <select
                     value={newCourse.category}
                     onChange={(e) => setNewCourse({ ...newCourse, category: e.target.value })}
-                    className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                    className="w-full px-4 py-2 bg-gray-800 border border-slate-600 rounded-lg text-white"
                   >
                     <option>General</option>
                     <option>Programming</option>
@@ -216,7 +216,7 @@ export default function Courses() {
                     type="number"
                     value={newCourse.duration}
                     onChange={(e) => setNewCourse({ ...newCourse, duration: parseInt(e.target.value) })}
-                    className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                    className="w-full px-4 py-2 bg-gray-800 border border-slate-600 rounded-lg text-white"
                   />
                 </div>
               </div>
@@ -224,7 +224,7 @@ export default function Courses() {
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="px-6 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition"
+                  className="px-6 py-2 bg-gray-800 hover:bg-slate-600 rounded-lg transition"
                 >
                   Cancel
                 </button>
