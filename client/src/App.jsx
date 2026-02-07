@@ -49,36 +49,78 @@ function AppContent() {
       {user && !hideNavbar && <Navbar user={user} setUser={setUser} />}
       
       <Routes>
-        {/* Public Routes */}
         <Route path="/" element={<Home />} />
-        <Route path="/login" element={!user ? <Login setUser={setUser} /> : <Navigate to="/dashboard" />} />
+        <Route 
+          path="/login" 
+          element={!user ? <Login setUser={setUser} /> : <Navigate to="/dashboard" />} 
+        />
         
-        {/* Protected Routes */}
-        <Route path="/dashboard" element={
-          user ? (
-            user.role === 'admin' ? <Navigate to="/admin" /> :
-            user.role === 'faculty' ? <Navigate to="/faculty" /> :
-            user.is_committee ? <Navigate to="/committee" /> :
-            <StudentDashboard />
-          ) : <Navigate to="/login" />
-        } />
+        <Route 
+          path="/dashboard" 
+          element={
+            user ? (
+              user.role === 'admin' ? <Navigate to="/admin" /> :
+              user.role === 'faculty' ? <Navigate to="/faculty" /> :
+              user.is_committee ? <Navigate to="/committee" /> :
+              <StudentDashboard />
+            ) : <Navigate to="/login" />
+          } 
+        />
         
-        <Route path="/admin" element={user?.role === 'admin' ? <AdminPanel /> : <Navigate to="/dashboard" />} />
-        <Route path="/faculty" element={user?.role === 'faculty' ? <FacultyDashboard /> : <Navigate to="/dashboard" />} />
-        <Route path="/committee" element={user?.is_committee ? <CommitteeDashboard /> : <Navigate to="/dashboard" />} />
-        <Route path="/committee/team" element={user?.is_committee ? <TeamViewPage /> : <Navigate to="/dashboard" />} />
+        <Route 
+          path="/admin" 
+          element={user?.role === 'admin' ? <AdminPanel /> : <Navigate to="/dashboard" />} 
+        />
+        <Route 
+          path="/faculty" 
+          element={user?.role === 'faculty' ? <FacultyDashboard /> : <Navigate to="/dashboard" />} 
+        />
+        <Route 
+          path="/committee" 
+          element={user?.is_committee ? <CommitteeDashboard /> : <Navigate to="/dashboard" />} 
+        />
+        <Route 
+          path="/committee/team" 
+          element={user?.is_committee ? <TeamViewPage /> : <Navigate to="/dashboard" />} 
+        />
         
-        <Route path="/profile" element={user ? <ProfilePage /> : <Navigate to="/login" />} />
-        <Route path="/courses" element={user ? <CoursesPage /> : <Navigate to="/login" />} />
-        <Route path="/projects" element={user ? <ProjectsPage /> : <Navigate to="/login" />} />
-        <Route path="/projects/create" element={user ? <CreateProjectPage /> : <Navigate to="/login" />} />
-        <Route path="/quizzes" element={user ? <QuizzesPage /> : <Navigate to="/login" />} />
-        <Route path="/quizzes/:id" element={user ? <TakeQuizPage /> : <Navigate to="/login" />} />
-        <Route path="/events" element={user ? <EventsPage /> : <Navigate to="/login" />} />
-        <Route path="/events/create" element={user ? <CreateEventPage /> : <Navigate to="/login" />} />
-        <Route path="/developer" element={user?.committee_post === 'Developer' ? <DeveloperPanel /> : <Navigate to="/dashboard" />} />
+        <Route 
+          path="/profile" 
+          element={user ? <ProfilePage /> : <Navigate to="/login" />} 
+        />
+        <Route 
+          path="/courses" 
+          element={user ? <CoursesPage /> : <Navigate to="/login" />} 
+        />
+        <Route 
+          path="/projects" 
+          element={user ? <ProjectsPage /> : <Navigate to="/login" />} 
+        />
+        <Route 
+          path="/projects/create" 
+          element={user ? <CreateProjectPage /> : <Navigate to="/login" />} 
+        />
+        <Route 
+          path="/quizzes" 
+          element={user ? <QuizzesPage /> : <Navigate to="/login" />} 
+        />
+        <Route 
+          path="/quizzes/:id" 
+          element={user ? <TakeQuizPage /> : <Navigate to="/login" />} 
+        />
+        <Route 
+          path="/events" 
+          element={user ? <EventsPage /> : <Navigate to="/login" />} 
+        />
+        <Route 
+          path="/events/create" 
+          element={user ? <CreateEventPage /> : <Navigate to="/login" />} 
+        />
+        <Route 
+          path="/developer" 
+          element={user?.committee_post === 'Developer' ? <DeveloperPanel /> : <Navigate to="/dashboard" />} 
+        />
         
-        {/* 404 Catch-all */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
       
