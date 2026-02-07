@@ -97,4 +97,35 @@ router.post('/upload-faculty', auth, isAdmin, upload.single('file'), async (req,
   }
 });
 
+// Add this route to admin.js
+router.put('/reset-password', auth, isAdmin, async (req, res) => {
+  try {
+    const { username, newPassword } = req.body;
+    
+    const { data: user } = await supabase
+      .from('users')
+      .select('id')
+      .eq('username', username)
+      .single();
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    
+    const { error } = await supabase
+      .from('user_passwords')
+      .update({ password_hash: passwordHash })
+      .eq('user_id', user.id);
+    
+    if (error) throw error;
+    
+    res.json({ message: 'Password reset successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to reset password' });
+  }
+});
+
+
 module.exports = router;
