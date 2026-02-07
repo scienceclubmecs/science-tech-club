@@ -10,6 +10,8 @@ import CourseView from './pages/CourseView'
 import Chat from './pages/Chat'
 import Navbar from './components/Navbar'
 import FloatingChatbot from './components/FloatingChatbot'
+import ProfilePage from './pages/ProfilePage'
+import CommitteeDashboard from './pages/CommitteeDashboard'
 
 function App() {
   const { user } = useAuthStore()
@@ -34,6 +36,8 @@ function App() {
           <Route path="/courses/:id" element={user ? <CourseView /> : <Navigate to="/login" />} />
           <Route path="/chat" element={user ? <Chat /> : <Navigate to="/login" />} />
           <Route path="/admin" element={user?.role === 'admin' ? <AdminPanel /> : <Navigate to="/dashboard" />} />
+          <Route path="/profile" element={user ? <ProfilePage /> : <Navigate to="/login" />} />
+          <Route path="/committee" element={user?.is_committee ? <CommitteeDashboard /> : <Navigate to="/dashboard" />} />
         </Routes>
         
         <FloatingChatbot />
