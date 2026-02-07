@@ -1,162 +1,100 @@
-import express from "express";
-import multer from "multer";
-import { parse } from "csv-parse/sync";
-import bcrypt from "bcryptjs";
-import { supabase } from "../config/supabase.js";
-import { auth } from "../middleware/auth.js";
-
+const express = require('express');
 const router = express.Router();
-const upload = multer({ storage: multer.memoryStorage() });
+const bcrypt = require('bcryptjs');
+const supabase = require('../config/supabase');
+const auth = require('../middleware/auth');
+const multer = require('multer');
+const upload = multer({ dest: 'uploads/' });
 
-// Dashboard stats (FIXED)
-router.get("/dashboard", auth, async (req, res) => {
-  if (req.user.role !== "admin") {
-    return res.status(403).json({ message: "Forbidden" });
+// Admin middleware
+const isAdmin = (req, res, next) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Access denied' });
   }
+  next();
+};
 
+// Get dashboard stats
+router.get('/dashboard', auth, isAdmin, async (req, res) => {
   try {
-    const [usersRes, coursesRes] = await Promise.all([
-      supabase.from("users").select("role"),
-      supabase.from("courses").select("id")
-    ]);
-
-    const users = usersRes.data || [];
-    const courses = coursesRes.data || [];
-
-    const stats = {
-      students: users.filter(u => u.role === "student").length,
-      faculty: users.filter(u => u.role === "faculty").length,
-      total: users.length,
-      courses: courses.length
-    };
-
-    res.json(stats);
-  } catch (err) {
-    console.error("Dashboard error:", err);
-    res.status(500).json({ message: "Server error" });
+    const { count: totalUsers } = await supabase.from('users').select('*', { count: 'exact', head: true });
+    const { count: totalCourses } = await supabase.from('courses').select('*', { count: 'exact', head: true });
+    const { count: students } = await supabase.from('users').select('*', { count: 'exact', head: true }).eq('role', 'student');
+    
+    res.json({ totalUsers, totalCourses, students });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch stats', error: error.message });
   }
 });
 
-// Add student manually (FIXED)
-router.post("/add-student", auth, async (req, res) => {
-  if (req.user.role !== "admin") {
-    return res.status(403).json({ message: "Admin only" });
-  }
-
-  const { username, email, department, year, password, interests } = req.body;
-
-  if (!username || !email || !password || password.length < 6) {
-    return res.status(400).json({ message: "username, email, password (6+ chars) required" });
-  }
-
+// Add student
+router.post('/add-student', auth, isAdmin, async (req, res) => {
   try {
-    // Check if username exists
-    const { data: existing } = await supabase
-      .from("users")
-      .select("id")
-      .eq("username", username)
-      .maybeSingle();
-
-    if (existing) {
-      return res.status(400).json({ message: "Username already exists" });
-    }
-
-    // Create user
+    const { username, email, department, year, password } = req.body;
+    
     const { data: newUser, error: userError } = await supabase
-      .from("users")
-      .insert({
-        username,
-        email,
-        role: "student",
-        department: department || null,
-        year: parseInt(year) || 1,
-        interests: interests ? interests.split(",").map(s => s.trim()).filter(Boolean) : []
-      })
-      .select("id, username, email")
+      .from('users')
+      .insert([{ username, email, department, year, role: 'student' }])
+      .select()
       .single();
-
-    if (userError) {
-      console.error("User creation error:", userError);
-      return res.status(400).json({ message: "Failed to create user" });
-    }
-
-    // Hash and store password
-    const hash = await bcrypt.hash(password, 10);
-    const { error: pwdError } = await supabase
-      .from("user_passwords")
-      .insert({ user_id: newUser.id, password_hash: hash });
-
-    if (pwdError) {
-      console.error("Password error:", pwdError);
-      // Rollback user creation
-      await supabase.from("users").delete().eq("id", newUser.id);
-      return res.status(500).json({ message: "Password creation failed" });
-    }
-
-    res.json({ message: "Student created successfully", user: newUser });
-  } catch (err) {
-    console.error("Add student error:", err);
-    res.status(500).json({ message: "Server error" });
+    
+    if (userError) throw userError;
+    
+    const passwordHash = await bcrypt.hash(password, 10);
+    const { error: pwError } = await supabase
+      .from('user_passwords')
+      .insert([{ user_id: newUser.id, password_hash: passwordHash }]);
+    
+    if (pwError) throw pwError;
+    
+    res.json({ message: 'Student added', user: newUser });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to add student', error: error.message });
   }
 });
 
-// Add faculty manually (FIXED)
-router.post("/add-faculty", auth, async (req, res) => {
-  if (req.user.role !== "admin") {
-    return res.status(403).json({ message: "Admin only" });
-  }
-
-  const { username, email, department, password } = req.body;
-
-  if (!username || !email || !password || password.length < 6) {
-    return res.status(400).json({ message: "username, email, password (6+ chars) required" });
-  }
-
+// Add faculty
+router.post('/add-faculty', auth, isAdmin, async (req, res) => {
   try {
-    const { data: existing } = await supabase
-      .from("users")
-      .select("id")
-      .eq("username", username)
-      .maybeSingle();
-
-    if (existing) {
-      return res.status(400).json({ message: "Username already exists" });
-    }
-
+    const { username, email, department, password } = req.body;
+    
     const { data: newUser, error: userError } = await supabase
-      .from("users")
-      .insert({
-        username,
-        email,
-        role: "faculty",
-        department: department || null
-      })
-      .select("id, username, email")
+      .from('users')
+      .insert([{ username, email, department, role: 'faculty' }])
+      .select()
       .single();
-
-    if (userError) {
-      console.error("User creation error:", userError);
-      return res.status(400).json({ message: "Failed to create user" });
-    }
-
-    const hash = await bcrypt.hash(password, 10);
-    const { error: pwdError } = await supabase
-      .from("user_passwords")
-      .insert({ user_id: newUser.id, password_hash: hash });
-
-    if (pwdError) {
-      console.error("Password error:", pwdError);
-      await supabase.from("users").delete().eq("id", newUser.id);
-      return res.status(500).json({ message: "Password creation failed" });
-    }
-
-    res.json({ message: "Faculty created successfully", user: newUser });
-  } catch (err) {
-    console.error("Add faculty error:", err);
-    res.status(500).json({ message: "Server error" });
+    
+    if (userError) throw userError;
+    
+    const passwordHash = await bcrypt.hash(password, 10);
+    const { error: pwError } = await supabase
+      .from('user_passwords')
+      .insert([{ user_id: newUser.id, password_hash: passwordHash }]);
+    
+    if (pwError) throw pwError;
+    
+    res.json({ message: 'Faculty added', user: newUser });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to add faculty', error: error.message });
   }
 });
 
-// ... (Keep existing CSV upload, set-role, reset-password endpoints from previous version)
+// Upload students CSV
+router.post('/upload-students', auth, isAdmin, upload.single('file'), async (req, res) => {
+  try {
+    res.json({ message: 'CSV upload not implemented yet' });
+  } catch (error) {
+    res.status(500).json({ message: 'Upload failed', error: error.message });
+  }
+});
 
-export default router;
+// Upload faculty CSV
+router.post('/upload-faculty', auth, isAdmin, upload.single('file'), async (req, res) => {
+  try {
+    res.json({ message: 'CSV upload not implemented yet' });
+  } catch (error) {
+    res.status(500).json({ message: 'Upload failed', error: error.message });
+  }
+});
+
+module.exports = router;
