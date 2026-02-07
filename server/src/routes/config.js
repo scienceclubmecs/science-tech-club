@@ -1,70 +1,43 @@
-import express from "express";
-import { supabase } from "../config/supabase.js";
-import { auth } from "../middleware/auth.js";
-
+const express = require('express');
 const router = express.Router();
+const supabase = require('../config/supabase');
+const auth = require('../middleware/auth');
 
-const canEditConfig = (user) => user?.role === "admin" || user?.isDeveloper === true;
-
-// Public: frontend can read logo/name without login
-router.get("/", async (req, res) => {
-  const { data, error } = await supabase
-    .from("site_config")
-    .select("*")
-    .eq("id", 1)
-    .single();
-
-  if (error) return res.status(500).json({ message: "Failed to load config" });
-  res.json(data);
+// Get config
+router.get('/', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('config')
+      .select('*')
+      .single();
+    
+    if (error) throw error;
+    res.json(data || {});
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch config', error: error.message });
+  }
 });
 
-// Admin/Developer: update logo/name/git
-router.put("/", auth, async (req, res) => {
-  if (!canEditConfig(req.user)) return res.status(403).json({ message: "Forbidden" });
-
-  const { siteName, logoUrl, gitRepoUrl } = req.body || {};
-
-  const payload = {
-    id: 1,
-    site_name: siteName ?? null,
-    logo_url: logoUrl ?? null,
-    git_repo_url: gitRepoUrl ?? null,
-    updated_at: new Date().toISOString()
-  };
-
-  const { data, error } = await supabase
-    .from("site_config")
-    .upsert(payload, { onConflict: "id" })
-    .select()
-    .single();
-
-  if (error) return res.status(400).json({ message: "Failed to save config" });
-  res.json(data);
+// Update config (admin only)
+router.put('/', auth, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+    
+    const { site_name, logo_url, git_repo_url } = req.body;
+    
+    const { data, error } = await supabase
+      .from('config')
+      .update({ site_name, logo_url, git_repo_url })
+      .select()
+      .single();
+    
+    if (error) throw error;
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to update config', error: error.message });
+  }
 });
 
-// Admin/Developer: update faculty roles
-router.put("/faculty-roles", auth, async (req, res) => {
-  if (!canEditConfig(req.user)) return res.status(403).json({ message: "Forbidden" });
-
-  const { coordinator, manager, advisor, incharge } = req.body || {};
-
-  const payload = {
-    id: 1,
-    faculty_coordinator: coordinator || null,
-    faculty_manager: manager || null,
-    faculty_advisor: advisor || null,
-    incharge: incharge || null,
-    updated_at: new Date().toISOString()
-  };
-
-  const { data, error } = await supabase
-    .from("site_config")
-    .upsert(payload, { onConflict: "id" })
-    .select()
-    .single();
-
-  if (error) return res.status(400).json({ message: "Failed to save faculty roles" });
-  res.json(data);
-});
-
-export default router;
+module.exports = router;
