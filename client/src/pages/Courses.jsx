@@ -1,210 +1,244 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { courses } from '../services/api'
-import { BookOpen, PlayCircle, Clock, Search, Filter, Sparkles } from 'lucide-react'
+import { useAuthStore } from '../store/authStore'
+import api from '../services/api'
+import { BookOpen, Clock, Search, Plus, Trash2 } from 'lucide-react'
 import Loading from '../components/Loading'
 
 export default function Courses() {
-  const [allCourses, setAllCourses] = useState([])
+  const { user } = useAuthStore()
+  const [courses, setCourses] = useState([])
   const [filteredCourses, setFilteredCourses] = useState([])
   const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState('All')
+  const [searchTerm, setSearchTerm] = useState('')
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [newCourse, setNewCourse] = useState({
+    title: '',
+    description: '',
+    video_url: '',
+    thumbnail_url: '',
+    category: 'General',
+    duration: 0
+  })
 
   useEffect(() => {
-    loadCourses()
+    fetchCourses()
   }, [])
 
   useEffect(() => {
-    filterCourses()
-  }, [searchQuery, selectedCategory, allCourses])
+    const filtered = courses.filter(course =>
+      course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      course.category.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    setFilteredCourses(filtered)
+  }, [searchTerm, courses])
 
-  const loadCourses = async () => {
+  const fetchCourses = async () => {
     try {
-      const { data } = await courses.getAll()
-      setAllCourses(data)
+      const { data } = await api.get('/courses')
+      setCourses(data)
       setFilteredCourses(data)
-    } catch (err) {
-      console.error('Load courses error:', err)
+    } catch (error) {
+      console.error('Failed to fetch courses:', error)
     } finally {
       setLoading(false)
     }
   }
 
-  const filterCourses = () => {
-    let filtered = allCourses
-
-    // Search filter
-    if (searchQuery.trim()) {
-      filtered = filtered.filter(course =>
-        course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        course.description?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+  const handleAddCourse = async (e) => {
+    e.preventDefault()
+    try {
+      await api.post('/courses', newCourse)
+      setShowAddModal(false)
+      setNewCourse({
+        title: '',
+        description: '',
+        video_url: '',
+        thumbnail_url: '',
+        category: 'General',
+        duration: 0
+      })
+      fetchCourses()
+    } catch (error) {
+      alert('Failed to add course')
     }
-
-    // Category filter
-    if (selectedCategory !== 'All') {
-      filtered = filtered.filter(course => course.category === selectedCategory)
-    }
-
-    setFilteredCourses(filtered)
   }
 
-  const categories = ['All', ...new Set(allCourses.map(c => c.category))]
+  const handleDeleteCourse = async (id) => {
+    if (!confirm('Are you sure you want to delete this course?')) return
+    try {
+      await api.delete(`/courses/${id}`)
+      fetchCourses()
+    } catch (error) {
+      alert('Failed to delete course')
+    }
+  }
 
-  if (loading) return <Loading fullScreen />
+  if (loading) return <Loading />
 
   return (
-    <div className="min-h-screen bg-darker">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center space-x-2 mb-2">
-            <BookOpen className="text-primary" size={32} />
-            <h1 className="text-4xl font-bold gradient-text">Course Library</h1>
-          </div>
-          <p className="text-gray-400 text-lg">
-            Explore our collection of video courses and tutorials
-          </p>
-        </div>
-
-        {/* Search & Filter */}
-        <div className="mb-8 space-y-4">
-          {/* Search Bar */}
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={20} />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search courses..."
-              className="input w-full pl-12 pr-4 py-3"
-            />
-          </div>
-
-          {/* Category Filter */}
-          <div className="flex items-center space-x-3 overflow-x-auto pb-2">
-            <Filter className="text-gray-500 flex-shrink-0" size={20} />
-            {categories.map((category) => (
-              <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all ${
-                  selectedCategory === category
-                    ? 'bg-primary text-black'
-                    : 'bg-dark-card text-gray-400 hover:text-gray-100 hover:bg-gray-800'
-                }`}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Courses Grid */}
-        {filteredCourses.length === 0 ? (
-          <div className="card text-center py-16">
-            <BookOpen className="mx-auto text-gray-600 mb-4" size={64} />
-            <h3 className="text-2xl font-semibold mb-2">
-              {searchQuery || selectedCategory !== 'All' ? 'No courses found' : 'No courses available'}
-            </h3>
-            <p className="text-gray-400 mb-6">
-              {searchQuery || selectedCategory !== 'All'
-                ? 'Try adjusting your search or filters'
-                : 'Check back later for new content'}
-            </p>
-            {(searchQuery || selectedCategory !== 'All') && (
-              <button
-                onClick={() => {
-                  setSearchQuery('')
-                  setSelectedCategory('All')
-                }}
-                className="btn-primary"
-              >
-                Clear Filters
-              </button>
-            )}
-          </div>
-        ) : (
-          <>
-            {/* Results Count */}
-            <div className="mb-6">
-              <p className="text-gray-400">
-                Showing <span className="text-primary font-semibold">{filteredCourses.length}</span> course
-                {filteredCourses.length !== 1 ? 's' : ''}
-              </p>
-            </div>
-
-            {/* Courses Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredCourses.map((course) => (
-                <CourseCard key={course.id} course={course} />
-              ))}
-            </div>
-          </>
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-bold text-white">Video Courses</h1>
+        {(user.role === 'admin' || user.is_committee) && (
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition"
+          >
+            <Plus className="w-5 h-5" />
+            <span>Add Course</span>
+          </button>
         )}
       </div>
+
+      <div className="mb-6">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <input
+            type="text"
+            placeholder="Search courses..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      </div>
+
+      {filteredCourses.length === 0 ? (
+        <div className="text-center py-12">
+          <BookOpen className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+          <p className="text-gray-400">No courses found</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredCourses.map((course) => (
+            <div key={course.id} className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden hover:border-blue-500 transition">
+              {course.thumbnail_url && (
+                <img src={course.thumbnail_url} alt={course.title} className="w-full h-48 object-cover" />
+              )}
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="px-3 py-1 bg-blue-600 text-xs rounded-full">{course.category}</span>
+                  {course.duration > 0 && (
+                    <div className="flex items-center text-gray-400 text-sm">
+                      <Clock className="w-4 h-4 mr-1" />
+                      <span>{course.duration} min</span>
+                    </div>
+                  )}
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">{course.title}</h3>
+                <p className="text-gray-400 text-sm mb-4 line-clamp-2">{course.description}</p>
+                <div className="flex items-center justify-between">
+                  <Link
+                    to={`/courses/${course.id}`}
+                    className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition"
+                  >
+                    <BookOpen className="w-4 h-4" />
+                    <span>Watch</span>
+                  </Link>
+                  {user.role === 'admin' && (
+                    <button
+                      onClick={() => handleDeleteCourse(course.id)}
+                      className="p-2 bg-red-600 hover:bg-red-700 rounded-lg transition"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-slate-800 p-8 rounded-xl w-full max-w-2xl border border-slate-700">
+            <h2 className="text-2xl font-bold text-white mb-6">Add New Course</h2>
+            <form onSubmit={handleAddCourse} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Title</label>
+                <input
+                  type="text"
+                  value={newCourse.title}
+                  onChange={(e) => setNewCourse({ ...newCourse, title: e.target.value })}
+                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Description</label>
+                <textarea
+                  value={newCourse.description}
+                  onChange={(e) => setNewCourse({ ...newCourse, description: e.target.value })}
+                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                  rows="3"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Video URL</label>
+                <input
+                  type="url"
+                  value={newCourse.video_url}
+                  onChange={(e) => setNewCourse({ ...newCourse, video_url: e.target.value })}
+                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Thumbnail URL</label>
+                <input
+                  type="url"
+                  value={newCourse.thumbnail_url}
+                  onChange={(e) => setNewCourse({ ...newCourse, thumbnail_url: e.target.value })}
+                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Category</label>
+                  <select
+                    value={newCourse.category}
+                    onChange={(e) => setNewCourse({ ...newCourse, category: e.target.value })}
+                    className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                  >
+                    <option>General</option>
+                    <option>Programming</option>
+                    <option>AI/ML</option>
+                    <option>Web Development</option>
+                    <option>Robotics</option>
+                    <option>IoT</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Duration (minutes)</label>
+                  <input
+                    type="number"
+                    value={newCourse.duration}
+                    onChange={(e) => setNewCourse({ ...newCourse, duration: parseInt(e.target.value) })}
+                    className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                  />
+                </div>
+              </div>
+              <div className="flex items-center justify-end space-x-4 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  className="px-6 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition"
+                >
+                  Add Course
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
-  )
-}
-
-function CourseCard({ course }) {
-  return (
-    <Link to={`/courses/${course.id}`} className="card-hover group">
-      {/* Thumbnail */}
-      <div className="relative mb-4 overflow-hidden rounded-lg bg-dark aspect-video">
-        <img
-          src={course.thumbnail_url || 'https://via.placeholder.com/640x360?text=Course'}
-          alt={course.title}
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-          onError={(e) => {
-            e.target.src = 'https://via.placeholder.com/640x360?text=Course'
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-        
-        {/* Play Button Overlay */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center transform group-hover:scale-110 transition-transform">
-            <PlayCircle className="text-black" size={32} />
-          </div>
-        </div>
-
-        {/* Category Badge */}
-        <div className="absolute top-3 right-3 bg-primary text-black text-xs px-3 py-1 rounded-full font-semibold">
-          {course.category}
-        </div>
-
-        {/* Duration */}
-        {course.duration > 0 && (
-          <div className="absolute bottom-3 left-3 flex items-center space-x-1 bg-black/70 backdrop-blur-sm px-2 py-1 rounded text-white text-sm">
-            <Clock size={14} />
-            <span>{Math.floor(course.duration / 60)}min</span>
-          </div>
-        )}
-      </div>
-
-      {/* Content */}
-      <div>
-        <h3 className="font-bold text-lg mb-2 group-hover:text-primary transition-colors line-clamp-2">
-          {course.title}
-        </h3>
-        <p className="text-gray-400 text-sm line-clamp-2 mb-3">
-          {course.description || 'No description available'}
-        </p>
-
-        {/* Creator */}
-        {course.creator && (
-          <div className="flex items-center space-x-2 text-xs text-gray-500">
-            <div className="w-6 h-6 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center">
-              <span className="text-black font-semibold text-xs">
-                {course.creator.username?.charAt(0).toUpperCase()}
-              </span>
-            </div>
-            <span>by {course.creator.username}</span>
-          </div>
-        )}
-      </div>
-    </Link>
   )
 }
