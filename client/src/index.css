@@ -12,8 +12,8 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #0f172a;
-  color: #e2e8f0;
+  background-color: #000000;
+  color: #e5e7eb;
 }
 
 code {
@@ -25,14 +25,14 @@ code {
 }
 
 ::-webkit-scrollbar-track {
-  background: #1e293b;
+  background: #111827;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #475569;
+  background: #374151;
   border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #64748b;
+  background: #4b5563;
 }
