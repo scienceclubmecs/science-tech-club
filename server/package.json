@@ -1,15 +1,14 @@
 {
   "name": "science-tech-club-backend",
   "version": "2.0.0",
-  "description": "Science & Tech Club Backend with Courses, Chat, Socket.IO",
+  "description": "Backend API for Science & Tech Club",
   "main": "src/server.js",
-  "type": "module",
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js"
   },
-  "keywords": ["club", "courses", "chat", "socket.io", "supabase"],
-  "author": "Science Tech Club Devs",
+  "keywords": ["science", "tech", "club", "api"],
+  "author": "Science & Tech Club",
   "license": "MIT",
   "dependencies": {
     "@supabase/supabase-js": "^2.39.1",
@@ -23,9 +22,9 @@
     "socket.io": "^4.6.1"
   },
   "devDependencies": {
-    "nodemon": "^3.1.7"
+    "nodemon": "^3.0.2"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=18.0.0"
   }
 }
