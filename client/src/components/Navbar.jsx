@@ -9,17 +9,17 @@ export default function Navbar() {
 
   const handleLogout = () => {
     logout()
-    navigate('/login')
+    navigate('/')
   }
 
   const isActive = (path) => location.pathname === path
 
   return (
-    <nav className="bg-slate-800 border-b border-slate-700">
+    <nav className="bg-black border-b border-gray-800">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-8">
-            <Link to="/dashboard" className="text-xl font-bold text-blue-400">
+            <Link to="/dashboard" className="text-xl font-bold text-blue-500">
               Science & Tech Club
             </Link>
             
@@ -27,7 +27,7 @@ export default function Navbar() {
               <Link
                 to="/dashboard"
                 className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition ${
-                  isActive('/dashboard') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-slate-700'
+                  isActive('/dashboard') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-900'
                 }`}
               >
                 <Home className="w-4 h-4" />
@@ -37,7 +37,7 @@ export default function Navbar() {
               <Link
                 to="/courses"
                 className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition ${
-                  isActive('/courses') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-slate-700'
+                  isActive('/courses') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-900'
                 }`}
               >
                 <BookOpen className="w-4 h-4" />
@@ -47,7 +47,7 @@ export default function Navbar() {
               <Link
                 to="/chat"
                 className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition ${
-                  isActive('/chat') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-slate-700'
+                  isActive('/chat') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-900'
                 }`}
               >
                 <MessageCircle className="w-4 h-4" />
@@ -58,7 +58,7 @@ export default function Navbar() {
                 <Link
                   to="/admin"
                   className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition ${
-                    isActive('/admin') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-slate-700'
+                    isActive('/admin') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-900'
                   }`}
                 >
                   <Settings className="w-4 h-4" />
@@ -69,7 +69,7 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-300">
+            <span className="text-sm text-gray-400">
               {user?.username} ({user?.role})
             </span>
             <button
