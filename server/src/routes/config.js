@@ -12,7 +12,10 @@ router.get('/', async (req, res) => {
       .limit(1)
       .single();
     
-    if (error && error.code !== 'PGRST116') throw error;
+    if (error && error.code !== 'PGRST116') {
+      console.error('Config fetch error:', error);
+    }
+    
     res.json(data || {
       site_name: 'Science & Tech Club',
       logo_url: '',
@@ -23,6 +26,7 @@ router.get('/', async (req, res) => {
       theme_color: 'blue'
     });
   } catch (error) {
+    console.error('Config error:', error);
     res.status(500).json({ message: 'Failed to fetch config' });
   }
 });
@@ -35,7 +39,7 @@ router.put('/', auth, async (req, res) => {
                     req.user.committee_post === 'CSE Head';
     
     if (!canEdit) {
-      return res.status(403).json({ message: 'Access denied. Only admin, developers, and CSE head can edit site config.' });
+      return res.status(403).json({ message: 'Access denied' });
     }
     
     const configData = req.body;
@@ -48,7 +52,6 @@ router.put('/', auth, async (req, res) => {
       .single();
     
     if (existing) {
-      // Update
       const { data, error } = await supabase
         .from('config')
         .update(configData)
@@ -59,7 +62,6 @@ router.put('/', auth, async (req, res) => {
       if (error) throw error;
       res.json(data);
     } else {
-      // Insert
       const { data, error } = await supabase
         .from('config')
         .insert([configData])
@@ -70,6 +72,7 @@ router.put('/', auth, async (req, res) => {
       res.json(data);
     }
   } catch (error) {
+    console.error('Update config error:', error);
     res.status(500).json({ message: 'Failed to update config' });
   }
 });
