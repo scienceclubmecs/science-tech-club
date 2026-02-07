@@ -1,75 +1,97 @@
-import express from "express";
-import { supabase } from "../config/supabase.js";
-import { auth } from "../middleware/auth.js";
-
+const express = require('express');
 const router = express.Router();
+const supabase = require('../config/supabase');
+const auth = require('../middleware/auth');
 
-router.post("/", auth, async (req, res) => {
-  const { title, description, department, year, max_members } = req.body;
-  const { data, error } = await supabase
-    .from("projects")
-    .insert({
-      title,
-      description,
-      department,
-      year,
-      max_members,
-      created_by: req.user.id
-    })
-    .select()
-    .single();
-  if (error) return res.status(400).json({ error });
-
-  // Auto add creator as owner
-  await supabase.from("project_members").insert({
-    project_id: data.id,
-    user_id: req.user.id,
-    member_role: "owner"
-  });
-
-  res.json({ ...data, chatRoom: `proj:${data.id}` });
-});
-
-router.get("/mine", auth, async (req, res) => {
-  const { data: projects } = await supabase
-    .from("project_members")
-    .select("*, project:project_id(*)")
-    .eq("user_id", req.user.id);
-  res.json(projects?.map(p => ({ ...p.project, chatRoom: `proj:${p.project.id}` })) || []);
-});
-
-router.get("/", auth, async (req, res) => {
-  const { data: projects } = await supabase
-    .from("projects")
-    .select("*");
-  res.json(projects?.map(p => ({ ...p, chatRoom: `proj:${p.id}` })) || []);
-});
-
-router.post("/:id/join", auth, async (req, res) => {
-  const { data: project } = await supabase
-    .from("projects")
-    .select("*, project_members(count)")
-    .eq("id", req.params.id)
-    .single();
-  
-  if (!project) return res.status(404).json({ message: "Not found" });
-  if (project.project_members.count >= project.max_members) {
-    return res.status(400).json({ message: "No vacancies" });
+// Get all projects
+router.get('/', auth, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    res.json(data || []);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch projects', error: error.message });
   }
-
-  const { error } = await supabase.from("project_members").insert({
-    project_id: req.params.id,
-    user_id: req.user.id,
-    member_role: "member"
-  });
-  if (error) return res.status(400).json({ error });
-
-  const { data: fullProject } = await supabase
-    .from("projects")
-    .select("*")
-    .eq("id", req.params.id)
-    .single();
-  res.json({ ...fullProject, chatRoom: `proj:${fullProject.id}` });
 });
 
-export default router;
+// Get single project
+router.get('/:id', auth, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('id', req.params.id)
+      .single();
+    
+    if (error) throw error;
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch project', error: error.message });
+  }
+});
+
+// Create project
+router.post('/', auth, async (req, res) => {
+  try {
+    const { title, description, github_url, demo_url, technologies, image_url } = req.body;
+    
+    const { data, error } = await supabase
+      .from('projects')
+      .insert([{
+        title,
+        description,
+        github_url,
+        demo_url,
+        technologies,
+        image_url,
+        created_by: req.user.id
+      }])
+      .select()
+      .single();
+    
+    if (error) throw error;
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to create project', error: error.message });
+  }
+});
+
+// Update project
+router.put('/:id', auth, async (req, res) => {
+  try {
+    const { title, description, github_url, demo_url, technologies, image_url } = req.body;
+    
+    const { data, error } = await supabase
+      .from('projects')
+      .update({ title, description, github_url, demo_url, technologies, image_url })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to update project', error: error.message });
+  }
+});
+
+// Delete project
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const { error } = await supabase
+      .from('projects')
+      .delete()
+      .eq('id', req.params.id);
+    
+    if (error) throw error;
+    res.json({ message: 'Project deleted' });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to delete project', error: error.message });
+  }
+});
+
+module.exports = router;
