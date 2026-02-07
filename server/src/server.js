@@ -79,6 +79,7 @@ app.use('/api/chat', require('./routes/chat'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/config', require('./routes/config'));
 app.use('/api/chatbot', require('./routes/chatbot'));
+app.use('/api/announcements', require('./routes/announcements'));
 
 io.on('connection', (socket) => {
   console.log('Socket connected:', socket.id);
