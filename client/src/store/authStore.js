@@ -1,29 +1,18 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
 
-export const useAuthStore = create(
-  persist(
-    (set) => ({
-      user: null,
-      token: null,
-      
-      setAuth: (user, token) => {
-        set({ user, token })
-        localStorage.setItem('club_token', token)
-      },
-      
-      logout: () => {
-        set({ user: null, token: null })
-        localStorage.removeItem('club_token')
-      },
-      
-      updateUser: (updates) => set((state) => ({
-        user: state.user ? { ...state.user, ...updates } : null
-      })),
-    }),
-    {
-      name: 'auth-storage',
-      partialize: (state) => ({ user: state.user, token: state.token }),
-    }
-  )
-)
+export const useAuthStore = create((set) => ({
+  user: JSON.parse(localStorage.getItem('user')) || null,
+  token: localStorage.getItem('token') || null,
+  
+  setAuth: (user, token) => {
+    localStorage.setItem('user', JSON.stringify(user))
+    localStorage.setItem('token', token)
+    set({ user, token })
+  },
+  
+  logout: () => {
+    localStorage.removeItem('user')
+    localStorage.removeItem('token')
+    set({ user: null, token: null })
+  }
+}))
