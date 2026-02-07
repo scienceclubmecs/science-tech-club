@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import api from '../services/api'
 import { 
   Users, BookOpen, Upload, UserPlus, Key, Trash2, GraduationCap,
-  Settings, Calendar, Award, FileText, Bell, MessageSquare
+  Settings, Calendar, Award, FileText, Bell, Download
 } from 'lucide-react'
 import Loading from '../components/Loading'
 
@@ -37,10 +37,16 @@ export default function AdminPanel() {
     'CSE Vice Head',
     'AIML Head',
     'AIML Vice Head',
+    'CSD Head',
+    'CSD Vice Head',
     'IT Head',
     'IT Vice Head',
+    'CME Head',
+    'CME Vice Head',
     'Civil Head',
     'Civil Vice Head',
+    'Mech Head',
+    'Mech Vice Head',
     'ECE Head',
     'ECE Vice Head',
     'EEE Head',
@@ -166,7 +172,7 @@ export default function AdminPanel() {
     try {
       await api.put(`/users/${userId}`, { 
         committee_post: post,
-        is_committee: post !== null
+        is_committee: post !== null && post !== ''
       })
       alert('Committee post assigned')
       fetchAllUsers()
@@ -275,6 +281,24 @@ export default function AdminPanel() {
     } catch (error) {
       alert('Failed to approve event')
     }
+  }
+
+  const downloadCSVTemplate = (type) => {
+    let csvContent = ''
+    
+    if (type === 'students') {
+      csvContent = 'surname,email,roll_number,dob,department,year\nMathsa,mathsa@example.com,21R11A0501,2005-06-07,CSE,1\nKumar,kumar@example.com,21R11A0502,2004-12-15,ECE,2'
+    } else {
+      csvContent = 'email,employment_id,department\ndrsmith@college.edu,EMP12345,CSE\nprofjones@college.edu,EMP12346,ECE'
+    }
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${type}_template.csv`
+    a.click()
+    window.URL.revokeObjectURL(url)
   }
 
   if (loading) return <Loading />
@@ -734,42 +758,142 @@ export default function AdminPanel() {
           {/* Upload CSV Tab */}
           {activeTab === 'upload' && (
             <div>
-              <h2 className="text-xl font-bold text-white mb-6">Upload CSV Files</h2>
-              <div className="space-y-6 max-w-3xl">
-                <div className="bg-gray-800 p-6 rounded-lg">
-                  <h3 className="text-lg font-semibold text-white mb-4">Upload Students CSV</h3>
-                  <div className="bg-black border border-gray-700 rounded p-4 mb-4">
-                    <p className="text-gray-400 text-xs font-mono mb-2">CSV Format:</p>
-                    <pre className="text-green-400 text-xs font-mono">
-{`surname,email,roll_number,dob,department,year
-Mathsa,mathsa@example.com,21R11A0501,2005-06-07,CSE,1`}
-                    </pre>
-                    <p className="text-gray-500 text-xs mt-2">Username: Surname + DDMMYY from DOB</p>
-                    <p className="text-gray-500 text-xs">Password: Roll Number</p>
+              <h2 className="text-xl font-bold text-white mb-6">Bulk Upload Users</h2>
+              <p className="text-sm text-gray-400 mb-8">
+                Upload students and faculty in bulk using CSV files. Download templates below.
+              </p>
+              
+              <div className="space-y-8 max-w-4xl">
+                {/* Students CSV */}
+                <div className="bg-gray-800 rounded-xl p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-white">Upload Students CSV</h3>
+                    <button
+                      onClick={() => downloadCSVTemplate('students')}
+                      className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-sm transition"
+                    >
+                      <Download className="w-4 h-4" />
+                      Download Template
+                    </button>
                   </div>
-                  <label className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg cursor-pointer inline-flex transition">
+
+                  <div className="bg-black border border-gray-700 rounded-lg p-4 mb-4">
+                    <p className="text-gray-400 text-xs font-mono mb-3">CSV Format (with header row):</p>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs font-mono">
+                        <thead>
+                          <tr className="text-green-400 border-b border-gray-700">
+                            <th className="text-left py-2 px-2">surname</th>
+                            <th className="text-left py-2 px-2">email</th>
+                            <th className="text-left py-2 px-2">roll_number</th>
+                            <th className="text-left py-2 px-2">dob</th>
+                            <th className="text-left py-2 px-2">department</th>
+                            <th className="text-left py-2 px-2">year</th>
+                          </tr>
+                        </thead>
+                        <tbody className="text-gray-400">
+                          <tr>
+                            <td className="py-2 px-2">Mathsa</td>
+                            <td className="py-2 px-2">mathsa@example.com</td>
+                            <td className="py-2 px-2">21R11A0501</td>
+                            <td className="py-2 px-2">2005-06-07</td>
+                            <td className="py-2 px-2">CSE</td>
+                            <td className="py-2 px-2">1</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-2">Kumar</td>
+                            <td className="py-2 px-2">kumar@example.com</td>
+                            <td className="py-2 px-2">21R11A0502</td>
+                            <td className="py-2 px-2">2004-12-15</td>
+                            <td className="py-2 px-2">ECE</td>
+                            <td className="py-2 px-2">2</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <div className="bg-blue-900/20 border border-blue-700 rounded-lg p-4 mb-4">
+                    <p className="text-blue-300 text-sm mb-2"><strong>Auto-Generated Fields:</strong></p>
+                    <ul className="text-blue-200 text-xs space-y-1">
+                      <li>• <strong>Username:</strong> surname + DDMMYY (e.g., Mathsa070605)</li>
+                      <li>• <strong>Password:</strong> roll_number (e.g., 21R11A0501)</li>
+                    </ul>
+                  </div>
+
+                  <label className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg cursor-pointer transition">
                     <Upload className="w-5 h-5" />
-                    <span>Choose CSV File</span>
+                    <span>Choose Students CSV File</span>
                     <input type="file" accept=".csv" onChange={handleUploadStudents} className="hidden" />
                   </label>
                 </div>
 
-                <div className="bg-gray-800 p-6 rounded-lg">
-                  <h3 className="text-lg font-semibold text-white mb-4">Upload Faculty CSV</h3>
-                  <div className="bg-black border border-gray-700 rounded p-4 mb-4">
-                    <p className="text-gray-400 text-xs font-mono mb-2">CSV Format:</p>
-                    <pre className="text-green-400 text-xs font-mono">
-{`email,employment_id,department
-prof@example.com,EMP12345,CSE`}
-                    </pre>
-                    <p className="text-gray-500 text-xs mt-2">Username: Email prefix (before @)</p>
-                    <p className="text-gray-500 text-xs">Password: Employment ID</p>
+                {/* Faculty CSV */}
+                <div className="bg-gray-800 rounded-xl p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-white">Upload Faculty CSV</h3>
+                    <button
+                      onClick={() => downloadCSVTemplate('faculty')}
+                      className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-sm transition"
+                    >
+                      <Download className="w-4 h-4" />
+                      Download Template
+                    </button>
                   </div>
-                  <label className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg cursor-pointer inline-flex transition">
+
+                  <div className="bg-black border border-gray-700 rounded-lg p-4 mb-4">
+                    <p className="text-gray-400 text-xs font-mono mb-3">CSV Format (with header row):</p>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs font-mono">
+                        <thead>
+                          <tr className="text-green-400 border-b border-gray-700">
+                            <th className="text-left py-2 px-2">email</th>
+                            <th className="text-left py-2 px-2">employment_id</th>
+                            <th className="text-left py-2 px-2">department</th>
+                          </tr>
+                        </thead>
+                        <tbody className="text-gray-400">
+                          <tr>
+                            <td className="py-2 px-2">drsmith@college.edu</td>
+                            <td className="py-2 px-2">EMP12345</td>
+                            <td className="py-2 px-2">CSE</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-2">profjones@college.edu</td>
+                            <td className="py-2 px-2">EMP12346</td>
+                            <td className="py-2 px-2">ECE</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <div className="bg-blue-900/20 border border-blue-700 rounded-lg p-4 mb-4">
+                    <p className="text-blue-300 text-sm mb-2"><strong>Auto-Generated Fields:</strong></p>
+                    <ul className="text-blue-200 text-xs space-y-1">
+                      <li>• <strong>Username:</strong> Email prefix before @ (e.g., drsmith)</li>
+                      <li>• <strong>Password:</strong> employment_id (e.g., EMP12345)</li>
+                    </ul>
+                  </div>
+
+                  <label className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg cursor-pointer transition">
                     <Upload className="w-5 h-5" />
-                    <span>Choose CSV File</span>
+                    <span>Choose Faculty CSV File</span>
                     <input type="file" accept=".csv" onChange={handleUploadFaculty} className="hidden" />
                   </label>
+                </div>
+
+                {/* Upload Instructions */}
+                <div className="bg-yellow-900/20 border border-yellow-700 rounded-xl p-6">
+                  <h3 className="text-yellow-400 font-semibold mb-3">⚠️ Important Instructions</h3>
+                  <ul className="text-yellow-200 text-sm space-y-2">
+                    <li>• CSV file must include header row with exact column names</li>
+                    <li>• Date format must be YYYY-MM-DD (e.g., 2005-06-07)</li>
+                    <li>• All fields are required</li>
+                    <li>• Use the download template button for correct format</li>
+                    <li>• Maximum 1000 rows per upload</li>
+                    <li>• Duplicates will be skipped automatically</li>
+                  </ul>
                 </div>
               </div>
             </div>
@@ -779,53 +903,186 @@ prof@example.com,EMP12345,CSE`}
           {activeTab === 'config' && (
             <div>
               <h2 className="text-xl font-bold text-white mb-6">Website Configuration</h2>
-              <p className="text-sm text-gray-400 mb-6">Manage site settings and customization</p>
+              <p className="text-sm text-gray-400 mb-6">
+                Only accessible by Admin, Developers, and CSE Department Head
+              </p>
               
-              <div className="space-y-4 max-w-2xl">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Site Name</label>
-                  <input
-                    type="text"
-                    defaultValue="Science & Tech Club"
-                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Logo URL</label>
-                  <input
-                    type="url"
-                    placeholder="https://example.com/logo.png"
-                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">GitHub Repository</label>
-                  <input
-                    type="url"
-                    defaultValue="https://github.com/scienceclubmecs/science-tech-club"
-                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Contact Email</label>
-                  <input
-                    type="email"
-                    defaultValue="scienceclubmecs@gmail.com"
-                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white"
-                  />
-                </div>
-                
-                <button className="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg transition">
-                  Save Configuration
-                </button>
-              </div>
+              <SiteConfigEditor />
             </div>
           )}
         </div>
       </div>
+    </div>
+  )
+}
+
+// Site Config Editor Component
+function SiteConfigEditor() {
+  const [config, setConfig] = useState({
+    site_name: 'Science & Tech Club',
+    logo_url: '',
+    git_repo_url: 'https://github.com/scienceclubmecs/science-tech-club',
+    contact_email: 'scienceclubmecs@gmail.com',
+    hero_title: 'Innovate. Create. Inspire.',
+    hero_subtitle: 'Join the premier tech community',
+    theme_color: 'blue'
+  })
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    fetchConfig()
+  }, [])
+
+  const fetchConfig = async () => {
+    try {
+      const { data } = await api.get('/config')
+      if (data) setConfig(data)
+    } catch (error) {
+      console.error('Failed to fetch config:', error)
+    }
+  }
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      await api.put('/config', config)
+      alert('Configuration saved successfully!')
+    } catch (error) {
+      alert('Failed to save configuration')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="space-y-6 max-w-3xl">
+      {/* Club Information */}
+      <div className="bg-gray-800 rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-white mb-4">Club Information</h3>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Club Name</label>
+            <input
+              type="text"
+              value={config.site_name}
+              onChange={(e) => setConfig({ ...config, site_name: e.target.value })}
+              className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Contact Email</label>
+            <input
+              type="email"
+              value={config.contact_email}
+              onChange={(e) => setConfig({ ...config, contact_email: e.target.value })}
+              className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Branding */}
+      <div className="bg-gray-800 rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-white mb-4">Branding</h3>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Club Logo URL</label>
+            <input
+              type="url"
+              value={config.logo_url}
+              onChange={(e) => setConfig({ ...config, logo_url: e.target.value })}
+              placeholder="https://example.com/logo.png"
+              className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white"
+            />
+            {config.logo_url && (
+              <img src={config.logo_url} alt="Logo preview" className="mt-2 h-16 object-contain" />
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Theme Color</label>
+            <div className="flex gap-3">
+              {['blue', 'purple', 'green', 'orange', 'red'].map(color => (
+                <button
+                  key={color}
+                  onClick={() => setConfig({ ...config, theme_color: color })}
+                  className={`w-12 h-12 rounded-lg bg-${color}-600 border-2 ${
+                    config.theme_color === color ? 'border-white' : 'border-transparent'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Home Page Content */}
+      <div className="bg-gray-800 rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-white mb-4">Home Page Content</h3>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Hero Title</label>
+            <input
+              type="text"
+              value={config.hero_title}
+              onChange={(e) => setConfig({ ...config, hero_title: e.target.value })}
+              className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Hero Subtitle</label>
+            <textarea
+              value={config.hero_subtitle}
+              onChange={(e) => setConfig({ ...config, hero_subtitle: e.target.value })}
+              className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white h-20"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Developer Settings */}
+      <div className="bg-gray-800 rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-white mb-4">Developer Settings</h3>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">GitHub Repository</label>
+            <div className="flex gap-2">
+              <input
+                type="url"
+                value={config.git_repo_url}
+                onChange={(e) => setConfig({ ...config, git_repo_url: e.target.value })}
+                className="flex-1 px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white"
+              />
+              <a
+                href={config.git_repo_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg transition"
+              >
+                Open
+              </a>
+            </div>
+          </div>
+
+          <div className="bg-gray-900 rounded-lg p-4">
+            <p className="text-xs text-gray-400 mb-2">⚠️ Developer Access Only</p>
+            <p className="text-xs text-gray-500">
+              Changes to these settings affect the entire website. Only developers and CSE department head have access.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Save Button */}
+      <button
+        onClick={handleSave}
+        disabled={saving}
+        className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 py-3 rounded-lg font-medium transition"
+      >
+        {saving ? 'Saving...' : 'Save Configuration'}
+      </button>
     </div>
   )
 }
