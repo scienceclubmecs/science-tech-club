@@ -1,3 +1,17 @@
+mport express from "express";
+import { createServer } from "http";
+import { Server } from "socket.io";
+import dotenv from "dotenv";
+import cors from "cors";
+import morgan from "morgan";
+
+// Routes
+import authRoutes from "./routes/auth.js";
+import adminRoutes from "./routes/admin.js";
+import configRoutes from "./routes/config.js";
+import chatbotRoutes from "./routes/chatbot.js";
+import coursesRoutes from "./routes/courses.js";
+import chatRoutes from "./routes/chat.js";
 require('dotenv').config();
 const express = require('express');
 const http = require('http');
