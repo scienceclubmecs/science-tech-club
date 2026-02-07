@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import api from '../services/api'
-import { LogIn, Loader2 } from 'lucide-react'
+import { LogIn, Loader2, ArrowLeft } from 'lucide-react'
 
 export default function Login() {
   const [username, setUsername] = useState('')
@@ -29,62 +29,118 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
-      <div className="bg-gray-900 p-8 rounded-xl shadow-2xl w-full max-w-md border border-slate-700">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-blue-400 mb-2">Science & Tech Club</h1>
-          <p className="text-gray-400">Sign in to continue</p>
+    <div className="min-h-screen flex items-center justify-center bg-black px-4">
+      <div className="w-full max-w-md">
+        {/* Back to Home */}
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 text-sm text-neutral-400 hover:text-white mb-8 transition"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back to home</span>
+        </Link>
+
+        {/* Login Card */}
+        <div className="bg-neutral-950 border border-neutral-800 rounded-2xl p-8 shadow-2xl">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 via-cyan-400 to-purple-500 mb-4">
+              <LogIn className="w-6 h-6 text-white" />
+            </div>
+            <h1 className="text-2xl font-semibold text-white mb-2">
+              Welcome back
+            </h1>
+            <p className="text-sm text-neutral-400">
+              Sign in to Science & Tech Club
+            </p>
+          </div>
+
+          {/* Error Message */}
+          {error && (
+            <div className="mb-6 p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm">
+              {error}
+            </div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Username */}
+            <div>
+              <label className="block text-sm font-medium text-neutral-300 mb-2">
+                Username
+              </label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full px-4 py-3 bg-black border border-neutral-800 rounded-xl text-white placeholder-neutral-600 focus:outline-none focus:border-blue-500 transition"
+                placeholder="Enter your username"
+                required
+                disabled={loading}
+              />
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="block text-sm font-medium text-neutral-300 mb-2">
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3 bg-black border border-neutral-800 rounded-xl text-white placeholder-neutral-600 focus:outline-none focus:border-blue-500 transition"
+                placeholder="Enter your password"
+                required
+                disabled={loading}
+              />
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2 bg-white text-black py-3 rounded-xl font-medium hover:bg-neutral-200 disabled:opacity-50 disabled:cursor-not-allowed transition"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Signing in...</span>
+                </>
+              ) : (
+                <>
+                  <LogIn className="w-5 h-5" />
+                  <span>Sign In</span>
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Footer Info */}
+          <div className="mt-6 pt-6 border-t border-neutral-800 text-center">
+            <p className="text-xs text-neutral-500">
+              Need help? Contact{' '}
+              <a href="mailto:scienceclubmecs@gmail.com" className="text-blue-400 hover:text-blue-300">
+                scienceclubmecs@gmail.com
+              </a>
+            </p>
+          </div>
         </div>
 
-        {error && (
-          <div className="mb-4 p-3 bg-red-500/20 border border-red-500 rounded-lg text-red-400 text-sm">
-            {error}
+        {/* Test Credentials (Remove in production) */}
+        <div className="mt-6 p-4 bg-neutral-900/50 border border-neutral-800 rounded-xl">
+          <p className="text-xs text-neutral-500 mb-2 font-medium">Test Credentials:</p>
+          <div className="text-xs text-neutral-400 space-y-1">
+            <div className="flex items-center justify-between">
+              <span>Username:</span>
+              <code className="text-white bg-black px-2 py-1 rounded">admin</code>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>Password:</span>
+              <code className="text-white bg-black px-2 py-1 rounded">admin123</code>
+            </div>
           </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Username</label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-              disabled={loading}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-              disabled={loading}
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white py-3 rounded-lg font-medium transition"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span>Signing in...</span>
-              </>
-            ) : (
-              <>
-                <LogIn className="w-5 h-5" />
-                <span>Sign In</span>
-              </>
-            )}
-          </button>
-        </form>
+        </div>
       </div>
     </div>
   )
