@@ -4,7 +4,7 @@
 
 :root {
   --primary-color: #3b82f6;
-  --watermark-opacity: 0.15;
+  --watermark-opacity: 0.25;
 }
 
 /* Dark Theme (Default) */
@@ -25,7 +25,7 @@
   --text-primary: #000000;
   --text-secondary: #6b7280;
   --border-color: #d1d5db;
-  --watermark-opacity: 0.08;
+  --watermark-opacity: 0.15;
 }
 
 body {
@@ -34,16 +34,16 @@ body {
   position: relative;
 }
 
-/* Club Logo Watermark - BRIGHTER */
+/* Watermark Logo - VERY BRIGHT AND VISIBLE */
 body::before {
   content: '';
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 50%;
-  max-width: 600px;
-  height: 50%;
+  width: 60%;
+  max-width: 900px;
+  height: 60%;
   background-image: url('https://i.ibb.co/v6WM95xK/2.jpg');
   background-size: contain;
   background-repeat: no-repeat;
@@ -51,7 +51,8 @@ body::before {
   opacity: var(--watermark-opacity);
   pointer-events: none;
   z-index: 0;
-  filter: brightness(1.2) contrast(1.1);
+  mix-blend-mode: lighten;
+  filter: brightness(1.5) contrast(1.2);
 }
 
 #root {
