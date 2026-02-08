@@ -1,28 +1,51 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Plus, Search, Filter, X, Code, Users, Calendar, ExternalLink } from 'lucide-react'
 import api from '../services/api'
-import { Award, Users, ExternalLink, Github, Globe, Plus, Filter } from 'lucide-react'
-import Loading from '../components/Loading'
 
 export default function ProjectsPage() {
+  const navigate = useNavigate()
   const [projects, setProjects] = useState([])
-  const [myProjects, setMyProjects] = useState([])
+  const [filteredProjects, setFilteredProjects] = useState([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('all')
-  const [filter, setFilter] = useState('all')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [showFilters, setShowFilters] = useState(false)
+  const [filters, setFilters] = useState({
+    branch: 'all',
+    domain: 'all',
+    status: 'all'
+  })
+
+  const user = JSON.parse(localStorage.getItem('user'))
+
+  const branches = ['CSE', 'AIML', 'CSD', 'IT', 'CME', 'Civil', 'Mech', 'ECE', 'EEE']
+  const domains = [
+    'Web Development',
+    'Mobile Development',
+    'AI/ML',
+    'Data Science',
+    'IoT',
+    'Robotics',
+    'Cloud Computing',
+    'Cybersecurity',
+    'Blockchain',
+    'AR/VR',
+    'Game Development',
+    'DevOps'
+  ]
 
   useEffect(() => {
     fetchProjects()
   }, [])
 
+  useEffect(() => {
+    applyFilters()
+  }, [projects, searchQuery, filters])
+
   const fetchProjects = async () => {
     try {
-      const [allRes, myRes] = await Promise.all([
-        api.get('/projects'),
-        api.get('/projects/my')
-      ])
-      setProjects(allRes.data)
-      setMyProjects(myRes.data)
+      const { data } = await api.get('/projects')
+      setProjects(data)
     } catch (error) {
       console.error('Failed to fetch projects:', error)
     } finally {
@@ -30,230 +53,258 @@ export default function ProjectsPage() {
     }
   }
 
-  const handleJoinProject = async (projectId) => {
-    try {
-      await api.post(`/projects/${projectId}/join`)
-      alert('Successfully joined project!')
-      fetchProjects()
-    } catch (error) {
-      alert(error.response?.data?.message || 'Failed to join project')
+  const applyFilters = () => {
+    let filtered = [...projects]
+
+    // Search filter
+    if (searchQuery) {
+      filtered = filtered.filter(project =>
+        project.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        project.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    }
+
+    // Branch filter
+    if (filters.branch !== 'all') {
+      filtered = filtered.filter(project =>
+        project.branch === filters.branch || project.branches?.includes(filters.branch)
+      )
+    }
+
+    // Domain filter
+    if (filters.domain !== 'all') {
+      filtered = filtered.filter(project =>
+        project.domain === filters.domain ||
+        project.domains?.includes(filters.domain) ||
+        project.tech_stack?.includes(filters.domain)
+      )
+    }
+
+    // Status filter
+    if (filters.status !== 'all') {
+      filtered = filtered.filter(project => project.status === filters.status)
+    }
+
+    setFilteredProjects(filtered)
+  }
+
+  const resetFilters = () => {
+    setFilters({
+      branch: 'all',
+      domain: 'all',
+      status: 'all'
+    })
+    setSearchQuery('')
+  }
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'open': return 'bg-green-600'
+      case 'in_progress': return 'bg-yellow-600'
+      case 'completed': return 'bg-blue-600'
+      case 'closed': return 'bg-gray-600'
+      default: return 'bg-gray-600'
     }
   }
 
-  const filteredProjects = projects.filter(p => {
-    if (filter === 'all') return true
-    if (filter === 'vacancies') return p.vacancies > 0
-    if (filter === 'approved') return p.status === 'approved'
-    if (filter === 'ongoing') return p.status === 'ongoing'
-    return true
-  })
-
-  if (loading) return <Loading />
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black pt-20 flex items-center justify-center">
+        <div className="text-white text-xl">Loading projects...</div>
+      </div>
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-black pt-20 px-4 pb-12">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold mb-2">Projects</h1>
-            <p className="text-gray-400">Explore, create, and collaborate on exciting projects</p>
+            <h1 className="text-4xl font-bold text-white mb-2">Projects</h1>
+            <p className="text-gray-400">Discover and join exciting projects</p>
           </div>
-          <Link
-            to="/projects/create"
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg transition"
-          >
-            <Plus className="w-5 h-5" />
-            Create Project
-          </Link>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex gap-4 mb-6 border-b border-gray-800">
-          <button
-            onClick={() => setActiveTab('all')}
-            className={`px-6 py-3 font-medium ${
-              activeTab === 'all'
-                ? 'text-blue-400 border-b-2 border-blue-400'
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            All Projects ({projects.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('my')}
-            className={`px-6 py-3 font-medium ${
-              activeTab === 'my'
-                ? 'text-blue-400 border-b-2 border-blue-400'
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            My Projects ({myProjects.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('vacancies')}
-            className={`px-6 py-3 font-medium ${
-              activeTab === 'vacancies'
-                ? 'text-blue-400 border-b-2 border-blue-400'
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            Join Projects ({projects.filter(p => p.vacancies > 0).length})
-          </button>
-        </div>
-
-        {/* Filter */}
-        {activeTab === 'all' && (
-          <div className="flex items-center gap-3 mb-6">
-            <Filter className="w-5 h-5 text-gray-400" />
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              className="bg-gray-900 border border-gray-800 rounded-lg px-4 py-2 text-white"
+          
+          {(user?.role === 'admin' || user?.role === 'faculty' || user?.is_committee) && (
+            <button
+              onClick={() => navigate('/projects/create')}
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg transition"
             >
-              <option value="all">All Projects</option>
-              <option value="vacancies">With Vacancies</option>
-              <option value="approved">Approved</option>
-              <option value="ongoing">Ongoing</option>
-            </select>
+              <Plus className="w-5 h-5" />
+              Create Project
+            </button>
+          )}
+        </div>
+
+        {/* Search and Filters */}
+        <div className="mb-8 space-y-4">
+          <div className="flex flex-col md:flex-row gap-4">
+            {/* Search Bar */}
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search projects..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-11 pr-4 py-3 bg-gray-900 border border-gray-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-600"
+              />
+            </div>
+
+            {/* Filter Toggle */}
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2 bg-gray-900 hover:bg-gray-800 border border-gray-800 px-6 py-3 rounded-lg transition"
+            >
+              <Filter className="w-5 h-5" />
+              Filters
+              {(filters.branch !== 'all' || filters.domain !== 'all' || filters.status !== 'all') && (
+                <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+              )}
+            </button>
           </div>
-        )}
+
+          {/* Filter Options */}
+          {showFilters && (
+            <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-white">Filters</h3>
+                <button
+                  onClick={resetFilters}
+                  className="text-sm text-blue-400 hover:text-blue-300"
+                >
+                  Reset All
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Branch Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Branch
+                  </label>
+                  <select
+                    value={filters.branch}
+                    onChange={(e) => setFilters({ ...filters, branch: e.target.value })}
+                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-600"
+                  >
+                    <option value="all">All Branches</option>
+                    {branches.map(branch => (
+                      <option key={branch} value={branch}>{branch}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Domain Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Domain
+                  </label>
+                  <select
+                    value={filters.domain}
+                    onChange={(e) => setFilters({ ...filters, domain: e.target.value })}
+                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-600"
+                  >
+                    <option value="all">All Domains</option>
+                    {domains.map(domain => (
+                      <option key={domain} value={domain}>{domain}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Status Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Status
+                  </label>
+                  <select
+                    value={filters.status}
+                    onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-600"
+                  >
+                    <option value="all">All Status</option>
+                    <option value="open">Open</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                    <option value="closed">Closed</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Results Count */}
+        <div className="mb-6 text-gray-400">
+          Showing {filteredProjects.length} of {projects.length} projects
+        </div>
 
         {/* Projects Grid */}
-        {activeTab === 'all' && (
+        {filteredProjects.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProjects.map(project => (
-              <ProjectCard key={project.id} project={project} onJoin={handleJoinProject} />
+            {filteredProjects.map((project) => (
+              <div
+                key={project.id}
+                className="bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-gray-700 transition group cursor-pointer"
+                onClick={() => navigate(`/projects/${project.id}`)}
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <h3 className="text-xl font-bold text-white group-hover:text-blue-400 transition">
+                    {project.title}
+                  </h3>
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}>
+                    {project.status?.replace('_', ' ')}
+                  </span>
+                </div>
+
+                <p className="text-gray-400 mb-4 line-clamp-3">
+                  {project.description}
+                </p>
+
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {project.tech_stack?.slice(0, 3).map((tech, idx) => (
+                    <span key={idx} className="px-2 py-1 bg-gray-800 rounded text-xs text-gray-300">
+                      {tech}
+                    </span>
+                  ))}
+                  {project.tech_stack?.length > 3 && (
+                    <span className="px-2 py-1 bg-gray-800 rounded text-xs text-gray-500">
+                      +{project.tech_stack.length - 3} more
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between text-sm text-gray-500">
+                  <div className="flex items-center gap-4">
+                    {project.vacancies > 0 && (
+                      <div className="flex items-center gap-1">
+                        <Users className="w-4 h-4" />
+                        {project.vacancies} spots
+                      </div>
+                    )}
+                    {project.created_at && (
+                      <div className="flex items-center gap-1">
+                        <Calendar className="w-4 h-4" />
+                        {new Date(project.created_at).toLocaleDateString()}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
-        )}
-
-        {activeTab === 'my' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {myProjects.length === 0 ? (
-              <div className="col-span-full text-center py-12">
-                <Award className="w-16 h-16 mx-auto mb-4 text-gray-700" />
-                <p className="text-gray-500 mb-4">You haven't created any projects yet</p>
-                <Link
-                  to="/projects/create"
-                  className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg transition"
-                >
-                  <Plus className="w-5 h-5" />
-                  Create Your First Project
-                </Link>
-              </div>
-            ) : (
-              myProjects.map(project => (
-                <ProjectCard key={project.id} project={project} isOwner />
-              ))
-            )}
+        ) : (
+          <div className="text-center py-20">
+            <Code className="w-16 h-16 mx-auto mb-4 text-gray-700" />
+            <h3 className="text-xl font-semibold text-gray-400 mb-2">No projects found</h3>
+            <p className="text-gray-500 mb-6">Try adjusting your filters or search query</p>
+            <button
+              onClick={resetFilters}
+              className="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg transition"
+            >
+              Clear Filters
+            </button>
           </div>
-        )}
-
-        {activeTab === 'vacancies' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {projects.filter(p => p.vacancies > 0).length === 0 ? (
-              <div className="col-span-full text-center py-12">
-                <Users className="w-16 h-16 mx-auto mb-4 text-gray-700" />
-                <p className="text-gray-500">No projects with vacancies at the moment</p>
-              </div>
-            ) : (
-              projects
-                .filter(p => p.vacancies > 0)
-                .map(project => (
-                  <ProjectCard key={project.id} project={project} onJoin={handleJoinProject} showJoinButton />
-                ))
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-function ProjectCard({ project, onJoin, isOwner, showJoinButton }) {
-  return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-gray-700 transition">
-      {project.image_url && (
-        <img src={project.image_url} alt={project.title} className="w-full h-40 object-cover rounded-lg mb-4" />
-      )}
-      
-      <div className="flex items-start justify-between mb-3">
-        <h3 className="text-xl font-bold">{project.title}</h3>
-        <span className={`px-2 py-1 rounded text-xs ${
-          project.status === 'approved' ? 'bg-green-600' :
-          project.status === 'ongoing' ? 'bg-blue-600' :
-          project.status === 'pending' ? 'bg-yellow-600' :
-          project.status === 'completed' ? 'bg-purple-600' :
-          'bg-red-600'
-        }`}>
-          {project.status}
-        </span>
-      </div>
-
-      <p className="text-gray-400 text-sm mb-4 line-clamp-3">{project.description}</p>
-
-      {project.skills_required && project.skills_required.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-4">
-          {project.skills_required.slice(0, 3).map(skill => (
-            <span key={skill} className="px-2 py-1 bg-gray-800 rounded text-xs text-gray-300">
-              {skill}
-            </span>
-          ))}
-        </div>
-      )}
-
-      <div className="flex items-center gap-4 mb-4 text-sm text-gray-400">
-        {project.vacancies > 0 && (
-          <div className="flex items-center gap-1">
-            <Users className="w-4 h-4" />
-            <span>{project.vacancies} slots</span>
-          </div>
-        )}
-        {project.creator && (
-          <span className="text-xs">By: {project.creator.username}</span>
-        )}
-      </div>
-
-      <div className="flex items-center gap-2">
-        {project.github_url && (
-          <a
-            href={project.github_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="p-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition"
-          >
-            <Github className="w-4 h-4" />
-          </a>
-        )}
-        {project.demo_url && (
-          <a
-            href={project.demo_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="p-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition"
-          >
-            <Globe className="w-4 h-4" />
-          </a>
-        )}
-        
-        {showJoinButton && project.vacancies > 0 && (
-          <button
-            onClick={() => onJoin(project.id)}
-            className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm transition"
-          >
-            <Users className="w-4 h-4" />
-            Join Project
-          </button>
-        )}
-        
-        {isOwner && (
-          <Link
-            to={`/projects/${project.id}/edit`}
-            className="flex-1 text-center bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-lg text-sm transition"
-          >
-            Edit
-          </Link>
         )}
       </div>
     </div>
