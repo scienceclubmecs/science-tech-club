@@ -1,122 +1,94 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
-import { useAuthStore } from '../store/authStore'
+import { useNavigate } from 'react-router-dom'
+import { Mail, Lock, AlertCircle } from 'lucide-react'
 import api from '../services/api'
-import { LogIn, Loader2, ArrowLeft } from 'lucide-react'
 
-export default function Login() {
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+export default function Login({ setUser }) {
   const navigate = useNavigate()
-  const setAuth = useAuthStore((state) => state.setAuth)
+  const [formData, setFormData] = useState({ email: '', password: '' })
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setLoading(true)
     setError('')
+    setLoading(true)
 
     try {
-      const { data } = await api.post('/auth/login', { username, password })
-      setAuth(data.user, data.token)
+      const { data } = await api.post('/auth/login', formData)
+      localStorage.setItem('token', data.token)
+      localStorage.setItem('user', JSON.stringify(data.user))
+      setUser(data.user)
       navigate('/dashboard')
-    } catch (err) {
-      setError(err.response?.data?.message || 'Login failed')
+    } catch (error) {
+      console.error('Login error:', error)
+      setError(error.response?.data?.message || 'Login failed. Please check your credentials.')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black px-4">
-      <div className="w-full max-w-md">
-        <Link
-          to="/"
-          className="inline-flex items-center gap-2 text-sm text-neutral-400 hover:text-white mb-8 transition"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back to home</span>
-        </Link>
-
-        <div className="bg-neutral-950 border border-neutral-800 rounded-2xl p-8 shadow-2xl">
-          <div className="text-center mb-8">
-            <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 via-cyan-400 to-purple-500 mb-4">
-              <LogIn className="w-6 h-6 text-white" />
-            </div>
-            <h1 className="text-2xl font-semibold text-white mb-2">
-              Welcome back
-            </h1>
-            <p className="text-sm text-neutral-400">
-              Sign in to Science & Tech Club
-            </p>
+    <div className="min-h-screen bg-black flex items-center justify-center px-4">
+      <div className="max-w-md w-full">
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl mx-auto mb-4 flex items-center justify-center text-3xl font-bold">
+            S
           </div>
+          <h1 className="text-3xl font-bold text-white mb-2">Welcome Back</h1>
+          <p className="text-gray-400">Science & Tech Club - MECS</p>
+        </div>
 
-          {error && (
-            <div className="mb-6 p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm">
-              {error}
-            </div>
-          )}
+        {error && (
+          <div className="bg-red-900/20 border border-red-800 rounded-lg p-4 mb-6 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+            <p className="text-red-400 text-sm">{error}</p>
+          </div>
+        )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-neutral-300 mb-2">
-                Username
-              </label>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label className="block text-white mb-2 text-sm font-medium">Email</label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
               <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-4 py-3 bg-black border border-neutral-800 rounded-xl text-white placeholder-neutral-600 focus:outline-none focus:border-blue-500 transition"
-                placeholder="Enter your username"
+                type="email"
                 required
-                disabled={loading}
+                value={formData.email}
+                onChange={(e) => setFormData({...formData, email: e.target.value})}
+                className="w-full pl-12 pr-4 py-3 bg-gray-900 border border-gray-800 rounded-lg text-white focus:outline-none focus:border-blue-600 transition"
+                placeholder="your.email@mecs.ac.in"
               />
             </div>
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-neutral-300 mb-2">
-                Password
-              </label>
+          <div>
+            <label className="block text-white mb-2 text-sm font-medium">Password</label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
               <input
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 bg-black border border-neutral-800 rounded-xl text-white placeholder-neutral-600 focus:outline-none focus:border-blue-500 transition"
-                placeholder="Enter your password"
                 required
-                disabled={loading}
+                value={formData.password}
+                onChange={(e) => setFormData({...formData, password: e.target.value})}
+                className="w-full pl-12 pr-4 py-3 bg-gray-900 border border-gray-800 rounded-lg text-white focus:outline-none focus:border-blue-600 transition"
+                placeholder="Enter your password"
               />
             </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-2 bg-white text-black py-3 rounded-xl font-medium hover:bg-neutral-200 disabled:opacity-50 disabled:cursor-not-allowed transition"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Signing in...</span>
-                </>
-              ) : (
-                <>
-                  <LogIn className="w-5 h-5" />
-                  <span>Sign In</span>
-                </>
-              )}
-            </button>
-          </form>
-
-          <div className="mt-6 pt-6 border-t border-neutral-800 text-center">
-            <p className="text-xs text-neutral-500">
-              Need help? Contact{' '}
-              <a href="mailto:scienceclubmecs@gmail.com" className="text-blue-400 hover:text-blue-300">
-                scienceclubmecs@gmail.com
-              </a>
-            </p>
           </div>
-        </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 py-3 rounded-lg font-medium transition"
+          >
+            {loading ? 'Logging in...' : 'Login'}
+          </button>
+        </form>
+
+        <p className="text-center text-gray-500 text-sm mt-6">
+          Contact admin for registration
+        </p>
       </div>
     </div>
   )
