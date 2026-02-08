@@ -289,6 +289,33 @@ export default function Home() {
           </div>
         </div>
       </section>
+      {/* CTA Section - Find this and ADD the NDLI button */}
+<section className="py-24 px-4 bg-gradient-to-br from-blue-900 via-purple-900 to-pink-900">
+  <div className="max-w-4xl mx-auto text-center">
+    <h2 className="text-4xl font-bold mb-6">Ready to Get Started?</h2>
+    <p className="text-xl text-gray-300 mb-8">
+      Join our community and start your journey in tech today
+    </p>
+    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+      <Link
+        to="/login"
+        className="bg-white text-blue-900 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-100 transition"
+      >
+        Login to Portal
+      </Link>
+      {/* NEW NDLI BUTTON */}
+      <a
+        href="https://club.ndl.iitkgp.ac.in/sign-in"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="bg-gradient-to-r from-green-600 to-teal-600 px-8 py-4 rounded-lg font-semibold text-lg hover:from-green-700 hover:to-teal-700 transition"
+      >
+        Visit NDLI Portal →
+      </a>
+    </div>
+  </div>
+</section>
+
 
       {/* Footer */}
       <footer className="py-12 border-t border-gray-900 px-4 bg-black">
