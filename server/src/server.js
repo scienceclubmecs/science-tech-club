@@ -16,6 +16,27 @@ app.use((req, res, next) => {
   next();
 });
 
+// Health check endpoint with Supabase test
+app.get('/api/health', async (req, res) => {
+  const supabase = require('./config/supabase');
+  
+  let dbStatus = 'unknown';
+  try {
+    const { data, error } = await supabase.from('users').select('count').limit(1);
+    dbStatus = error ? 'error' : 'connected';
+  } catch (err) {
+    dbStatus = 'error';
+  }
+
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    database: dbStatus,
+    supabaseConfigured: !!(process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY)
+  });
+});
+
 // API Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/users'));
@@ -25,15 +46,6 @@ app.use('/api/quizzes', require('./routes/quizzes'));
 app.use('/api/events', require('./routes/events'));
 app.use('/api/public', require('./routes/public'));
 app.use('/api/config', require('./routes/config'));
-
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
-  });
-});
 
 // Serve static files from React build in production
 if (process.env.NODE_ENV === 'production') {
@@ -60,7 +72,7 @@ app.use((err, req, res, next) => {
   console.error('Error:', err);
   res.status(err.status || 500).json({
     message: err.message || 'Internal server error',
-    error: process.env.NODE_ENV === 'development' ? err : {}
+    error: process.env.NODE_ENV === 'development' ? err.stack : {}
   });
 });
 
@@ -75,6 +87,7 @@ app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📡 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🔗 API Base: http://localhost:${PORT}/api`);
+  console.log(`🔧 Supabase: ${process.env.SUPABASE_URL ? '✓ Configured' : '✗ Not configured'}`);
 });
 
 module.exports = app;
