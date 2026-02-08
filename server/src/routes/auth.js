@@ -1,55 +1,77 @@
 const express = require('express');
 const router = express.Router();
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const supabase = require('../config/supabase');
-const auth = require('../middleware/auth'); 
+const auth = require('../middleware/auth');
 
-// Login with username
+// Register
+router.post('/register', async (req, res) => {
+  try {
+    const { username, email, password, role = 'student' } = req.body;
+
+    // Check if user exists
+    const { data: existing } = await supabase
+      .from('users')
+      .select('*')
+      .or(`username.eq.${username},email.eq.${email}`)
+      .single();
+
+    if (existing) {
+      return res.status(400).json({ message: 'User already exists' });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user
+    const { data: user, error } = await supabase
+      .from('users')
+      .insert([
+        {
+          username,
+          email,
+          password: hashedPassword,
+          role
+        }
+      ])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.status(201).json({ message: 'User created successfully', userId: user.id });
+  } catch (error) {
+    console.error('Registration error:', error);
+    res.status(500).json({ message: 'Registration failed' });
+  }
+});
+
+// Login
 router.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    console.log('Login attempt for username:', username);
-
-    if (!username || !password) {
-      return res.status(400).json({ message: 'Username and password required' });
-    }
-
-    // Check if Supabase is configured
-    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
-      console.error('Supabase credentials missing!');
-      return res.status(500).json({ message: 'Server configuration error' });
-    }
-
-    // Get user by username
+    // Find user
     const { data: user, error } = await supabase
       .from('users')
       .select('*')
       .eq('username', username)
       .single();
 
-    if (error) {
-      console.error('Supabase error:', error);
-      if (error.code === 'PGRST116') {
-        return res.status(401).json({ message: 'Invalid username or password' });
-      }
-      return res.status(500).json({ message: 'Database error', details: error.message });
+    if (error || !user) {
+      return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    if (!user) {
-      return res.status(401).json({ message: 'Invalid username or password' });
-    }
-
-    // Verify password
-    const isValidPassword = await bcrypt.compare(password, user.password);
-    if (!isValidPassword) {
-      return res.status(401).json({ message: 'Invalid username or password' });
+    // Check password
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) {
+      return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     // Generate token
     const token = jwt.sign(
-      { userId: user.id, role: user.role },
+      { id: user.id, username: user.username, role: user.role },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '7d' }
     );
@@ -57,87 +79,42 @@ router.post('/login', async (req, res) => {
     // Remove password from response
     delete user.password;
 
-    console.log('Login successful for user:', user.username);
     res.json({ token, user });
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ message: 'Login failed', error: error.message });
+    res.status(500).json({ message: 'Login failed' });
   }
 });
-// Add this route to your existing auth.js file
+
+// Verify Token (for page refresh/reload)
 router.get('/verify', auth, async (req, res) => {
   try {
     const { data: user, error } = await supabase
       .from('users')
       .select('*')
       .eq('id', req.user.id)
-      .single()
+      .single();
     
-    if (error) throw error
+    if (error) throw error;
     
     // Remove password from response
-    delete user.password
+    delete user.password;
     
-    res.json({ user })
+    res.json({ user });
   } catch (error) {
-    res.status(401).json({ message: 'Invalid token' })
+    console.error('Verification error:', error);
+    res.status(401).json({ message: 'Invalid token' });
   }
-})
+});
 
-// Register
-router.post('/register', async (req, res) => {
+// Logout (optional - client-side handles token removal)
+router.post('/logout', auth, async (req, res) => {
   try {
-    const { email, password, username, role, department } = req.body;
-
-    if (!username || !password) {
-      return res.status(400).json({ message: 'Username and password required' });
-    }
-
-    // Check if username already exists
-    const { data: existing } = await supabase
-      .from('users')
-      .select('username')
-      .eq('username', username)
-      .single();
-
-    if (existing) {
-      return res.status(400).json({ message: 'Username already exists' });
-    }
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create user
-    const { data, error } = await supabase
-      .from('users')
-      .insert([{
-        email: email || `${username}@mecs.ac.in`,
-        password: hashedPassword,
-        username,
-        role: role || 'student',
-        department: department || 'Not specified'
-      }])
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Registration error:', error);
-      return res.status(400).json({ message: 'Registration failed', details: error.message });
-    }
-
-    // Generate token
-    const token = jwt.sign(
-      { userId: data.id, role: data.role },
-      process.env.JWT_SECRET || 'your-secret-key',
-      { expiresIn: '7d' }
-    );
-
-    delete data.password;
-
-    res.status(201).json({ token, user: data });
+    // In a stateless JWT system, logout is typically handled client-side
+    // by removing the token from localStorage
+    res.json({ message: 'Logged out successfully' });
   } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({ message: 'Registration failed', error: error.message });
+    res.status(500).json({ message: 'Logout failed' });
   }
 });
 
