@@ -5,7 +5,8 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 const app = express();
-
+const messagesRoutes = require('./routes/messages');
+const tasksRoutes = require('./routes/tasks');
 // Middleware
 app.use(cors({
   origin: [
@@ -24,6 +25,9 @@ app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
   next();
 });
+
+app.use('/api/messages', messagesRoutes);
+app.use('/api/tasks', tasksRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
