@@ -87,7 +87,7 @@ export default function Home() {
               Science & Technology Club
             </span>
           </h1>
-          <h2 className="text-2xl md:text-3xl font-bold mb-6">
+          <h2 className="text-2xl md:text-3xl  mb-6">
             <span className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
               Innovation In Progress
             </span>
