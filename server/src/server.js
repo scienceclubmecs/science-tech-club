@@ -99,6 +99,7 @@ try {
   const adminRoutes = require('./routes/admin');
   const announcementsRoutes = require('./routes/announcements');
   const publicRoutes = require('./routes/public');
+  const chatbotRoutes = require('./routes/chatbot');
 
   app.use('/api/auth', authRoutes);
   app.use('/api/users', usersRoutes);
@@ -110,6 +111,7 @@ try {
   app.use('/api/admin', adminRoutes);
   app.use('/api/announcements', announcementsRoutes);
   app.use('/api/public', publicRoutes);
+  app.use('/api/chatbot', chatbotRoutes);
 
   console.log('✅ All routes loaded successfully');
 } catch (error) {
