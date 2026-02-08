@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const supabase = require('../config/supabase');
 const auth = require('../middleware/auth');
+const bcrypt = require('bcryptjs');
+
 
 // Get current user profile
 router.get('/profile', auth, async (req, res) => {
@@ -246,6 +248,199 @@ router.delete('/:id', auth, async (req, res) => {
       message: 'Failed to delete user',
       error: error.message 
     });
+  }
+});
+
+// Change own password (any user)
+router.put('/change-password', auth, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'Current and new password required' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: 'New password must be at least 6 characters' });
+    }
+
+    // Get current user with password
+    const { data: user, error: fetchError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', req.user.id)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    // Verify current password
+    const validPassword = await bcrypt.compare(currentPassword, user.password);
+    if (!validPassword) {
+      return res.status(401).json({ message: 'Current password is incorrect' });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({ password: hashedPassword, updated_at: new Date().toISOString() })
+      .eq('id', req.user.id);
+
+    if (updateError) throw updateError;
+
+    res.json({ message: 'Password changed successfully' });
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({ message: 'Failed to change password', error: error.message });
+  }
+});
+
+// Admin/Committee reset user password
+router.put('/:id/reset-password', auth, async (req, res) => {
+  try {
+    const { newPassword } = req.body;
+
+    // Check if user has permission (admin or committee)
+    if (req.user.role !== 'admin' && !req.user.is_committee) {
+      return res.status(403).json({ message: 'Only admins and committee members can reset passwords' });
+    }
+
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ message: 'New password must be at least 6 characters' });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update user password
+    const { error } = await supabase
+      .from('users')
+      .update({ 
+        password: hashedPassword, 
+        updated_at: new Date().toISOString() 
+      })
+      .eq('id', req.params.id);
+
+    if (error) throw error;
+
+    res.json({ message: 'Password reset successfully' });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ message: 'Failed to reset password', error: error.message });
+  }
+});
+
+// Request password reset (any user can request)
+router.post('/request-password-reset', auth, async (req, res) => {
+  try {
+    const { reason } = req.body;
+
+    // Create password reset request
+    const { data, error } = await supabase
+      .from('password_reset_requests')
+      .insert([{
+        user_id: req.user.id,
+        username: req.user.username,
+        email: req.user.email,
+        reason: reason || 'Forgot password',
+        status: 'pending',
+        requested_at: new Date().toISOString()
+      }])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.json({ 
+      message: 'Password reset request submitted. Admin/Committee will process it soon.',
+      request: data 
+    });
+  } catch (error) {
+    console.error('Request password reset error:', error);
+    res.status(500).json({ message: 'Failed to submit request', error: error.message });
+  }
+});
+
+// Get password reset requests (admin/committee only)
+router.get('/password-reset-requests', auth, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin' && !req.user.is_committee) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    const { data, error } = await supabase
+      .from('password_reset_requests')
+      .select('*')
+      .order('requested_at', { ascending: false });
+
+    if (error) throw error;
+
+    res.json(data || []);
+  } catch (error) {
+    console.error('Fetch reset requests error:', error);
+    res.status(500).json({ message: 'Failed to fetch requests', error: error.message });
+  }
+});
+
+// Approve/Reject password reset request (admin/committee only)
+router.put('/password-reset-requests/:id', auth, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin' && !req.user.is_committee) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    const { status, new_password } = req.body;
+
+    if (status === 'approved' && new_password) {
+      // Get the request
+      const { data: request, error: fetchError } = await supabase
+        .from('password_reset_requests')
+        .select('*')
+        .eq('id', req.params.id)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Hash new password
+      const hashedPassword = await bcrypt.hash(new_password, 10);
+
+      // Update user password
+      await supabase
+        .from('users')
+        .update({ password: hashedPassword, updated_at: new Date().toISOString() })
+        .eq('id', request.user_id);
+
+      // Update request status
+      await supabase
+        .from('password_reset_requests')
+        .update({ 
+          status: 'approved', 
+          processed_by: req.user.id,
+          processed_at: new Date().toISOString()
+        })
+        .eq('id', req.params.id);
+
+      res.json({ message: 'Password reset approved and updated' });
+    } else if (status === 'rejected') {
+      // Update request status
+      await supabase
+        .from('password_reset_requests')
+        .update({ 
+          status: 'rejected',
+          processed_by: req.user.id,
+          processed_at: new Date().toISOString()
+        })
+        .eq('id', req.params.id);
+
+      res.json({ message: 'Password reset request rejected' });
+    } else {
+      res.status(400).json({ message: 'Invalid status or missing new_password' });
+    }
+  } catch (error) {
+    console.error('Process reset request error:', error);
+    res.status(500).json({ message: 'Failed to process request', error: error.message });
   }
 });
 
