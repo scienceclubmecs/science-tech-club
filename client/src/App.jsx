@@ -20,6 +20,7 @@ import ProfilePage from './pages/ProfilePage'
 import ChatbotButton from './components/ChatbotButton'
 import { ThemeProvider } from './components/ThemeProvider'
 import api from './services/api'
+import MessagesPage from './pages/MessagesPage'
 
 function AppContent() {
   const [user, setUser] = useState(null)
@@ -99,7 +100,7 @@ function AppContent() {
           path="/committee/team" 
           element={user?.is_committee ? <TeamViewPage /> : <Navigate to="/dashboard" />} 
         />
-        
+        <Route path="/messages/*" element={<MessagesPage />} />
         <Route 
           path="/profile" 
           element={user ? <ProfilePage /> : <Navigate to="/login" />} 
