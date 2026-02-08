@@ -19,23 +19,25 @@ app.use((req, res, next) => {
 
 // Health check endpoint
 app.get('/api/health', async (req, res) => {
-  const supabase = require('./config/supabase');
-  
-  let dbStatus = 'unknown';
   try {
+    const supabase = require('./config/supabase');
     const { data, error } = await supabase.from('users').select('count').limit(1);
-    dbStatus = error ? 'error' : 'connected';
+    const dbStatus = error ? 'error' : 'connected';
+    
+    res.json({ 
+      status: 'ok', 
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development',
+      database: dbStatus,
+      supabaseConfigured: !!(process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY)
+    });
   } catch (err) {
-    dbStatus = 'error';
+    res.json({ 
+      status: 'error', 
+      database: 'error',
+      message: err.message 
+    });
   }
-
-  res.json({ 
-    status: 'ok', 
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development',
-    database: dbStatus,
-    supabaseConfigured: !!(process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY)
-  });
 });
 
 // API Routes
@@ -48,16 +50,16 @@ app.use('/api/events', require('./routes/events'));
 app.use('/api/public', require('./routes/public'));
 app.use('/api/config', require('./routes/config'));
 
-// Serve static files from React build - FIXED PATH
+// Serve static files from React build - CORRECTED PATH
 const clientBuildPath = path.resolve(process.cwd(), 'client/dist');
 const indexHtmlPath = path.join(clientBuildPath, 'index.html');
 
 console.log('🔍 Looking for frontend at:', clientBuildPath);
 console.log('📄 index.html:', fs.existsSync(indexHtmlPath) ? '✓ FOUND' : '✗ MISSING');
-console.log('📁 dist contents:', fs.existsSync(clientBuildPath) ? fs.readdirSync(clientBuildPath).join(', ') : 'DIR MISSING');
 
 if (fs.existsSync(clientBuildPath)) {
   console.log('✅ Serving static files');
+  console.log('📁 dist contents:', fs.readdirSync(clientBuildPath).join(', '));
   
   app.use(express.static(clientBuildPath));
   
@@ -72,15 +74,16 @@ if (fs.existsSync(clientBuildPath)) {
     res.json({ 
       message: 'Science & Tech Club API Server',
       status: 'running',
+      environment: process.env.NODE_ENV || 'development',
       note: 'Frontend not built. Check build logs.',
       debug: {
         clientBuildPath,
-        indexHtmlPathExists: fs.existsSync(indexHtmlPath)
+        indexHtmlPathExists: fs.existsSync(indexHtmlPath),
+        cwd: process.cwd()
       }
     });
   });
-}
-
+  
   app.get('*', (req, res) => {
     res.status(404).json({ 
       message: 'Frontend not deployed',
@@ -101,6 +104,11 @@ app.use((err, req, res, next) => {
     message: err.message || 'Internal server error',
     error: process.env.NODE_ENV === 'development' ? err.stack : {}
   });
+});
+
+// 404 handler for API routes
+app.use('/api/*', (req, res) => {
+  res.status(404).json({ message: 'API endpoint not found' });
 });
 
 const PORT = process.env.PORT || 5000;
