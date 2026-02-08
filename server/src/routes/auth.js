@@ -63,6 +63,25 @@ router.post('/login', async (req, res) => {
     res.status(500).json({ message: 'Login failed', error: error.message });
   }
 });
+// Add this route to your existing auth.js file
+router.get('/verify', auth, async (req, res) => {
+  try {
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', req.user.id)
+      .single()
+    
+    if (error) throw error
+    
+    // Remove password from response
+    delete user.password
+    
+    res.json({ user })
+  } catch (error) {
+    res.status(401).json({ message: 'Invalid token' })
+  }
+})
 
 // Register
 router.post('/register', async (req, res) => {
