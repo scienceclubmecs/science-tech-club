@@ -9,8 +9,16 @@ router.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
 
+    console.log('Login attempt for username:', username);
+
     if (!username || !password) {
       return res.status(400).json({ message: 'Username and password required' });
+    }
+
+    // Check if Supabase is configured
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
+      console.error('Supabase credentials missing!');
+      return res.status(500).json({ message: 'Server configuration error' });
     }
 
     // Get user by username
@@ -20,7 +28,15 @@ router.post('/login', async (req, res) => {
       .eq('username', username)
       .single();
 
-    if (error || !user) {
+    if (error) {
+      console.error('Supabase error:', error);
+      if (error.code === 'PGRST116') {
+        return res.status(401).json({ message: 'Invalid username or password' });
+      }
+      return res.status(500).json({ message: 'Database error', details: error.message });
+    }
+
+    if (!user) {
       return res.status(401).json({ message: 'Invalid username or password' });
     }
 
@@ -40,17 +56,22 @@ router.post('/login', async (req, res) => {
     // Remove password from response
     delete user.password;
 
+    console.log('Login successful for user:', user.username);
     res.json({ token, user });
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ message: 'Login failed' });
+    res.status(500).json({ message: 'Login failed', error: error.message });
   }
 });
 
-// Register (admin only in production)
+// Register
 router.post('/register', async (req, res) => {
   try {
     const { email, password, username, role, department } = req.body;
+
+    if (!username || !password) {
+      return res.status(400).json({ message: 'Username and password required' });
+    }
 
     // Check if username already exists
     const { data: existing } = await supabase
@@ -70,18 +91,18 @@ router.post('/register', async (req, res) => {
     const { data, error } = await supabase
       .from('users')
       .insert([{
-        email,
+        email: email || `${username}@mecs.ac.in`,
         password: hashedPassword,
         username,
         role: role || 'student',
-        department
+        department: department || 'Not specified'
       }])
       .select()
       .single();
 
     if (error) {
       console.error('Registration error:', error);
-      return res.status(400).json({ message: 'Registration failed' });
+      return res.status(400).json({ message: 'Registration failed', details: error.message });
     }
 
     // Generate token
@@ -96,7 +117,7 @@ router.post('/register', async (req, res) => {
     res.status(201).json({ token, user: data });
   } catch (error) {
     console.error('Registration error:', error);
-    res.status(500).json({ message: 'Registration failed' });
+    res.status(500).json({ message: 'Registration failed', error: error.message });
   }
 });
 
