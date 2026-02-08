@@ -1,28 +1,16 @@
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { User, Mail, Phone, MapPin, Calendar, Edit2, Save, X, Upload } from 'lucide-react'
 import api from '../services/api'
-import { Camera, Save, User } from 'lucide-react'
 import Loading from '../components/Loading'
-import ChangePasswordModal from '../components/ChangePasswordModal'
 
 export default function ProfilePage() {
+  const navigate = useNavigate()
   const [profile, setProfile] = useState(null)
   const [editing, setEditing] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [formData, setFormData] = useState({
-    email: '',
-    department: '',
-    year: 1,
-    interests: [],
-    research_interests: '',
-    profile_photo_url: ''
-  })
-
-  const interestOptions = [
-    'Web Development', 'Mobile Development', 'AI/ML', 'Data Science',
-    'IoT', 'Robotics', 'Cloud Computing', 'Cybersecurity',
-    'Blockchain', 'AR/VR', 'Game Development', 'DevOps'
-  ]
+  const [editedProfile, setEditedProfile] = useState({})
 
   useEffect(() => {
     fetchProfile()
@@ -32,321 +20,307 @@ export default function ProfilePage() {
     try {
       const { data } = await api.get('/users/profile')
       setProfile(data)
-      setFormData({
-        email: data.email || '',
-        department: data.department || '',
-        year: data.year || 1,
-        interests: data.interests || [],
-        research_interests: data.research_interests || '',
-        profile_photo_url: data.profile_photo_url || ''
-      })
+      setEditedProfile(data)
     } catch (error) {
       console.error('Failed to fetch profile:', error)
+      if (error.response?.status === 401) {
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        navigate('/login')
+      }
     } finally {
       setLoading(false)
     }
   }
 
+  const handleEdit = () => {
+    setEditing(true)
+    setEditedProfile({ ...profile })
+  }
+
+  const handleCancel = () => {
+    setEditing(false)
+    setEditedProfile({ ...profile })
+  }
+
   const handleSave = async () => {
     setSaving(true)
     try {
-      const { data } = await api.put('/users/profile', formData)
-      
-      // Update profile state
+      const { data } = await api.put('/users/profile', editedProfile)
       setProfile(data)
+      setEditing(false)
       
-      // Update localStorage user data
-      const storedUser = JSON.parse(localStorage.getItem('user'))
-      const updatedUser = { ...storedUser, ...data }
-      localStorage.setItem('user', JSON.stringify(updatedUser))
+      // Update local storage
+      const user = JSON.parse(localStorage.getItem('user'))
+      localStorage.setItem('user', JSON.stringify({ ...user, ...data }))
       
       alert('Profile updated successfully!')
-      setEditing(false)
     } catch (error) {
       console.error('Failed to update profile:', error)
-      alert('Failed to update profile: ' + (error.response?.data?.message || error.message))
+      alert(error.response?.data?.message || 'Failed to update profile')
     } finally {
       setSaving(false)
     }
   }
 
-  const toggleInterest = (interest) => {
-    setFormData(prev => ({
+  const handleChange = (field, value) => {
+    setEditedProfile(prev => ({
       ...prev,
-      interests: prev.interests.includes(interest)
-        ? prev.interests.filter(i => i !== interest)
-        : [...prev.interests, interest]
+      [field]: value
     }))
-  }
-  const [showPasswordModal, setShowPasswordModal] = useState(false)
-  const handleCancel = () => {
-    setEditing(false)
-    // Reset form to original profile data
-    setFormData({
-      email: profile.email || '',
-      department: profile.department || '',
-      year: profile.year || 1,
-      interests: profile.interests || [],
-      research_interests: profile.research_interests || '',
-      profile_photo_url: profile.profile_photo_url || ''
-    })
   }
 
   if (loading) return <Loading />
+  if (!profile) return <div className="min-h-screen bg-black text-white flex items-center justify-center">Profile not found</div>
 
   return (
     <div className="min-h-screen bg-black text-white pt-20 px-4 pb-12">
-      <div className="container mx-auto max-w-4xl">
-        <h1 className="text-3xl font-bold mb-8">My Profile</h1>
-
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-8">
-          {/* Profile Photo */}
-          <div className="flex items-center gap-6 mb-8">
-            <div className="relative">
-              {formData.profile_photo_url ? (
-                <img
-                  src={formData.profile_photo_url}
-                  alt="Profile"
-                  className="w-24 h-24 rounded-full object-cover border-4 border-gray-800"
-                  onError={(e) => {
-                    e.target.style.display = 'none'
-                    e.target.nextSibling.style.display = 'flex'
-                  }}
-                />
-              ) : null}
-              <div 
-                className={`w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-3xl font-bold ${
-                  formData.profile_photo_url ? 'hidden' : ''
-                }`}
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-4xl font-bold">My Profile</h1>
+          
+          {!editing ? (
+            <button
+              onClick={handleEdit}
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg transition"
+            >
+              <Edit2 className="w-5 h-5" />
+              Edit Profile
+            </button>
+          ) : (
+            <div className="flex gap-3">
+              <button
+                onClick={handleCancel}
+                disabled={saving}
+                className="flex items-center gap-2 px-6 py-2 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 rounded-lg transition"
               >
-                {profile?.username?.[0]?.toUpperCase() || 'U'}
-              </div>
+                <X className="w-5 h-5" />
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-700 disabled:cursor-not-allowed px-6 py-2 rounded-lg transition"
+              >
+                <Save className="w-5 h-5" />
+                {saving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Profile Content */}
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-8">
+          {/* Profile Picture */}
+          <div className="flex items-center gap-6 mb-8 pb-8 border-b border-gray-800">
+            <div className="relative">
+              {profile.profile_photo_url ? (
+                <img 
+                  src={profile.profile_photo_url} 
+                  alt={profile.username}
+                  className="w-24 h-24 rounded-full object-cover border-4 border-blue-500"
+                />
+              ) : (
+                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-4xl font-bold">
+                  {profile.username?.[0]?.toUpperCase()}
+                </div>
+              )}
+              
               {editing && (
-                <button 
-                  type="button"
-                  className="absolute bottom-0 right-0 bg-blue-600 hover:bg-blue-700 p-2 rounded-full transition"
-                  title="Change photo"
-                >
-                  <Camera className="w-4 h-4" />
+                <button className="absolute bottom-0 right-0 bg-blue-600 hover:bg-blue-700 p-2 rounded-full">
+                  <Upload className="w-4 h-4" />
                 </button>
               )}
             </div>
+            
             <div>
-              <h2 className="text-2xl font-bold">{profile?.username}</h2>
-              <p className="text-gray-400 capitalize">{profile?.role}</p>
-              {profile?.committee_post && (
-                <span className="inline-block mt-2 px-3 py-1 bg-blue-600 rounded-full text-xs">
-                  {profile.committee_post}
-                </span>
-              )}
-              {profile?.roll_number && (
-                <p className="text-gray-500 text-sm mt-1">Roll: {profile.roll_number}</p>
-              )}
-              {profile?.employment_id && (
-                <p className="text-gray-500 text-sm mt-1">ID: {profile.employment_id}</p>
-              )}
+              <h2 className="text-2xl font-bold mb-1">{profile.full_name || profile.username}</h2>
+              <p className="text-gray-400 mb-2">{profile.email}</p>
+              <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                profile.role === 'admin' ? 'bg-red-600' :
+                profile.role === 'faculty' ? 'bg-purple-600' :
+                profile.is_committee ? 'bg-blue-600' :
+                'bg-green-600'
+              }`}>
+                {profile.role === 'admin' ? 'Admin' :
+                 profile.role === 'faculty' ? 'Faculty' :
+                 profile.is_committee ? 'Committee Member' :
+                 'Student'}
+              </span>
             </div>
           </div>
 
           {/* Profile Fields */}
-          <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Username */}
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-2">
+                <User className="w-4 h-4 inline mr-2" />
+                Username
+              </label>
+              <input
+                type="text"
+                value={editing ? editedProfile.username : profile.username}
+                onChange={(e) => handleChange('username', e.target.value)}
+                disabled={!editing}
+                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white disabled:opacity-60 focus:outline-none focus:border-blue-500"
+              />
+            </div>
+
+            {/* Full Name */}
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-2">
+                Full Name
+              </label>
+              <input
+                type="text"
+                value={editing ? editedProfile.full_name || '' : profile.full_name || ''}
+                onChange={(e) => handleChange('full_name', e.target.value)}
+                disabled={!editing}
+                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white disabled:opacity-60 focus:outline-none focus:border-blue-500"
+              />
+            </div>
+
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
-              {editing ? (
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-600"
-                />
-              ) : (
-                <p className="text-white">{profile?.email}</p>
-              )}
+              <label className="block text-sm font-medium text-gray-400 mb-2">
+                <Mail className="w-4 h-4 inline mr-2" />
+                Email
+              </label>
+              <input
+                type="email"
+                value={editing ? editedProfile.email : profile.email}
+                onChange={(e) => handleChange('email', e.target.value)}
+                disabled={!editing}
+                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white disabled:opacity-60 focus:outline-none focus:border-blue-500"
+              />
             </div>
 
-            {/* Department */}
+            {/* Phone */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Department</label>
-              {editing ? (
-                <select
-                  value={formData.department}
-                  onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-600"
-                >
-                  <option value="">Select Department</option>
-                  {['CSE', 'AIML', 'CSD', 'IT', 'CME', 'Civil', 'Mech', 'ECE', 'EEE'].map(dept => (
-                    <option key={dept} value={dept}>{dept}</option>
-                  ))}
-                </select>
-              ) : (
-                <p className="text-white">{profile?.department || 'Not set'}</p>
-              )}
+              <label className="block text-sm font-medium text-gray-400 mb-2">
+                <Phone className="w-4 h-4 inline mr-2" />
+                Phone
+              </label>
+              <input
+                type="tel"
+                value={editing ? editedProfile.phone || '' : profile.phone || ''}
+                onChange={(e) => handleChange('phone', e.target.value)}
+                disabled={!editing}
+                placeholder="Enter phone number"
+                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white disabled:opacity-60 placeholder-gray-500 focus:outline-none focus:border-blue-500"
+              />
             </div>
 
-            {/* Year (Students only) */}
-            {profile?.role === 'student' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Year</label>
-                {editing ? (
+            {/* Department (for students) */}
+            {profile.role === 'student' && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-2">
+                    Department
+                  </label>
                   <select
-                    value={formData.year}
-                    onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}
-                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-600"
+                    value={editing ? editedProfile.department || '' : profile.department || ''}
+                    onChange={(e) => handleChange('department', e.target.value)}
+                    disabled={!editing}
+                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white disabled:opacity-60 focus:outline-none focus:border-blue-500"
                   >
-                    <option value={1}>1st Year</option>
-                    <option value={2}>2nd Year</option>
-                    <option value={3}>3rd Year</option>
-                    <option value={4}>4th Year</option>
+                    <option value="">Select Department</option>
+                    <option value="CSE">CSE</option>
+                    <option value="AIML">AIML</option>
+                    <option value="CSD">CSD</option>
+                    <option value="IT">IT</option>
+                    <option value="ECE">ECE</option>
+                    <option value="EEE">EEE</option>
+                    <option value="Civil">Civil</option>
+                    <option value="Mech">Mechanical</option>
                   </select>
-                ) : (
-                  <p className="text-white">Year {profile?.year}</p>
-                )}
-              </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-2">
+                    <Calendar className="w-4 h-4 inline mr-2" />
+                    Year
+                  </label>
+                  <select
+                    value={editing ? editedProfile.year || '' : profile.year || ''}
+                    onChange={(e) => handleChange('year', parseInt(e.target.value))}
+                    disabled={!editing}
+                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white disabled:opacity-60 focus:outline-none focus:border-blue-500"
+                  >
+                    <option value="">Select Year</option>
+                    <option value="1">1st Year</option>
+                    <option value="2">2nd Year</option>
+                    <option value="3">3rd Year</option>
+                    <option value="4">4th Year</option>
+                  </select>
+                </div>
+              </>
             )}
+
+            {/* Location */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-400 mb-2">
+                <MapPin className="w-4 h-4 inline mr-2" />
+                Location
+              </label>
+              <input
+                type="text"
+                value={editing ? editedProfile.location || '' : profile.location || ''}
+                onChange={(e) => handleChange('location', e.target.value)}
+                disabled={!editing}
+                placeholder="Enter your location"
+                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white disabled:opacity-60 placeholder-gray-500 focus:outline-none focus:border-blue-500"
+              />
+            </div>
+
+            {/* Bio */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-400 mb-2">
+                Bio
+              </label>
+              <textarea
+                value={editing ? editedProfile.bio || '' : profile.bio || ''}
+                onChange={(e) => handleChange('bio', e.target.value)}
+                disabled={!editing}
+                placeholder="Tell us about yourself..."
+                rows={4}
+                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white disabled:opacity-60 placeholder-gray-500 focus:outline-none focus:border-blue-500 resize-none"
+              />
+            </div>
 
             {/* Interests */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-3">Interests</label>
-              {editing ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {interestOptions.map(interest => (
-                    <button
-                      key={interest}
-                      type="button"
-                      onClick={() => toggleInterest(interest)}
-                      className={`px-4 py-2 rounded-lg text-sm transition ${
-                        formData.interests.includes(interest)
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                      }`}
-                    >
-                      {interest}
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {profile?.interests?.length > 0 ? (
-                    profile.interests.map(interest => (
-                      <span key={interest} className="px-3 py-1 bg-blue-600 rounded-full text-sm">
-                        {interest}
-                      </span>
-                    ))
-                  ) : (
-                    <p className="text-gray-500">No interests added yet</p>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Research Interests */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                {profile?.role === 'faculty' ? 'Research Interests' : 'Bio / About Me'}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-400 mb-2">
+                Interests (comma-separated)
               </label>
-              {editing ? (
-                <textarea
-                  value={formData.research_interests}
-                  onChange={(e) => setFormData({ ...formData, research_interests: e.target.value })}
-                  placeholder={profile?.role === 'faculty' 
-                    ? "Describe your research interests..." 
-                    : "Tell us about yourself..."}
-                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white h-24 focus:outline-none focus:border-blue-600"
-                />
-              ) : (
-                <p className="text-white whitespace-pre-wrap">{profile?.research_interests || 'Not set'}</p>
-              )}
+              <input
+                type="text"
+                value={editing 
+                  ? (Array.isArray(editedProfile.interests) ? editedProfile.interests.join(', ') : editedProfile.interests || '')
+                  : (Array.isArray(profile.interests) ? profile.interests.join(', ') : profile.interests || '')
+                }
+                onChange={(e) => handleChange('interests', e.target.value.split(',').map(i => i.trim()))}
+                disabled={!editing}
+                placeholder="e.g., Web Development, AI/ML, Robotics"
+                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white disabled:opacity-60 placeholder-gray-500 focus:outline-none focus:border-blue-500"
+              />
             </div>
+          </div>
 
-            {/* Profile Photo URL */}
-            {editing && (
+          {/* Account Info */}
+          <div className="mt-8 pt-8 border-t border-gray-800">
+            <h3 className="text-lg font-semibold mb-4">Account Information</h3>
+            <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Profile Photo URL</label>
-                <input
-                  type="url"
-                  value={formData.profile_photo_url}
-                  onChange={(e) => setFormData({ ...formData, profile_photo_url: e.target.value })}
-                  placeholder="https://example.com/photo.jpg"
-                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-600"
-                />
-                <p className="text-xs text-gray-500 mt-1">Enter a direct URL to your profile photo</p>
+                <span className="text-gray-400">Member Since:</span>
+                <p className="text-white mt-1">{new Date(profile.created_at).toLocaleDateString()}</p>
               </div>
-            )}
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-4 mt-8">
-            {editing ? (
-              <>
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed px-6 py-2 rounded-lg transition"
-                >
-                  <Save className="w-5 h-5" />
-                  {saving ? 'Saving...' : 'Save Changes'}
-                </button>
-                <button
-                  onClick={handleCancel}
-                  disabled={saving}
-                  className="px-6 py-2 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 rounded-lg transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => setShowPasswordModal(true)}
-                  className="flex items-center gap-2 bg-yellow-600 hover:bg-yellow-700 px-6 py-2 rounded-lg transition"
-                >
-                  <Lock className="w-5 h-5" />
-                  Change Password
-                </button>
-                <ChangePasswordModal 
-                  isOpen={showPasswordModal}
-                  onClose={() => setShowPasswordModal(false)}
-                />
-
-              </>
-            ) : (
-              <button
-                onClick={() => setEditing(true)}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg transition"
-              >
-                <User className="w-5 h-5" />
-                Edit Profile
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Profile Completion Alert */}
-        {(!profile?.profile_photo_url || !profile?.interests?.length) && (
-          <div className="mt-6 bg-yellow-900/20 border border-yellow-700 rounded-xl p-6">
-            <h3 className="text-yellow-400 font-semibold mb-2">⚠️ Complete Your Profile</h3>
-            <ul className="text-yellow-200 text-sm space-y-1">
-              {!profile?.profile_photo_url && <li>• Add a profile photo</li>}
-              {!profile?.interests?.length && <li>• Select your interests</li>}
-            </ul>
-          </div>
-        )}
-
-        {/* Account Info */}
-        <div className="mt-6 bg-gray-900 border border-gray-800 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">Account Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div>
-              <span className="text-gray-400">Account ID:</span>
-              <span className="text-white ml-2 font-mono text-xs">{profile?.id}</span>
-            </div>
-            <div>
-              <span className="text-gray-400">Member Since:</span>
-              <span className="text-white ml-2">
-                {new Date(profile?.created_at).toLocaleDateString('en-US', { 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })}
-              </span>
+              <div>
+                <span className="text-gray-400">Last Updated:</span>
+                <p className="text-white mt-1">{new Date(profile.updated_at).toLocaleDateString()}</p>
+              </div>
             </div>
           </div>
         </div>
