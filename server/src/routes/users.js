@@ -3,6 +3,51 @@ const router = express.Router();
 const supabase = require('../config/supabase');
 const auth = require('../middleware/auth');
 
+// Get current user profile
+router.get('/profile', auth, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('id, username, email, role, department, year, roll_number, employment_id, is_committee, committee_post, dob, created_at')
+      .eq('id', req.user.id)
+      .single();
+
+    if (error) throw error;
+    res.json(data);
+  } catch (error) {
+    console.error('Fetch profile error:', error);
+    res.status(500).json({ message: 'Failed to fetch profile' });
+  }
+});
+
+// Update current user profile
+router.put('/profile', auth, async (req, res) => {
+  try {
+    const updates = req.body;
+    
+    // Don't allow updating these fields via profile
+    delete updates.password;
+    delete updates.role;
+    delete updates.id;
+    delete updates.created_at;
+    
+    const { data, error } = await supabase
+      .from('users')
+      .update(updates)
+      .eq('id', req.user.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    
+    delete data.password;
+    res.json(data);
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({ message: 'Failed to update profile' });
+  }
+});
+
 // Get all users (admin only)
 router.get('/', auth, async (req, res) => {
   try {
@@ -12,7 +57,7 @@ router.get('/', auth, async (req, res) => {
 
     const { data, error } = await supabase
       .from('users')
-      .select('id, username, email, role, department, year, is_committee, committee_post, created_at')
+      .select('id, username, email, role, department, year, is_committee, committee_post, roll_number, employment_id, created_at')
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -23,12 +68,12 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
-// Get single user
+// Get single user by ID
 router.get('/:id', auth, async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('users')
-      .select('id, username, email, role, department, year, is_committee, committee_post')
+      .select('id, username, email, role, department, year, is_committee, committee_post, roll_number, employment_id, dob')
       .eq('id', req.params.id)
       .single();
 
@@ -40,7 +85,7 @@ router.get('/:id', auth, async (req, res) => {
   }
 });
 
-// Update user
+// Update user by ID (admin or self)
 router.put('/:id', auth, async (req, res) => {
   try {
     // Users can update their own profile, admins can update anyone
@@ -49,7 +94,16 @@ router.put('/:id', auth, async (req, res) => {
     }
 
     const updates = req.body;
-    delete updates.password; // Don't allow password updates this way
+    
+    // Don't allow password updates through this route
+    delete updates.password;
+    
+    // Only admins can change roles and committee status
+    if (req.user.role !== 'admin') {
+      delete updates.role;
+      delete updates.is_committee;
+      delete updates.committee_post;
+    }
 
     const { data, error } = await supabase
       .from('users')
@@ -64,7 +118,7 @@ router.put('/:id', auth, async (req, res) => {
     res.json(data);
   } catch (error) {
     console.error('Update user error:', error);
-    res.status(500).json({ message: 'Failed to update user' });
+    res.status(500).json({ message: error.message || 'Failed to update user' });
   }
 });
 
@@ -85,6 +139,8 @@ router.put('/:id/role', auth, async (req, res) => {
       .single();
 
     if (error) throw error;
+    
+    delete data.password;
     res.json(data);
   } catch (error) {
     console.error('Update role error:', error);
