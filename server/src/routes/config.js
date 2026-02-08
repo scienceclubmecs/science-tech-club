@@ -31,12 +31,11 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Update config (admin/developer/CSE head only)
+// Update config (admin/developer only)
 router.put('/', auth, async (req, res) => {
   try {
     const canEdit = req.user.role === 'admin' || 
-                    req.user.committee_post === 'Developer' ||
-                    req.user.committee_post === 'CSE Head';
+                    req.user.committee_post === 'Developer';
     
     if (!canEdit) {
       return res.status(403).json({ message: 'Access denied' });
@@ -44,7 +43,6 @@ router.put('/', auth, async (req, res) => {
     
     const configData = req.body;
     
-    // Check if config exists
     const { data: existing } = await supabase
       .from('config')
       .select('id')
