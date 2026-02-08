@@ -34,7 +34,7 @@ body {
   position: relative;
 }
 
-/* Watermark Logo - VERY BRIGHT AND VISIBLE */
+/* Watermark Logo - VERY BRIGHT AND VISIBLE - Matches home_preview.html */
 body::before {
   content: '';
   position: fixed;
@@ -48,14 +48,19 @@ body::before {
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
-  opacity: var(--watermark-opacity);
+  opacity: 0.25;
   pointer-events: none;
   z-index: 0;
   mix-blend-mode: lighten;
-  filter: brightness(1.5) contrast(1.2);
 }
 
+/* Ensure content is above watermark */
 #root {
+  position: relative;
+  z-index: 1;
+}
+
+.content-wrapper {
   position: relative;
   z-index: 1;
 }
@@ -67,4 +72,13 @@ body::before {
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+.float-animation {
+  animation: float 6s ease-in-out infinite;
 }
