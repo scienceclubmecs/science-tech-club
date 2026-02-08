@@ -1,27 +1,21 @@
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { Calendar, MapPin, Users, Plus } from 'lucide-react'
 import api from '../services/api'
-import { Calendar, MapPin, Clock, Users, Plus, CheckCircle } from 'lucide-react'
-import Loading from '../components/Loading'
 
 export default function EventsPage() {
   const [events, setEvents] = useState([])
-  const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState('upcoming')
+  const user = JSON.parse(localStorage.getItem('user'))
 
   useEffect(() => {
-    fetchData()
+    fetchEvents()
   }, [])
 
-  const fetchData = async () => {
+  const fetchEvents = async () => {
     try {
-      const [eventsRes, profileRes] = await Promise.all([
-        api.get('/events'),
-        api.get('/users/me')
-      ])
-      setEvents(eventsRes.data)
-      setProfile(profileRes.data)
+      const { data } = await api.get('/events')
+      setEvents(data)
     } catch (error) {
       console.error('Failed to fetch events:', error)
     } finally {
@@ -29,185 +23,73 @@ export default function EventsPage() {
     }
   }
 
-  const canCreateEvent = () => {
-    return profile?.role === 'admin' || 
-           profile?.committee_post === 'Executive Head' ||
-           profile?.committee_post === 'Chair' ||
-           profile?.committee_post === 'Secretary'
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black pt-20 px-4 flex items-center justify-center">
+        <div className="text-white">Loading events...</div>
+      </div>
+    )
   }
 
-  const filteredEvents = events.filter(e => {
-    const eventDate = new Date(e.event_date)
-    const now = new Date()
-    
-    if (filter === 'upcoming') return eventDate > now
-    if (filter === 'past') return eventDate < now
-    if (filter === 'draft') return e.status === 'draft'
-    if (filter === 'approved') return e.status === 'approved'
-    return true
-  })
-
-  if (loading) return <Loading />
-
   return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+    <div className="min-h-screen bg-black pt-20 px-4 pb-12">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex items-center justify-between mb-12">
           <div>
-            <h1 className="text-3xl font-bold mb-2">Events</h1>
-            <p className="text-gray-400">Upcoming club events and activities</p>
+            <h1 className="text-4xl font-bold text-white mb-4">Events</h1>
+            <p className="text-gray-400">Upcoming tech events and workshops</p>
           </div>
-          {canCreateEvent() && (
-            <Link
-              to="/events/create"
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg transition"
-            >
+          {user?.is_committee && (
+            <Link to="/events/create" className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg flex items-center gap-2 transition">
               <Plus className="w-5 h-5" />
               Create Event
             </Link>
           )}
         </div>
 
-        {/* Filter Tabs */}
-        <div className="flex gap-3 mb-8 border-b border-gray-800">
-          <button
-            onClick={() => setFilter('upcoming')}
-            className={`px-6 py-3 font-medium ${
-              filter === 'upcoming'
-                ? 'text-blue-400 border-b-2 border-blue-400'
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            Upcoming
-          </button>
-          <button
-            onClick={() => setFilter('past')}
-            className={`px-6 py-3 font-medium ${
-              filter === 'past'
-                ? 'text-blue-400 border-b-2 border-blue-400'
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            Past Events
-          </button>
-          {canCreateEvent() && (
-            <>
-              <button
-                onClick={() => setFilter('draft')}
-                className={`px-6 py-3 font-medium ${
-                  filter === 'draft'
-                    ? 'text-blue-400 border-b-2 border-blue-400'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                Drafts
-              </button>
-              <button
-                onClick={() => setFilter('approved')}
-                className={`px-6 py-3 font-medium ${
-                  filter === 'approved'
-                    ? 'text-blue-400 border-b-2 border-blue-400'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                Approved
-              </button>
-            </>
-          )}
-        </div>
-
-        {/* Events Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredEvents.length === 0 ? (
-            <div className="col-span-full text-center py-12">
-              <Calendar className="w-16 h-16 mx-auto mb-4 text-gray-700" />
-              <p className="text-gray-500">No events found</p>
-            </div>
-          ) : (
-            filteredEvents.map(event => (
-              <EventCard key={event.id} event={event} canManage={canCreateEvent()} />
-            ))
-          )}
-        </div>
+        {events.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {events.map((event) => (
+              <EventCard key={event.id} event={event} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-20">
+            <Calendar className="w-16 h-16 text-gray-700 mx-auto mb-4" />
+            <p className="text-gray-500">No upcoming events</p>
+          </div>
+        )}
       </div>
     </div>
   )
 }
 
-function EventCard({ event, canManage }) {
-  const eventDate = new Date(event.event_date)
-  const isPast = eventDate < new Date()
-
+function EventCard({ event }) {
   return (
-    <div className={`bg-gray-900 border border-gray-800 rounded-xl overflow-hidden hover:border-gray-700 transition ${
-      isPast ? 'opacity-60' : ''
-    }`}>
-      {event.image_url && (
-        <img 
-          src={event.image_url} 
-          alt={event.title} 
-          className="w-full h-48 object-cover"
-        />
-      )}
-      
-      <div className="p-6">
-        <div className="flex items-start justify-between mb-3">
-          <h3 className="text-xl font-bold flex-1">{event.title}</h3>
-          <span className={`px-2 py-1 rounded text-xs ml-2 ${
-            event.status === 'approved' ? 'bg-green-600' :
-            event.status === 'ongoing' ? 'bg-blue-600' :
-            event.status === 'completed' ? 'bg-purple-600' :
-            'bg-yellow-600'
-          }`}>
-            {event.status}
-          </span>
+    <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600 transition">
+      <div className="flex items-start justify-between mb-4">
+        <Calendar className="w-8 h-8 text-blue-500" />
+        <span className="text-xs bg-blue-600 px-3 py-1 rounded-full">{event.event_type}</span>
+      </div>
+      <h3 className="text-xl font-bold text-white mb-2">{event.title}</h3>
+      <p className="text-gray-400 text-sm mb-4">{event.description}</p>
+      <div className="space-y-2 text-sm text-gray-500">
+        <div className="flex items-center gap-2">
+          <Calendar className="w-4 h-4" />
+          {new Date(event.event_date).toLocaleDateString()}
         </div>
-
-        <p className="text-gray-400 text-sm mb-4 line-clamp-2">{event.description}</p>
-
-        <div className="space-y-2 mb-4">
-          <div className="flex items-center gap-2 text-sm text-gray-400">
-            <Calendar className="w-4 h-4" />
-            <span>{eventDate.toLocaleDateString('en-US', { 
-              weekday: 'short', 
-              year: 'numeric', 
-              month: 'short', 
-              day: 'numeric' 
-            })}</span>
-          </div>
-          
-          <div className="flex items-center gap-2 text-sm text-gray-400">
-            <Clock className="w-4 h-4" />
-            <span>{eventDate.toLocaleTimeString('en-US', { 
-              hour: '2-digit', 
-              minute: '2-digit' 
-            })}</span>
-          </div>
-
-          {event.location && (
-            <div className="flex items-center gap-2 text-sm text-gray-400">
-              <MapPin className="w-4 h-4" />
-              <span>{event.location}</span>
-            </div>
-          )}
-        </div>
-
-        {event.tasks && event.tasks.length > 0 && (
-          <div className="mb-4">
-            <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
-              <CheckCircle className="w-3 h-3" />
-              <span>{event.tasks.filter(t => t.completed).length} / {event.tasks.length} tasks completed</span>
-            </div>
+        {event.location && (
+          <div className="flex items-center gap-2">
+            <MapPin className="w-4 h-4" />
+            {event.location}
           </div>
         )}
-
-        <Link
-          to={`/events/${event.id}`}
-          className="block text-center bg-gray-800 hover:bg-gray-700 py-2 rounded-lg text-sm transition"
-        >
-          View Details
-        </Link>
+        {event.max_participants && (
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4" />
+            Max {event.max_participants} participants
+          </div>
+        )}
       </div>
     </div>
   )
