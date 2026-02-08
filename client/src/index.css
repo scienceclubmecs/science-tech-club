@@ -25,7 +25,6 @@
   --text-primary: #000000;
   --text-secondary: #6b7280;
   --border-color: #d1d5db;
-  --watermark-opacity: 0.15;
 }
 
 body {
@@ -34,7 +33,7 @@ body {
   position: relative;
 }
 
-/* Watermark Logo - VERY BRIGHT AND VISIBLE - Exactly like home_preview.html */
+/* Watermark Logo - VERY BRIGHT AND VISIBLE */
 body::before {
   content: '';
   position: fixed;
@@ -54,15 +53,23 @@ body::before {
   mix-blend-mode: lighten;
 }
 
-/* Ensure content is above watermark */
-#root {
+/* Make page content slightly transparent to show watermark */
+#root > * {
   position: relative;
   z-index: 1;
 }
 
-.content-wrapper {
-  position: relative;
-  z-index: 1;
+/* Reduce opacity of main content backgrounds to show watermark */
+.bg-black {
+  background-color: rgba(0, 0, 0, 0.85) !important;
+}
+
+.bg-gray-900 {
+  background-color: rgba(17, 24, 39, 0.85) !important;
+}
+
+.bg-gray-950 {
+  background-color: rgba(3, 7, 18, 0.85) !important;
 }
 
 /* Hide scrollbar */
@@ -74,7 +81,7 @@ body::before {
   scrollbar-width: none;
 }
 
-/* Animations from home_preview.html */
+/* Animations */
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-20px); }
