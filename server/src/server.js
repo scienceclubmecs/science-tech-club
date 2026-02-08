@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
 
 const app = express();
@@ -16,7 +17,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Health check endpoint with Supabase test
+// Health check endpoint
 app.get('/api/health', async (req, res) => {
   const supabase = require('./config/supabase');
   
@@ -47,22 +48,44 @@ app.use('/api/events', require('./routes/events'));
 app.use('/api/public', require('./routes/public'));
 app.use('/api/config', require('./routes/config'));
 
-// Serve static files from React build in production
-if (process.env.NODE_ENV === 'production') {
-  const clientBuildPath = path.join(__dirname, '../../client/dist');
+// Serve static files from React build
+const clientBuildPath = path.resolve(__dirname, '../../client/dist');
+const indexHtmlPath = path.join(clientBuildPath, 'index.html');
+
+console.log('Looking for frontend build at:', clientBuildPath);
+console.log('Index.html exists:', fs.existsSync(indexHtmlPath));
+
+if (fs.existsSync(indexHtmlPath)) {
+  console.log('✅ Serving static files from:', clientBuildPath);
   
   app.use(express.static(clientBuildPath));
   
   // Catch-all route - serve React app for any non-API route
   app.get('*', (req, res) => {
-    res.sendFile(path.join(clientBuildPath, 'index.html'));
+    res.sendFile(indexHtmlPath);
   });
 } else {
+  console.log('⚠️  Frontend build not found');
+  console.log('📡 Running in API-only mode');
+  
   app.get('/', (req, res) => {
     res.json({ 
       message: 'Science & Tech Club API Server',
       status: 'running',
-      environment: 'development'
+      environment: process.env.NODE_ENV || 'development',
+      note: 'Frontend not built. Run npm run build first.'
+    });
+  });
+  
+  app.get('*', (req, res) => {
+    res.status(404).json({ 
+      message: 'Frontend not deployed',
+      apiEndpoints: [
+        'GET /api/health',
+        'POST /api/auth/login',
+        'POST /api/auth/register',
+        'GET /api/public/committee'
+      ]
     });
   });
 }
@@ -74,11 +97,6 @@ app.use((err, req, res, next) => {
     message: err.message || 'Internal server error',
     error: process.env.NODE_ENV === 'development' ? err.stack : {}
   });
-});
-
-// 404 handler for API routes
-app.use('/api/*', (req, res) => {
-  res.status(404).json({ message: 'API endpoint not found' });
 });
 
 const PORT = process.env.PORT || 5000;
