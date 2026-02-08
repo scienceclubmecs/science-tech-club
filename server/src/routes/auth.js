@@ -3,6 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const supabase = require('../config/supabase');
+const auth = require('../middleware/auth'); 
 
 // Login with username
 router.post('/login', async (req, res) => {
