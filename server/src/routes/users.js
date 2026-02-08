@@ -8,15 +8,27 @@ router.get('/profile', auth, async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('users')
-      .select('id, username, email, role, department, year, roll_number, employment_id, is_committee, committee_post, dob, created_at')
+      .select('*')
       .eq('id', req.user.id)
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase error:', error);
+      throw error;
+    }
+
+    // Remove password from response
+    if (data) {
+      delete data.password;
+    }
+
     res.json(data);
   } catch (error) {
     console.error('Fetch profile error:', error);
-    res.status(500).json({ message: 'Failed to fetch profile' });
+    res.status(500).json({ 
+      message: 'Failed to fetch profile',
+      error: error.message 
+    });
   }
 });
 
@@ -31,6 +43,9 @@ router.put('/profile', auth, async (req, res) => {
     delete updates.id;
     delete updates.created_at;
     
+    // Add updated_at timestamp
+    updates.updated_at = new Date().toISOString();
+
     const { data, error } = await supabase
       .from('users')
       .update(updates)
@@ -38,13 +53,23 @@ router.put('/profile', auth, async (req, res) => {
       .select()
       .single();
 
-    if (error) throw error;
-    
-    delete data.password;
+    if (error) {
+      console.error('Supabase update error:', error);
+      throw error;
+    }
+
+    // Remove password from response
+    if (data) {
+      delete data.password;
+    }
+
     res.json(data);
   } catch (error) {
     console.error('Update profile error:', error);
-    res.status(500).json({ message: 'Failed to update profile' });
+    res.status(500).json({ 
+      message: 'Failed to update profile',
+      error: error.message 
+    });
   }
 });
 
@@ -57,14 +82,27 @@ router.get('/', auth, async (req, res) => {
 
     const { data, error } = await supabase
       .from('users')
-      .select('id, username, email, role, department, year, is_committee, committee_post, roll_number, employment_id, created_at')
+      .select('*')
       .order('created_at', { ascending: false });
 
-    if (error) throw error;
-    res.json(data || []);
+    if (error) {
+      console.error('Supabase error:', error);
+      throw error;
+    }
+
+    // Remove passwords from all users
+    const users = data.map(user => {
+      const { password, ...userWithoutPassword } = user;
+      return userWithoutPassword;
+    });
+
+    res.json(users || []);
   } catch (error) {
     console.error('Fetch users error:', error);
-    res.status(500).json({ message: 'Failed to fetch users' });
+    res.status(500).json({ 
+      message: 'Failed to fetch users',
+      error: error.message 
+    });
   }
 });
 
@@ -73,15 +111,26 @@ router.get('/:id', auth, async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('users')
-      .select('id, username, email, role, department, year, is_committee, committee_post, roll_number, employment_id, dob')
+      .select('*')
       .eq('id', req.params.id)
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase error:', error);
+      throw error;
+    }
+
+    if (data) {
+      delete data.password;
+    }
+
     res.json(data);
   } catch (error) {
     console.error('Fetch user error:', error);
-    res.status(500).json({ message: 'Failed to fetch user' });
+    res.status(500).json({ 
+      message: 'Failed to fetch user',
+      error: error.message 
+    });
   }
 });
 
@@ -97,6 +146,7 @@ router.put('/:id', auth, async (req, res) => {
     
     // Don't allow password updates through this route
     delete updates.password;
+    delete updates.created_at;
     
     // Only admins can change roles and committee status
     if (req.user.role !== 'admin') {
@@ -105,6 +155,9 @@ router.put('/:id', auth, async (req, res) => {
       delete updates.committee_post;
     }
 
+    // Add updated_at timestamp
+    updates.updated_at = new Date().toISOString();
+
     const { data, error } = await supabase
       .from('users')
       .update(updates)
@@ -112,13 +165,22 @@ router.put('/:id', auth, async (req, res) => {
       .select()
       .single();
 
-    if (error) throw error;
-    
-    delete data.password;
+    if (error) {
+      console.error('Supabase update error:', error);
+      throw error;
+    }
+
+    if (data) {
+      delete data.password;
+    }
+
     res.json(data);
   } catch (error) {
     console.error('Update user error:', error);
-    res.status(500).json({ message: error.message || 'Failed to update user' });
+    res.status(500).json({ 
+      message: error.message || 'Failed to update user',
+      error: error.message 
+    });
   }
 });
 
@@ -133,18 +195,30 @@ router.put('/:id/role', auth, async (req, res) => {
 
     const { data, error } = await supabase
       .from('users')
-      .update({ role })
+      .update({ 
+        role,
+        updated_at: new Date().toISOString()
+      })
       .eq('id', req.params.id)
       .select()
       .single();
 
-    if (error) throw error;
-    
-    delete data.password;
+    if (error) {
+      console.error('Supabase error:', error);
+      throw error;
+    }
+
+    if (data) {
+      delete data.password;
+    }
+
     res.json(data);
   } catch (error) {
     console.error('Update role error:', error);
-    res.status(500).json({ message: 'Failed to update role' });
+    res.status(500).json({ 
+      message: 'Failed to update role',
+      error: error.message 
+    });
   }
 });
 
@@ -160,11 +234,18 @@ router.delete('/:id', auth, async (req, res) => {
       .delete()
       .eq('id', req.params.id);
 
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase error:', error);
+      throw error;
+    }
+
     res.json({ message: 'User deleted successfully' });
   } catch (error) {
     console.error('Delete user error:', error);
-    res.status(500).json({ message: 'Failed to delete user' });
+    res.status(500).json({ 
+      message: 'Failed to delete user',
+      error: error.message 
+    });
   }
 });
 
