@@ -4,7 +4,7 @@
 
 :root {
   --primary-color: #3b82f6;
-  --watermark-opacity: 0.08;
+  --watermark-opacity: 0.15;
 }
 
 /* Dark Theme (Default) */
@@ -25,6 +25,7 @@
   --text-primary: #000000;
   --text-secondary: #6b7280;
   --border-color: #d1d5db;
+  --watermark-opacity: 0.08;
 }
 
 body {
@@ -33,7 +34,7 @@ body {
   position: relative;
 }
 
-/* Club Logo Watermark on Every Page */
+/* Club Logo Watermark - BRIGHTER */
 body::before {
   content: '';
   position: fixed;
@@ -50,7 +51,7 @@ body::before {
   opacity: var(--watermark-opacity);
   pointer-events: none;
   z-index: 0;
-  filter: grayscale(100%);
+  filter: brightness(1.2) contrast(1.1);
 }
 
 #root {
