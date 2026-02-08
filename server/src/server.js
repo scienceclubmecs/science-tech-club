@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
-require('dotenv').config();
+const dotenv = require('dotenv');
+
+dotenv.config();
 
 const app = express();
 
@@ -48,8 +50,10 @@ app.use('/api/courses', require('./routes/courses'));
 app.use('/api/projects', require('./routes/projects'));
 app.use('/api/quizzes', require('./routes/quizzes'));
 app.use('/api/events', require('./routes/events'));
-app.use('/api/public', require('./routes/public'));
 app.use('/api/config', require('./routes/config'));
+app.use('/api/admin', require('./routes/admin'));
+app.use('/api/announcements', require('./routes/announcements'));
+app.use('/api/public', require('./routes/public')); // Only one /api/public needed
 
 // Root endpoint
 app.get('/', (req, res) => {
