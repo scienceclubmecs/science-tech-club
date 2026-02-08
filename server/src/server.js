@@ -48,35 +48,39 @@ app.use('/api/events', require('./routes/events'));
 app.use('/api/public', require('./routes/public'));
 app.use('/api/config', require('./routes/config'));
 
-// Serve static files from React build
-const clientBuildPath = path.join(__dirname, '../client/dist');
+// Serve static files from React build - FIXED PATH
+const clientBuildPath = path.resolve(process.cwd(), 'client/dist');
 const indexHtmlPath = path.join(clientBuildPath, 'index.html');
 
-console.log('Looking for frontend build at:', clientBuildPath);
-console.log('Index.html exists:', fs.existsSync(indexHtmlPath));
+console.log('🔍 Looking for frontend at:', clientBuildPath);
+console.log('📄 index.html:', fs.existsSync(indexHtmlPath) ? '✓ FOUND' : '✗ MISSING');
+console.log('📁 dist contents:', fs.existsSync(clientBuildPath) ? fs.readdirSync(clientBuildPath).join(', ') : 'DIR MISSING');
 
-if (fs.existsSync(indexHtmlPath)) {
-  console.log('✅ Serving static files from:', clientBuildPath);
+if (fs.existsSync(clientBuildPath)) {
+  console.log('✅ Serving static files');
   
   app.use(express.static(clientBuildPath));
   
-  // Catch-all route - serve React app for any non-API route
+  // Catch-all route for React Router
   app.get('*', (req, res) => {
     res.sendFile(indexHtmlPath);
   });
 } else {
-  console.log('⚠️  Frontend build not found');
-  console.log('📡 Running in API-only mode');
+  console.log('⚠️  Frontend not found - API-only mode');
   
   app.get('/', (req, res) => {
     res.json({ 
       message: 'Science & Tech Club API Server',
       status: 'running',
-      environment: process.env.NODE_ENV || 'development',
-      note: 'Frontend not built. Run npm run build first.'
+      note: 'Frontend not built. Check build logs.',
+      debug: {
+        clientBuildPath,
+        indexHtmlPathExists: fs.existsSync(indexHtmlPath)
+      }
     });
   });
-  
+}
+
   app.get('*', (req, res) => {
     res.status(404).json({ 
       message: 'Frontend not deployed',
