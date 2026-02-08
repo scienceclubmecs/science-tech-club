@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { LogOut, User, Home, BookOpen, Award, Calendar, Users } from 'lucide-react'
+import Logo from './Logo'
 
 export default function Navbar({ user, setUser }) {
   const navigate = useNavigate()
@@ -15,17 +16,16 @@ export default function Navbar({ user, setUser }) {
     <nav className="bg-black/90 backdrop-blur-md border-b border-gray-800 sticky top-0 z-50">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          {/* Logo & Brand */}
-          <Link to="/dashboard" className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-2xl font-bold">
-              S
-            </div>
-
-            <div>
-              <div className="text-lg font-bold text-white">Science & Tech Club</div>
-              <div className="text-xs text-gray-500">MECS</div>
-            </div>
+          <Link to="/dashboard">
+            <Logo size="md" showText={true} />
           </Link>
+
+          {/* Rest of navbar... */}
+        </div>
+      </div>
+    </nav>
+  )
+}
 
           {/* Nav Links */}
           <div className="hidden md:flex items-center gap-6">
