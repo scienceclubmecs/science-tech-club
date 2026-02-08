@@ -1,14 +1,22 @@
 {
   "name": "science-tech-club",
   "version": "2.0.0",
+  "description": "MECS Science & Tech Club Platform",
   "scripts": {
-    "client": "cd client && npm run dev",
-    "server": "cd server && npm run dev",
-    "dev": "concurrently \"npm run server\" \"npm run client\"",
     "build": "cd client && npm install && npm run build",
     "start": "cd server && npm start",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd server && npm run dev",
+    "client": "cd client && npm run dev",
     "install-all": "npm install && cd client && npm install && cd ../server && npm install"
   },
+  "keywords": [
+    "mecs",
+    "science-club",
+    "tech-club"
+  ],
+  "author": "MECS Science & Tech Club",
+  "license": "MIT",
   "devDependencies": {
     "concurrently": "^8.2.0"
   }
