@@ -21,6 +21,7 @@ import ChatbotButton from './components/ChatbotButton'
 import { ThemeProvider } from './components/ThemeProvider'
 import api from './services/api'
 import MessagesPage from './pages/MessagesPage'
+import TasksFloatingButton from './components/TasksFloatingButton'
 
 function AppContent() {
   const [user, setUser] = useState(null)
@@ -141,7 +142,12 @@ function AppContent() {
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
       
-      {user && <ChatbotButton />}
+      {user && (
+          <>
+            <TasksFloatingButton />
+            <ChatbotButton />
+          </>
+        )}
     </div>
   )
 }
