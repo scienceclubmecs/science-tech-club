@@ -3,6 +3,117 @@ const router = express.Router();
 const supabase = require('../config/supabase');
 const auth = require('../middleware/auth');
 
+// Get current user's projects
+router.get('/my-projects', auth, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('project_members')
+      .select(`
+        *,
+        projects (
+          id,
+          title,
+          description,
+          status,
+          domain,
+          technologies,
+          image_url,
+          created_at,
+          max_members,
+          current_members
+        )
+      `)
+      .eq('user_id', req.user.id)
+      .order('joined_at', { ascending: false });
+
+    if (error) throw error;
+
+    // Format response
+    const myProjects = data.map(member => ({
+      ...member.projects,
+      role: member.role,
+      joined_at: member.joined_at,
+      progress: member.progress || 0
+    }));
+
+    res.json(myProjects);
+  } catch (error) {
+    console.error('Fetch my projects error:', error);
+    res.status(500).json({ 
+      message: 'Failed to fetch your projects', 
+      error: error.message 
+    });
+  }
+});
+
+// Join a project
+router.post('/:id/join', auth, async (req, res) => {
+  try {
+    // Check if project exists and is open
+    const { data: project, error: projectError } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('id', req.params.id)
+      .single();
+
+    if (projectError) throw projectError;
+
+    if (project.status !== 'open') {
+      return res.status(400).json({ message: 'This project is not open for new members' });
+    }
+
+    // Check if already a member
+    const { data: existing } = await supabase
+      .from('project_members')
+      .select('*')
+      .eq('project_id', req.params.id)
+      .eq('user_id', req.user.id)
+      .single();
+
+    if (existing) {
+      return res.status(400).json({ message: 'You are already a member of this project' });
+    }
+
+    // Check if project is full
+    if (project.max_members && project.current_members >= project.max_members) {
+      return res.status(400).json({ message: 'This project is full' });
+    }
+
+    // Add member
+    const { data, error } = await supabase
+      .from('project_members')
+      .insert([{
+        project_id: req.params.id,
+        user_id: req.user.id,
+        role: 'member',
+        joined_at: new Date().toISOString()
+      }])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Update current_members count
+    await supabase
+      .from('projects')
+      .update({ 
+        current_members: (project.current_members || 0) + 1 
+      })
+      .eq('id', req.params.id);
+
+    res.json({ 
+      message: 'Successfully joined project!',
+      membership: data 
+    });
+  } catch (error) {
+    console.error('Join project error:', error);
+    res.status(500).json({ 
+      message: 'Failed to join project', 
+      error: error.message 
+    });
+  }
+});
+
 // Update the get all projects route
 router.get('/', auth, async (req, res) => {
   try {
