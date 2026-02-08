@@ -19,6 +19,7 @@ import DeveloperPanel from './pages/DeveloperPanel'
 import ProfilePage from './pages/ProfilePage'
 import ChatbotButton from './components/ChatbotButton'
 import { ThemeProvider } from './components/ThemeProvider'
+import api from './services/api'
 
 function AppContent() {
   const [user, setUser] = useState(null)
@@ -26,19 +27,33 @@ function AppContent() {
   const location = useLocation()
 
   useEffect(() => {
+    // Check if user is logged in on mount and verify token
     const token = localStorage.getItem('token')
-    const userData = localStorage.getItem('user')
+    const storedUser = localStorage.getItem('user')
     
-    if (token && userData) {
-      setUser(JSON.parse(userData))
+    if (token && storedUser) {
+      // Verify token is still valid
+      api.get('/auth/verify')
+        .then(({ data }) => {
+          setUser(data.user)
+          localStorage.setItem('user', JSON.stringify(data.user))
+        })
+        .catch(() => {
+          // Token invalid, clear storage
+          localStorage.removeItem('token')
+          localStorage.removeItem('user')
+          setUser(null)
+        })
+        .finally(() => setLoading(false))
+    } else {
+      setLoading(false)
     }
-    setLoading(false)
   }, [])
 
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-white">Loading...</div>
+        <div className="text-white text-xl">Loading...</div>
       </div>
     )
   }
