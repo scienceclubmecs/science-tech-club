@@ -49,7 +49,7 @@ app.use('/api/public', require('./routes/public'));
 app.use('/api/config', require('./routes/config'));
 
 // Serve static files from React build
-const clientBuildPath = path.resolve(__dirname, '../../client/dist');
+const clientBuildPath = path.join(__dirname, '../client/dist');
 const indexHtmlPath = path.join(clientBuildPath, 'index.html');
 
 console.log('Looking for frontend build at:', clientBuildPath);
