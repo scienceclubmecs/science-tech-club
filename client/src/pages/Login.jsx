@@ -32,15 +32,23 @@ export default function Login({ setUser }) {
     <div className="min-h-screen bg-black flex items-center justify-center px-4">
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-4">
+          <div className="flex items-center justify-center gap-4 mb-4">
+            {/* Club Logo */}
+            <img 
+              src="https://i.ibb.co/v6WM95xK/2.jpg" 
+              alt="Science & Tech Club" 
+              className="w-20 h-20 rounded-lg object-contain"
+            />
+            {/* College Logo */}
             <img 
               src="https://i.ibb.co/sptF2qvk/mecs-logo.jpg" 
-              alt="MECS Logo" 
+              alt="MECS" 
               className="w-16 h-16 rounded-lg object-contain"
             />
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">Welcome Back</h1>
           <p className="text-gray-400">Science & Tech Club - MECS</p>
+          <p className="text-xs text-gray-600 mt-1">Matrusri Engineering College</p>
         </div>
 
         {error && (
