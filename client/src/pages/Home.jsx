@@ -42,16 +42,16 @@ export default function Home() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              {/* MECS Logo */}
+              {/* Club Logo */}
               <img 
-                src="https://i.ibb.co/sptF2qvk/mecs-logo.jpg" 
-                alt="MECS Logo" 
+                src="https://i.ibb.co/v6WM95xK/2.jpg" 
+                alt="Science & Tech Club" 
                 className="w-12 h-12 rounded-lg object-contain"
               />
               {/* Club Info */}
               <div>
                 <div className="text-xl font-bold">Science & Tech Club</div>
-                <div className="text-xs text-gray-500">MALLA REDDY ENGINEERING COLLEGE</div>
+                <div className="text-xs text-gray-500">MATRUSRI ENGINEERING COLLEGE</div>
               </div>
             </div>
             <div className="hidden md:flex gap-6">
@@ -60,9 +60,17 @@ export default function Home() {
               <a href="#features" className="text-gray-400 hover:text-white transition">Features</a>
               <a href="#team" className="text-gray-400 hover:text-white transition">Team</a>
             </div>
-            <Link to="/login" className="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg transition">
-              Login
-            </Link>
+            <div className="flex items-center gap-4">
+              {/* College Logo */}
+              <img 
+                src="https://i.ibb.co/sptF2qvk/mecs-logo.jpg" 
+                alt="MECS" 
+                className="w-10 h-10 rounded-lg object-contain hidden md:block"
+              />
+              <Link to="/login" className="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg transition">
+                Login
+              </Link>
+            </div>
           </div>
         </div>
       </nav>
@@ -73,7 +81,7 @@ export default function Home() {
           <div className="mb-8">
             <div className="inline-flex items-center gap-2 bg-gray-900 border border-gray-800 px-4 py-2 rounded-full">
               <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-              <span className="text-sm text-gray-400">MALLA REDDY ENGINEERING COLLEGE</span>
+              <span className="text-sm text-gray-400">MATRUSRI ENGINEERING COLLEGE</span>
             </div>
           </div>
 
@@ -130,7 +138,7 @@ export default function Home() {
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-4">About Our Club</h2>
             <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-              Building tomorrow's innovators at Malla Reddy Engineering College
+              Building tomorrow's innovators at Matrusri Engineering College
             </p>
           </div>
 
@@ -265,7 +273,7 @@ export default function Home() {
           <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-2xl p-12 text-center">
             <h2 className="text-4xl md:text-5xl font-bold mb-6">Join MECS Tech Club Today</h2>
             <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-              Be part of the most innovative tech community at Malla Reddy Engineering College. 
+              Be part of the most innovative tech community at Matrusri Engineering College. 
               Transform your ideas into reality and build your tech career with us.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -288,8 +296,8 @@ export default function Home() {
             <div>
               <div className="flex items-center gap-3 mb-4">
                 <img 
-                  src="https://i.ibb.co/sptF2qvk/mecs-logo.jpg" 
-                  alt="MECS Logo" 
+                  src="https://i.ibb.co/v6WM95xK/2.jpg" 
+                  alt="Science & Tech Club" 
                   className="w-10 h-10 rounded-lg object-contain"
                 />
                 <div>
@@ -298,8 +306,8 @@ export default function Home() {
                 </div>
               </div>
               <p className="text-gray-500 text-sm">
-                Malla Reddy Engineering College<br />
-                Maisammaguda, Hyderabad, Telangana
+                Matrusri Engineering College<br />
+                Hyderabad, Telangana
               </p>
             </div>
             
@@ -318,20 +326,19 @@ export default function Home() {
               <div className="space-y-2 text-sm text-gray-500">
                 <p>Email: scienceclubmecs@gmail.com</p>
                 <p>Campus: MECS, Hyderabad</p>
-                <p>Website: mecs.ac.in</p>
+                <div className="flex items-center gap-2 mt-4">
+                  <img 
+                    src="https://i.ibb.co/sptF2qvk/mecs-logo.jpg" 
+                    alt="MECS" 
+                    className="w-8 h-8 rounded object-contain"
+                  />
+                  <span className="text-xs">Matrusri Engineering College</span>
+                </div>
               </div>
             </div>
           </div>
           
           <div className="border-t border-gray-900 pt-8 text-center text-gray-500 text-sm">
-            <div className="flex items-center justify-center gap-2 mb-4">
-              <img 
-                src="https://i.ibb.co/sptF2qvk/mecs-logo.jpg" 
-                alt="MECS" 
-                className="w-8 h-8 rounded object-contain"
-              />
-              <span>Malla Reddy Engineering College</span>
-            </div>
             <p>&copy; 2026 Science & Tech Club, MECS. All rights reserved.</p>
             <div className="flex justify-center gap-6 mt-4">
               <a href="#" className="hover:text-white transition">Privacy Policy</a>
