@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import api from '../services/api'
 import { Camera, Save, User } from 'lucide-react'
 import Loading from '../components/Loading'
+import ChangePasswordModal from '../components/ChangePasswordModal'
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState(null)
@@ -77,7 +78,7 @@ export default function ProfilePage() {
         : [...prev.interests, interest]
     }))
   }
-
+  const [showPasswordModal, setShowPasswordModal] = useState(false)
   const handleCancel = () => {
     setEditing(false)
     // Reset form to original profile data
@@ -293,6 +294,18 @@ export default function ProfilePage() {
                 >
                   Cancel
                 </button>
+                <button
+                  onClick={() => setShowPasswordModal(true)}
+                  className="flex items-center gap-2 bg-yellow-600 hover:bg-yellow-700 px-6 py-2 rounded-lg transition"
+                >
+                  <Lock className="w-5 h-5" />
+                  Change Password
+                </button>
+                <ChangePasswordModal 
+                  isOpen={showPasswordModal}
+                  onClose={() => setShowPasswordModal(false)}
+                />
+
               </>
             ) : (
               <button
