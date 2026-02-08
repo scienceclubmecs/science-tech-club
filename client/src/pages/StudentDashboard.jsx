@@ -5,7 +5,6 @@ import {
   Code, MessageSquare, Calendar, ArrowRight
 } from 'lucide-react'
 import Loading from '../components/Loading'
-import TasksFloatingButton from '../components/TasksFloatingButton'
 import MessagesFloatingButton from '../components/MessagesFloatingButton'
 import api from '../services/api'
 
@@ -201,7 +200,6 @@ export default function StudentDashboard() {
 
       {/* Floating Buttons - Messages above Tasks */}
       <MessagesFloatingButton />
-      <TasksFloatingButton />
     </div>
   )
 }
