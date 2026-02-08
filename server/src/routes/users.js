@@ -4,7 +4,6 @@ const supabase = require('../config/supabase');
 const auth = require('../middleware/auth');
 const bcrypt = require('bcryptjs');
 
-
 // Get current user profile
 router.get('/profile', auth, async (req, res) => {
   try {
@@ -37,7 +36,7 @@ router.get('/profile', auth, async (req, res) => {
 // Update current user profile
 router.put('/profile', auth, async (req, res) => {
   try {
-    const updates = req.body;
+    const updates = { ...req.body };
     
     // Don't allow updating these fields via profile
     delete updates.password;
@@ -144,7 +143,7 @@ router.put('/:id', auth, async (req, res) => {
       return res.status(403).json({ message: 'Access denied' });
     }
 
-    const updates = req.body;
+    const updates = { ...req.body };
     
     // Don't allow password updates through this route
     delete updates.password;
@@ -285,7 +284,10 @@ router.put('/change-password', auth, async (req, res) => {
     // Update password
     const { error: updateError } = await supabase
       .from('users')
-      .update({ password: hashedPassword, updated_at: new Date().toISOString() })
+      .update({ 
+        password: hashedPassword, 
+        updated_at: new Date().toISOString() 
+      })
       .eq('id', req.user.id);
 
     if (updateError) throw updateError;
@@ -293,7 +295,10 @@ router.put('/change-password', auth, async (req, res) => {
     res.json({ message: 'Password changed successfully' });
   } catch (error) {
     console.error('Change password error:', error);
-    res.status(500).json({ message: 'Failed to change password', error: error.message });
+    res.status(500).json({ 
+      message: 'Failed to change password', 
+      error: error.message 
+    });
   }
 });
 
@@ -328,7 +333,10 @@ router.put('/:id/reset-password', auth, async (req, res) => {
     res.json({ message: 'Password reset successfully' });
   } catch (error) {
     console.error('Reset password error:', error);
-    res.status(500).json({ message: 'Failed to reset password', error: error.message });
+    res.status(500).json({ 
+      message: 'Failed to reset password', 
+      error: error.message 
+    });
   }
 });
 
@@ -359,7 +367,10 @@ router.post('/request-password-reset', auth, async (req, res) => {
     });
   } catch (error) {
     console.error('Request password reset error:', error);
-    res.status(500).json({ message: 'Failed to submit request', error: error.message });
+    res.status(500).json({ 
+      message: 'Failed to submit request', 
+      error: error.message 
+    });
   }
 });
 
@@ -380,7 +391,10 @@ router.get('/password-reset-requests', auth, async (req, res) => {
     res.json(data || []);
   } catch (error) {
     console.error('Fetch reset requests error:', error);
-    res.status(500).json({ message: 'Failed to fetch requests', error: error.message });
+    res.status(500).json({ 
+      message: 'Failed to fetch requests', 
+      error: error.message 
+    });
   }
 });
 
@@ -409,7 +423,10 @@ router.put('/password-reset-requests/:id', auth, async (req, res) => {
       // Update user password
       await supabase
         .from('users')
-        .update({ password: hashedPassword, updated_at: new Date().toISOString() })
+        .update({ 
+          password: hashedPassword, 
+          updated_at: new Date().toISOString() 
+        })
         .eq('id', request.user_id);
 
       // Update request status
@@ -440,7 +457,10 @@ router.put('/password-reset-requests/:id', auth, async (req, res) => {
     }
   } catch (error) {
     console.error('Process reset request error:', error);
-    res.status(500).json({ message: 'Failed to process request', error: error.message });
+    res.status(500).json({ 
+      message: 'Failed to process request', 
+      error: error.message 
+    });
   }
 });
 
