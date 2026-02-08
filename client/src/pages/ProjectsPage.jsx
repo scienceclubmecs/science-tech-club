@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Search, Filter, X, Code, Users, Calendar, ExternalLink } from 'lucide-react'
+import { Plus, Search, Filter, Briefcase, Code, Users, Calendar } from 'lucide-react'
 import api from '../services/api'
 
 export default function ProjectsPage() {
@@ -124,27 +124,30 @@ export default function ProjectsPage() {
             <h1 className="text-4xl font-bold text-white mb-2">Projects</h1>
             <p className="text-gray-400">Discover and join exciting projects</p>
           </div>
+          
           <div className="flex gap-3">
-            {/* Add this button for students */}
+            {/* My Projects Button - For Students */}
             {user?.role === 'student' && (
               <button
                 onClick={() => navigate('/my-projects')}
-                className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg transition"
+                className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg transition text-white"
               >
                 <Briefcase className="w-5 h-5" />
                 My Projects
               </button>
             )}
 
-          {(user?.role === 'admin' || user?.role === 'faculty' || user?.is_committee) && (
-            <button
-              onClick={() => navigate('/projects/create')}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg transition"
-            >
-              <Plus className="w-5 h-5" />
-              Create Project
-            </button>
-          )}
+            {/* Create Project Button - For Faculty/Admin/Committee */}
+            {(user?.role === 'admin' || user?.role === 'faculty' || user?.is_committee) && (
+              <button
+                onClick={() => navigate('/projects/create')}
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg transition text-white"
+              >
+                <Plus className="w-5 h-5" />
+                Create Project
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Search and Filters */}
@@ -165,7 +168,7 @@ export default function ProjectsPage() {
             {/* Filter Toggle */}
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2 bg-gray-900 hover:bg-gray-800 border border-gray-800 px-6 py-3 rounded-lg transition"
+              className="flex items-center gap-2 bg-gray-900 hover:bg-gray-800 border border-gray-800 px-6 py-3 rounded-lg transition text-white"
             >
               <Filter className="w-5 h-5" />
               Filters
@@ -263,7 +266,7 @@ export default function ProjectsPage() {
                   <h3 className="text-xl font-bold text-white group-hover:text-blue-400 transition">
                     {project.title}
                   </h3>
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}>
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium text-white ${getStatusColor(project.status)}`}>
                     {project.status?.replace('_', ' ')}
                   </span>
                 </div>
@@ -311,7 +314,7 @@ export default function ProjectsPage() {
             <p className="text-gray-500 mb-6">Try adjusting your filters or search query</p>
             <button
               onClick={resetFilters}
-              className="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg transition"
+              className="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg transition text-white"
             >
               Clear Filters
             </button>
