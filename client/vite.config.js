@@ -24,6 +24,10 @@ export default defineConfig({
         target: 'http://localhost:5000',
         changeOrigin: true
       }
-    }
+    },
+    historyApiFallback: true  // Add this
+  },
+  preview: {
+    historyApiFallback: true  // Add this for production preview
   }
 })
