@@ -78,7 +78,7 @@ export default function Home() {
           <div className="mb-8">
             <div className="inline-flex items-center gap-2 bg-gray-900 border border-gray-800 px-4 py-2 rounded-full">
               <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-              <span className="text-sm text-gray-400">MATRUSRI ENGINEERING COLLEGE</span>
+              <span className="text-sm text-gray-400">WELCOME TO INNOVATION</span>
             </div>
           </div>
 
@@ -87,6 +87,11 @@ export default function Home() {
               Science & Technology Club
             </span>
           </h1>
+          <h2 className="text-2xl md:text-3xl font-bold mb-6">
+            <span className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+              Innovation In Progress
+            </span>
+          </h2>
 
           <p className="text-xl text-gray-400 mb-8 max-w-3xl mx-auto leading-relaxed">
             Empowering students through innovation, collaboration, and cutting-edge technology. 
