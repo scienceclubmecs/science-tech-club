@@ -22,6 +22,8 @@ import { ThemeProvider } from './components/ThemeProvider'
 import api from './services/api'
 import MessagesPage from './pages/MessagesPage'
 import TasksFloatingButton from './components/TasksFloatingButton'
+import MyProjectsPage from './pages/MyProjectsPage'
+
 
 function AppContent() {
   const [user, setUser] = useState(null)
@@ -84,7 +86,7 @@ function AppContent() {
             ) : <Navigate to="/login" />
           } 
         />
-        
+       
         <Route 
           path="/admin" 
           element={user?.role === 'admin' ? <AdminPanel /> : <Navigate to="/dashboard" />} 
@@ -134,6 +136,14 @@ function AppContent() {
           path="/events/create" 
           element={user ? <CreateEventPage /> : <Navigate to="/login" />} 
         />
+        
+        <Route
+          path="/my-projects"
+          element={
+            user?.role === 'student' ? <MyProjectsPage /> : <Navigate to="/projects" />
+          }
+        />
+        
         <Route 
           path="/developer" 
           element={user?.committee_post === 'Developer' ? <DeveloperPanel /> : <Navigate to="/dashboard" />} 
