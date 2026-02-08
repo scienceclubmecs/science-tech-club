@@ -51,7 +51,7 @@ body::before {
   pointer-events: none;
   z-index: 0;
   mix-blend-mode: lighten;
-  filter: brightness(1.3);
+  filter: brightness(5);
 }
 
 /* Make page content MORE transparent to show watermark */
@@ -62,19 +62,19 @@ body::before {
 
 /* Reduce opacity MORE - from 0.85 to 0.70 */
 .bg-black {
-  background-color: rgba(0, 0, 0, 0.70) !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
 }
 
 .bg-gray-900 {
-  background-color: rgba(17, 24, 39, 0.70) !important;
+  background-color: rgba(17, 24, 39, 0.5) !important;
 }
 
 .bg-gray-950 {
-  background-color: rgba(3, 7, 18, 0.70) !important;
+  background-color: rgba(3, 7, 18, 0.45) !important;
 }
 
 .bg-gray-800 {
-  background-color: rgba(31, 41, 55, 0.75) !important;
+  background-color: rgba(31, 41, 55, 0.5) !important;
 }
 
 /* Hide scrollbar */
