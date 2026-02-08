@@ -282,8 +282,9 @@ export default function Home() {
                 <ArrowRight className="w-5 h-5" />
               </Link>
               <a href="mailto:scienceclubmecs@gmail.com" className="bg-transparent border-2 border-white hover:bg-white/10 px-8 py-4 rounded-lg font-medium transition">
-                Contact Us
-              </a>
+  Contact Us
+</a>
+
             </div>
           </div>
         </div>
@@ -301,15 +302,14 @@ export default function Home() {
                   className="w-10 h-10 rounded-lg object-contain"
                 />
                 <div>
-                  <div className="font-bold">Science & Tech Club</div>
-                  <div className="text-xs text-gray-500">MECS</div>
-                </div>
-              </div>
-              <p className="text-gray-500 text-sm">
-                Matrusri Engineering College<br />
-                Hyderabad, Telangana
-              </p>
-            </div>
+  <h4 className="font-bold mb-4">Contact</h4>
+  <div className="space-y-2 text-sm text-gray-500">
+    <p>Email: scienceclubmecs@gmail.com</p>
+    <p>Campus: MECS, Hyderabad</p>
+    <p>Website: <a href="https://matrusri.edu.in" target="_blank" rel="noopener noreferrer" className="hover:text-white transition">matrusri.edu.in</a></p>
+  </div>
+</div>
+
             
             <div>
               <h4 className="font-bold mb-4">Quick Links</h4>
@@ -338,13 +338,13 @@ export default function Home() {
             </div>
           </div>
           
-          <div className="border-t border-gray-900 pt-8 text-center text-gray-500 text-sm">
-            <p>&copy; 2026 Science & Tech Club, MECS. All rights reserved.</p>
-            <div className="flex justify-center gap-6 mt-4">
-              <a href="#" className="hover:text-white transition">Privacy Policy</a>
-              <a href="#" className="hover:text-white transition">Terms of Service</a>
-              <a href="mailto:scienceclubmecs@gmail.com" className="hover:text-white transition">Contact</a>
-            </div>
+          <div className="flex justify-center gap-6 mt-4">
+  <a href="#" className="hover:text-white transition">Privacy Policy</a>
+  <a href="#" className="hover:text-white transition">Terms of Service</a>
+  <a href="mailto:scienceclubmecs@gmail.com" className="hover:text-white transition">Contact</a>
+  <a href="https://matrusri.edu.in" target="_blank" rel="noopener noreferrer" className="hover:text-white transition">MECS Website</a>
+</div>
+
           </div>
         </div>
       </footer>
