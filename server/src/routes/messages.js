@@ -20,6 +20,37 @@ router.get('/channels', auth, async (req, res) => {
   }
 });
 
+// Get unread message count
+router.get('/unread-count', auth, async (req, res) => {
+  try {
+    // Count unread messages in DMs
+    const { data: dmData, error: dmError } = await supabase
+      .from('direct_messages')
+      .select('user1_unread, user2_unread, user1_id, user2_id')
+      .or(`user1_id.eq.${req.user.id},user2_id.eq.${req.user.id}`)
+      .eq('status', 'accepted');
+
+    if (dmError) throw dmError;
+
+    let dmUnread = 0;
+    dmData.forEach(dm => {
+      if (dm.user1_id === req.user.id) {
+        dmUnread += dm.user1_unread || 0;
+      } else {
+        dmUnread += dm.user2_unread || 0;
+      }
+    });
+
+    // Count unread channel messages (you can implement this later)
+    const channelUnread = 0;
+
+    res.json({ count: dmUnread + channelUnread });
+  } catch (error) {
+    console.error('Fetch unread count error:', error);
+    res.status(500).json({ message: 'Failed to fetch unread count', error: error.message });
+  }
+});
+
 // Get direct messages
 router.get('/direct', auth, async (req, res) => {
   try {
