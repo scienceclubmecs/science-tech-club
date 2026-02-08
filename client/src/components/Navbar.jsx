@@ -17,11 +17,10 @@ export default function Navbar({ user, setUser }) {
         <div className="flex items-center justify-between h-16">
           {/* Logo & Brand */}
           <Link to="/dashboard" className="flex items-center gap-3">
-            <img 
-              src="https://via.placeholder.com/40x40/3b82f6/ffffff?text=LOGO" 
-              alt="Club Logo" 
-              className="w-10 h-10 rounded-lg"
-            />
+            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-2xl font-bold">
+              S
+            </div>
+
             <div>
               <div className="text-lg font-bold text-white">Science & Tech Club</div>
               <div className="text-xs text-gray-500">MECS</div>
