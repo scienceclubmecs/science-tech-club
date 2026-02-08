@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Mail, Lock, AlertCircle } from 'lucide-react'
+import { User, Lock, AlertCircle } from 'lucide-react'
 import api from '../services/api'
 
 export default function Login({ setUser }) {
   const navigate = useNavigate()
-  const [formData, setFormData] = useState({ email: '', password: '' })
+  const [formData, setFormData] = useState({ username: '', password: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -48,16 +48,16 @@ export default function Login({ setUser }) {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-white mb-2 text-sm font-medium">Email</label>
+            <label className="block text-white mb-2 text-sm font-medium">Username</label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
               <input
-                type="email"
+                type="text"
                 required
-                value={formData.email}
-                onChange={(e) => setFormData({...formData, email: e.target.value})}
+                value={formData.username}
+                onChange={(e) => setFormData({...formData, username: e.target.value})}
                 className="w-full pl-12 pr-4 py-3 bg-gray-900 border border-gray-800 rounded-lg text-white focus:outline-none focus:border-blue-600 transition"
-                placeholder="your.email@mecs.ac.in"
+                placeholder="Enter your username"
               />
             </div>
           </div>
