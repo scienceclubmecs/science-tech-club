@@ -6,13 +6,13 @@ import {
 } from 'lucide-react'
 import Loading from '../components/Loading'
 import TasksFloatingButton from '../components/TasksFloatingButton'
+import MessagesFloatingButton from '../components/MessagesFloatingButton'
 import api from '../services/api'
 
 export default function StudentDashboard() {
   const navigate = useNavigate()
   const [profile, setProfile] = useState(null)
   const [announcements, setAnnouncements] = useState([])
-  const [myProjects, setMyProjects] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -199,7 +199,8 @@ export default function StudentDashboard() {
         </div>
       </div>
 
-      {/* Floating Tasks Button */}
+      {/* Floating Buttons - Messages above Tasks */}
+      <MessagesFloatingButton />
       <TasksFloatingButton />
     </div>
   )
