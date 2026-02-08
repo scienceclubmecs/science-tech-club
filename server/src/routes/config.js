@@ -17,14 +17,15 @@ router.get('/', async (req, res) => {
     }
     
     res.json(data || {
-      site_name: 'Science & Tech Club',
-      logo_url: '',
-      mecs_logo_url: 'https://i.ibb.co/sptF2qvk/mecs-logo.jpg',
-      theme_mode: 'dark',
-      primary_color: '#3b82f6',
-      watermark_opacity: '0.25',
-      contact_email: 'scienceclubmecs@gmail.com'
-    });
+  site_name: 'Science & Tech Club',
+  logo_url: 'https://i.ibb.co/v6WM95xK/2.jpg',
+  mecs_logo_url: 'https://i.ibb.co/sptF2qvk/mecs-logo.jpg',
+  theme_mode: 'dark',
+  primary_color: '#3b82f6',
+  watermark_opacity: '0.08',
+  contact_email: 'scienceclubmecs@gmail.com'
+});
+
   } catch (error) {
     console.error('Config error:', error);
     res.status(500).json({ message: 'Failed to fetch config' });
