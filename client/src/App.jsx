@@ -18,6 +18,7 @@ import TeamViewPage from './pages/TeamViewPage'
 import DeveloperPanel from './pages/DeveloperPanel'
 import ProfilePage from './pages/ProfilePage'
 import ChatbotButton from './components/ChatbotButton'
+import { ThemeProvider } from './components/ThemeProvider'
 
 function AppContent() {
   const [user, setUser] = useState(null)
@@ -131,9 +132,11 @@ function AppContent() {
 
 function App() {
   return (
-    <Router>
-      <AppContent />
-    </Router>
+    <ThemeProvider>
+      <Router>
+        <AppContent />
+      </Router>
+    </ThemeProvider>
   )
 }
 
