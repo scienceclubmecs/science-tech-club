@@ -50,9 +50,9 @@ app.use('/api/events', require('./routes/events'));
 app.use('/api/public', require('./routes/public'));
 app.use('/api/config', require('./routes/config'));
 
-// Serve static files from React build - CORRECTED PATH
-const clientBuildPath = path.resolve(process.cwd(), 'client/dist');
-const indexHtmlPath = path.join(clientBuildPath, 'index.html');
+// Serve static files from React build - ABSOLUTE PATH
+const clientBuildPath = '/opt/render/project/src/client/dist';
+const indexHtmlPath = '/opt/render/project/src/client/dist/index.html';
 
 console.log('🔍 Looking for frontend at:', clientBuildPath);
 console.log('📄 index.html:', fs.existsSync(indexHtmlPath) ? '✓ FOUND' : '✗ MISSING');
@@ -68,8 +68,7 @@ if (fs.existsSync(clientBuildPath)) {
     res.sendFile(indexHtmlPath);
   });
 } else {
-  console.log('⚠️  Frontend not found - API-only mode');
-  
+  console.log('⚠️  Frontend not found - API-only mode');  
   app.get('/', (req, res) => {
     res.json({ 
       message: 'Science & Tech Club API Server',
