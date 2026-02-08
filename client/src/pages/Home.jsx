@@ -84,11 +84,10 @@ export default function Home() {
 
           <h1 className="text-5xl md:text-7xl font-bold mb-6">
             <span className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-              Science & Technology Club
+              SCIENCE AND TECHNOLOGY CLUB
             </span>
           </h1>
-          <h2 className="text-2xl md:text-3xl mb-6">
-            <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+          <h2 className="text-xl text-gray-400 mb-8 max-w-3xl mx-auto leading-relaxed">
               Innovation In Progress
             </span>
           </h2>
@@ -254,8 +253,9 @@ export default function Home() {
       {/* CTA Section with NDLI Button */}
       <section className="py-20 px-4">
         <div className="max-w-4xl mx-auto">
-          <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-2xl p-12 text-center">
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">Join MECS Tech Club Today</h2>
+          <div className="bg-gradient-to-r from-black via-zinc-800 to-gray-600 rounded-2xl p-12 text-center text-white
+">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6">Join MECS Science & Tech Club Today</h2>
             <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
               Be part of the most innovative tech community at Matrusri Engineering College. 
               Transform your ideas into reality and build your tech career with us.
@@ -336,7 +336,7 @@ export default function Home() {
           </div>
           
           <div className="border-t border-gray-900 pt-8 text-center text-gray-500 text-sm">
-            <p>&copy; 2026 Science & Tech Club, MECS. All rights reserved.</p>
+            <p>&copy; 2025 Science & Tech Club, MECS. All rights reserved.</p>
             <div className="flex flex-wrap justify-center gap-6 mt-4">
               <a href="#" className="hover:text-white transition">Privacy Policy</a>
               <a href="#" className="hover:text-white transition">Terms of Service</a>
