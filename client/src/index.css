@@ -4,8 +4,7 @@
 
 :root {
   --primary-color: #3b82f6;
-  --watermark-opacity: 0.25;
-  --watermark-image: none;
+  --watermark-opacity: 0.08;
 }
 
 /* Dark Theme (Default) */
@@ -31,26 +30,27 @@
 body {
   background: var(--bg-primary);
   color: var(--text-primary);
+  position: relative;
 }
 
-/* Dynamic Watermark */
+/* Club Logo Watermark on Every Page */
 body::before {
   content: '';
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 60%;
-  max-width: 900px;
-  height: 60%;
-  background-image: var(--watermark-image);
+  width: 50%;
+  max-width: 600px;
+  height: 50%;
+  background-image: url('https://i.ibb.co/v6WM95xK/2.jpg');
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
   opacity: var(--watermark-opacity);
   pointer-events: none;
   z-index: 0;
-  mix-blend-mode: luminosity;
+  filter: grayscale(100%);
 }
 
 #root {
