@@ -20,14 +20,6 @@ export default function Navbar({ user, setUser }) {
             <Logo size="md" showText={true} />
           </Link>
 
-          {/* Rest of navbar... */}
-        </div>
-      </div>
-    </nav>
-  )
-}
-
-          {/* Nav Links */}
           <div className="hidden md:flex items-center gap-6">
             <Link to="/dashboard" className="flex items-center gap-2 text-gray-400 hover:text-white transition">
               <Home className="w-4 h-4" />
@@ -53,7 +45,6 @@ export default function Navbar({ user, setUser }) {
             )}
           </div>
 
-          {/* User Menu */}
           <div className="flex items-center gap-4">
             <Link to="/profile" className="flex items-center gap-2 text-gray-400 hover:text-white transition">
               <User className="w-4 h-4" />
