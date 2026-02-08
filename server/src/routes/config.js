@@ -19,7 +19,7 @@ router.get('/', async (req, res) => {
     res.json(data || {
       site_name: 'Science & Tech Club',
       logo_url: '',
-      mecs_logo_url: '',
+      mecs_logo_url: 'https://i.ibb.co/sptF2qvk/mecs-logo.jpg',
       theme_mode: 'dark',
       primary_color: '#3b82f6',
       watermark_opacity: '0.25',
