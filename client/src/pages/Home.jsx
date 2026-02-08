@@ -344,11 +344,11 @@ export default function Home() {
                 />
                 <div>
                   <div className="font-bold">S&T Club</div>
-                  <div className="text-xs text-gray-500">MECS</div>
+                  <div className="text-xs text-gray-500">Matrusri Engineering College</div>
                 </div>
               </div>
               <p className="text-sm text-gray-500">
-                Empowering students through technology and innovation.
+                Saidabad
               </p>
             </div>
             
@@ -375,8 +375,8 @@ export default function Home() {
               <h4 className="font-bold mb-3 text-sm">Contact</h4>
               <ul className="space-y-2 text-sm text-gray-500">
                 <li>scienceclubmecs@gmail.com</li>
-                <li>Lal Bahadur Nagar, Telangana</li>
-                <li>MECS Campus</li>
+                <li>Matrusri Engineering College Campus</li>
+                <li>www.matrusri.edu.in</li>
               </ul>
             </div>
           </div>
