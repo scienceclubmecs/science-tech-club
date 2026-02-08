@@ -4,7 +4,7 @@ import api from '../services/api'
 import { 
   Sparkles, ArrowRight, ChevronLeft, ChevronRight, 
   BookOpen, Award, Calendar, Users, Code, Lightbulb,
-  Trophy, GraduationCap
+  Trophy, GraduationCap, ExternalLink
 } from 'lucide-react'
 
 export default function Home() {
@@ -87,8 +87,8 @@ export default function Home() {
               Science & Technology Club
             </span>
           </h1>
-          <h2 className="text-2xl md:text-3xl  mb-6">
-            <span className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+          <h2 className="text-2xl md:text-3xl mb-6">
+            <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
               Innovation In Progress
             </span>
           </h2>
@@ -99,36 +99,13 @@ export default function Home() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-            <Link to="/login" className="bg-blue-600 hover:bg-blue-700 px-8 py-4 rounded-lg font-medium transition inline-flex items-center justify-center gap-2">
+            <Link to="/login" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-8 py-4 rounded-lg font-medium transition inline-flex items-center justify-center gap-2 shadow-lg shadow-blue-500/30">
               Get Started
               <ArrowRight className="w-5 h-5" />
             </Link>
             <a href="#about" className="bg-gray-900 hover:bg-gray-800 border border-gray-800 px-8 py-4 rounded-lg font-medium transition">
               Learn More
             </a>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-16">
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-              <GraduationCap className="w-8 h-8 text-blue-500 mx-auto mb-3" />
-              <div className="text-3xl font-bold text-white">500+</div>
-              <div className="text-sm text-gray-500">Active Members</div>
-            </div>
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-              <Trophy className="w-8 h-8 text-purple-500 mx-auto mb-3" />
-              <div className="text-3xl font-bold text-white">50+</div>
-              <div className="text-sm text-gray-500">Projects Completed</div>
-            </div>
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-              <Calendar className="w-8 h-8 text-pink-500 mx-auto mb-3" />
-              <div className="text-3xl font-bold text-white">30+</div>
-              <div className="text-sm text-gray-500">Events Hosted</div>
-            </div>
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-              <Award className="w-8 h-8 text-orange-500 mx-auto mb-3" />
-              <div className="text-3xl font-bold text-white">100+</div>
-              <div className="text-sm text-gray-500">Certifications</div>
-            </div>
           </div>
         </div>
       </section>
@@ -137,7 +114,9 @@ export default function Home() {
       <section id="about" className="py-20 px-4 bg-gray-950">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">About Our Club</h2>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+              About Our Club
+            </h2>
             <p className="text-gray-400 text-lg max-w-2xl mx-auto">
               Building tomorrow's innovators at Matrusri Engineering College
             </p>
@@ -145,7 +124,7 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 hover:border-blue-600 transition">
-              <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center mb-4">
                 <Lightbulb className="w-6 h-6" />
               </div>
               <h3 className="text-2xl font-bold mb-3">Our Mission</h3>
@@ -157,7 +136,7 @@ export default function Home() {
             </div>
 
             <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 hover:border-purple-600 transition">
-              <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-purple-700 rounded-lg flex items-center justify-center mb-4">
                 <Sparkles className="w-6 h-6" />
               </div>
               <h3 className="text-2xl font-bold mb-3">Our Vision</h3>
@@ -175,7 +154,9 @@ export default function Home() {
       <section id="features" className="py-20 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">What We Offer</h2>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+              What We Offer
+            </h2>
             <p className="text-gray-400 text-lg">Comprehensive platform for MECS students</p>
           </div>
 
@@ -230,7 +211,9 @@ export default function Home() {
       <section id="team" className="py-20 px-4 bg-gray-950">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">Our Committee</h2>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+              Our Committee
+            </h2>
             <p className="text-gray-400 text-lg">Meet the dedicated team leading MECS tech initiatives</p>
           </div>
 
@@ -268,7 +251,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* CTA Section with NDLI Button */}
       <section className="py-20 px-4">
         <div className="max-w-4xl mx-auto">
           <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-2xl p-12 text-center">
@@ -278,44 +261,29 @@ export default function Home() {
               Transform your ideas into reality and build your tech career with us.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/login" className="bg-white text-black hover:bg-gray-100 px-8 py-4 rounded-lg font-medium transition inline-flex items-center justify-center gap-2">
-                Get Started Now
+              <Link to="/login" className="bg-white text-black hover:bg-gray-100 px-8 py-4 rounded-lg font-medium transition inline-flex items-center justify-center gap-2 shadow-lg">
+                Login to Portal
                 <ArrowRight className="w-5 h-5" />
               </Link>
-              <a href="mailto:scienceclubmecs@gmail.com" className="bg-transparent border-2 border-white hover:bg-white/10 px-8 py-4 rounded-lg font-medium transition">
+              <a 
+                href="https://club.ndl.iitkgp.ac.in/sign-in" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 px-8 py-4 rounded-lg font-medium transition inline-flex items-center justify-center gap-2 shadow-lg"
+              >
+                Visit NDLI Portal
+                <ExternalLink className="w-5 h-5" />
+              </a>
+              <a 
+                href="mailto:scienceclubmecs@gmail.com" 
+                className="bg-transparent border-2 border-white hover:bg-white/10 px-8 py-4 rounded-lg font-medium transition"
+              >
                 Contact Us
               </a>
             </div>
           </div>
         </div>
       </section>
-      {/* CTA Section - Find this and ADD the NDLI button */}
-<section className="py-24 px-4 bg-gradient-to-br from-blue-900 via-purple-900 to-pink-900">
-  <div className="max-w-4xl mx-auto text-center">
-    <h2 className="text-4xl font-bold mb-6">Ready to Get Started?</h2>
-    <p className="text-xl text-gray-300 mb-8">
-      Join our community and start your journey in tech today
-    </p>
-    <div className="flex flex-col sm:flex-row gap-4 justify-center">
-      <Link
-        to="/login"
-        className="bg-white text-blue-900 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-100 transition"
-      >
-        Login to Portal
-      </Link>
-      {/* NEW NDLI BUTTON */}
-      <a
-        href="https://club.ndl.iitkgp.ac.in/sign-in"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="bg-gradient-to-r from-green-600 to-teal-600 px-8 py-4 rounded-lg font-semibold text-lg hover:from-green-700 hover:to-teal-700 transition"
-      >
-        Visit NDLI Portal →
-      </a>
-    </div>
-  </div>
-</section>
-
 
       {/* Footer */}
       <footer className="py-12 border-t border-gray-900 px-4 bg-black">
@@ -369,7 +337,7 @@ export default function Home() {
           
           <div className="border-t border-gray-900 pt-8 text-center text-gray-500 text-sm">
             <p>&copy; 2026 Science & Tech Club, MECS. All rights reserved.</p>
-            <div className="flex justify-center gap-6 mt-4">
+            <div className="flex flex-wrap justify-center gap-6 mt-4">
               <a href="#" className="hover:text-white transition">Privacy Policy</a>
               <a href="#" className="hover:text-white transition">Terms of Service</a>
               <a href="mailto:scienceclubmecs@gmail.com" className="hover:text-white transition">Contact</a>
