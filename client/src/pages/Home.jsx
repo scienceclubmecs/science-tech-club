@@ -40,11 +40,10 @@ export default function Home() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <img 
-                src="https://via.placeholder.com/50x50/3b82f6/ffffff?text=LOGO" 
-                alt="Club Logo" 
-                className="w-12 h-12 rounded-lg"
-              />
+              <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-2xl font-bold">
+                    S
+                  </div>
+
               <div>
                 <div className="text-xl font-bold">Science & Tech Club</div>
                 <div className="text-xs text-gray-500">MECS</div>
