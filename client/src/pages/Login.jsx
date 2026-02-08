@@ -32,10 +32,12 @@ export default function Login({ setUser }) {
       {/* Home Button */}
       <button
         onClick={() => navigate('/')}
-        className="absolute top-6 left-6 flex items-center gap-2 text-gray-400 hover:text-white transition-colors group"
+        className="absolute top-6 left-6 flex items-center gap-2 text-gray-400 hover:text-white transition-colors group z-10"
       >
-        <Home className="w-5 h-5 group-hover:scale-110 transition-transform" />
-        <span className="text-sm font-medium">Back to Home</span>
+        <div className="flex items-center gap-2 px-4 py-2 bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-lg hover:border-gray-700">
+          <Home className="w-5 h-5 group-hover:scale-110 transition-transform" />
+          <span className="text-sm font-medium">Back to Home</span>
+        </div>
       </button>
 
       {/* Background Effects */}
@@ -46,15 +48,15 @@ export default function Login({ setUser }) {
 
       <div className="relative z-10 w-full max-w-md">
         <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl p-8 shadow-2xl">
-          {/* Logo */}
+          {/* Club Logo */}
           <div className="flex justify-center mb-6">
             <div className="relative">
               <img 
-                src="https://i.ibb.co/sptF2qvk/mecs-logo.jpg" 
-                alt="MECS" 
-                className="h-20 w-20 rounded-full border-4 border-blue-500/30"
+                src="https://i.ibb.co/v6WM95xK/2.jpg" 
+                alt="Science & Tech Club" 
+                className="h-24 w-24 rounded-full border-4 border-blue-500/30 shadow-lg"
               />
-              <div className="absolute -inset-2 bg-blue-500/20 rounded-full blur-xl"></div>
+              <div className="absolute -inset-2 bg-blue-500/20 rounded-full blur-xl animate-pulse"></div>
             </div>
           </div>
 
@@ -110,10 +112,19 @@ export default function Login({ setUser }) {
             </button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-gray-400">
-            Don't have an account?{' '}
-            <span className="text-blue-400">Contact your administrator</span>
-          </p>
+          <div className="mt-6 pt-6 border-t border-gray-800">
+            <p className="text-center text-sm text-gray-400">
+              Don't have an account?{' '}
+              <span className="text-blue-400 font-medium">Contact your administrator</span>
+            </p>
+          </div>
+
+          {/* Footer Info */}
+          <div className="mt-6 text-center">
+            <p className="text-xs text-gray-500">
+              Science & Tech Club, MECS
+            </p>
+          </div>
         </div>
       </div>
     </div>
