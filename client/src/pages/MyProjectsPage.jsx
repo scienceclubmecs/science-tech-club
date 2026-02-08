@@ -168,7 +168,7 @@ export default function MyProjectsPage() {
                     </span>
                     
                     {project.role && (
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-gray-400 capitalize">
                         {project.role}
                       </span>
                     )}
@@ -188,7 +188,7 @@ export default function MyProjectsPage() {
                   <div className="space-y-2 mb-4">
                     <div className="flex items-center gap-2 text-sm text-gray-400">
                       <Users className="w-4 h-4" />
-                      <span>{project.team_size || 0} members</span>
+                      <span>{project.current_members || 0} members</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-400">
                       <Calendar className="w-4 h-4" />
