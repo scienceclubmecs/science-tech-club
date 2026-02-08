@@ -2,39 +2,55 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 
+// Load environment variables
 dotenv.config();
 
 const app = express();
-const messagesRoutes = require('./routes/messages');
-const tasksRoutes = require('./routes/tasks');
-// Middleware
-app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'http://localhost:5173',
-    'https://science-tech-club-iju0.onrender.com',
-    'https://science-tech-club-mecs.onrender.com'
-  ],
-  credentials: true
-}));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-// Request logging
+// CORS Configuration
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://localhost:4173',
+  'https://science-tech-club-iju0.onrender.com',
+  'https://science-tech-club-mecs.onrender.com'
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, Postman, curl)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.log('⚠️ Blocked by CORS:', origin);
+      callback(null, true); // Allow in development, log only
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// Body parsers
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Request logging middleware
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  const timestamp = new Date().toISOString();
+  console.log(`${timestamp} - ${req.method} ${req.path}`);
   next();
 });
-
-app.use('/api/messages', messagesRoutes);
-app.use('/api/tasks', tasksRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
   res.json({
-    message: 'Science & Tech Club API',
+    name: 'Science & Tech Club API',
     version: '2.0.0',
     status: 'running',
+    timestamp: new Date().toISOString(),
     endpoints: {
       health: '/api/health',
       test: '/api/test',
@@ -47,7 +63,10 @@ app.get('/', (req, res) => {
       config: '/api/config',
       admin: '/api/admin',
       announcements: '/api/announcements',
-      public: '/api/public'
+      public: '/api/public',
+      chatbot: '/api/chatbot',
+      messages: '/api/messages',
+      tasks: '/api/tasks'
     }
   });
 });
@@ -64,12 +83,16 @@ app.get('/api/health', async (req, res) => {
       timestamp: new Date().toISOString(),
       environment: process.env.NODE_ENV || 'development',
       database: dbStatus,
-      supabaseConfigured: !!(process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY)
+      config: {
+        supabase: !!(process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY),
+        jwt: !!process.env.JWT_SECRET,
+        groq: !!process.env.GROQ_API_KEY
+      }
     });
   } catch (err) {
-    res.json({ 
+    res.status(500).json({ 
       status: 'error', 
-      database: 'error', 
+      database: 'disconnected', 
       message: err.message 
     });
   }
@@ -78,120 +101,146 @@ app.get('/api/health', async (req, res) => {
 // Test endpoint
 app.get('/api/test', (req, res) => {
   res.json({ 
-    message: 'API is working!',
+    message: 'API is working perfectly!',
     timestamp: new Date().toISOString(),
-    env: process.env.NODE_ENV || 'development',
-    supabaseUrl: process.env.SUPABASE_URL ? '✓ Configured' : '✗ Missing',
-    supabaseKey: process.env.SUPABASE_ANON_KEY ? '✓ Configured' : '✗ Missing',
-    jwtSecret: process.env.JWT_SECRET ? '✓ Configured' : '✗ Missing'
+    environment: process.env.NODE_ENV || 'development',
+    configuration: {
+      supabaseUrl: process.env.SUPABASE_URL ? '✓ Configured' : '✗ Missing',
+      supabaseKey: process.env.SUPABASE_ANON_KEY ? '✓ Configured' : '✗ Missing',
+      jwtSecret: process.env.JWT_SECRET ? '✓ Configured' : '✗ Missing',
+      groqApiKey: process.env.GROQ_API_KEY ? '✓ Configured' : '✗ Missing'
+    }
   });
 });
 
 // Import and mount API routes
-try {
-  const authRoutes = require('./routes/auth');
-  const usersRoutes = require('./routes/users');
-  const coursesRoutes = require('./routes/courses');
-  const projectsRoutes = require('./routes/projects');
-  const quizzesRoutes = require('./routes/quizzes');
-  const eventsRoutes = require('./routes/events');
-  const configRoutes = require('./routes/config');
-  const adminRoutes = require('./routes/admin');
-  const announcementsRoutes = require('./routes/announcements');
-  const publicRoutes = require('./routes/public');
-  const chatbotRoutes = require('./routes/chatbot');
+const routeFiles = [
+  { path: '/api/auth', file: './routes/auth', name: 'Authentication' },
+  { path: '/api/users', file: './routes/users', name: 'Users' },
+  { path: '/api/courses', file: './routes/courses', name: 'Courses' },
+  { path: '/api/projects', file: './routes/projects', name: 'Projects' },
+  { path: '/api/quizzes', file: './routes/quizzes', name: 'Quizzes' },
+  { path: '/api/events', file: './routes/events', name: 'Events' },
+  { path: '/api/config', file: './routes/config', name: 'Config' },
+  { path: '/api/admin', file: './routes/admin', name: 'Admin' },
+  { path: '/api/announcements', file: './routes/announcements', name: 'Announcements' },
+  { path: '/api/public', file: './routes/public', name: 'Public' },
+  { path: '/api/chatbot', file: './routes/chatbot', name: 'Chatbot' },
+  { path: '/api/messages', file: './routes/messages', name: 'Messages' },
+  { path: '/api/tasks', file: './routes/tasks', name: 'Tasks' }
+];
 
-  app.use('/api/auth', authRoutes);
-  app.use('/api/users', usersRoutes);
-  app.use('/api/courses', coursesRoutes);
-  app.use('/api/projects', projectsRoutes);
-  app.use('/api/quizzes', quizzesRoutes);
-  app.use('/api/events', eventsRoutes);
-  app.use('/api/config', configRoutes);
-  app.use('/api/admin', adminRoutes);
-  app.use('/api/announcements', announcementsRoutes);
-  app.use('/api/public', publicRoutes);
-  app.use('/api/chatbot', chatbotRoutes);
+const loadedRoutes = [];
+const failedRoutes = [];
 
-  console.log('✅ All routes loaded successfully');
-} catch (error) {
-  console.error('❌ Error loading routes:', error.message);
-  console.error('Make sure all route files exist in server/src/routes/');
+routeFiles.forEach(({ path, file, name }) => {
+  try {
+    const route = require(file);
+    app.use(path, route);
+    loadedRoutes.push(name);
+  } catch (error) {
+    console.error(`❌ Failed to load ${name} routes:`, error.message);
+    failedRoutes.push({ name, error: error.message });
+  }
+});
+
+console.log('\n📦 Routes Loading Status:');
+console.log(`  ✅ Loaded: ${loadedRoutes.length}/${routeFiles.length}`);
+if (loadedRoutes.length > 0) {
+  console.log(`  Routes: ${loadedRoutes.join(', ')}`);
+}
+if (failedRoutes.length > 0) {
+  console.log(`  ❌ Failed: ${failedRoutes.map(r => r.name).join(', ')}`);
 }
 
 // 404 handler - MUST BE AFTER ALL ROUTES
 app.use((req, res) => {
-  console.log('404 - Not Found:', req.method, req.path);
+  console.log('⚠️ 404 - Not Found:', req.method, req.path);
   res.status(404).json({ 
+    success: false,
     message: 'Endpoint not found',
     path: req.path,
     method: req.method,
-    availableEndpoints: [
-      'GET /',
-      'GET /api/health',
-      'GET /api/test',
-      'POST /api/auth/login',
-      'POST /api/auth/register',
-      'GET /api/auth/verify',
-      'GET /api/users',
-      'GET /api/users/profile',
-      'PUT /api/users/profile',
-      'GET /api/courses',
-      'GET /api/projects',
-      'GET /api/events',
-      'GET /api/quizzes',
-      'GET /api/config',
-      'GET /api/admin/dashboard',
-      'GET /api/announcements',
-      'GET /api/public/committee'
-    ]
+    hint: 'Check available endpoints at GET /',
+    documentation: 'Visit / for API documentation'
   });
 });
 
-// Error handler - MUST BE LAST
+// Global Error handler - MUST BE LAST
 app.use((err, req, res, next) => {
-  console.error('Error:', err);
+  console.error('💥 Error:', err.message);
+  
+  // Log full stack trace in development
+  if (process.env.NODE_ENV === 'development') {
+    console.error(err.stack);
+  }
+
   res.status(err.status || 500).json({
+    success: false,
     message: err.message || 'Internal server error',
-    error: process.env.NODE_ENV === 'development' ? err.stack : {}
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
   });
 });
 
+// Start server
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log('\n🚀 Science & Tech Club API Server');
-  console.log('═'.repeat(50));
-  console.log('📡 Port:', PORT);
-  console.log('🌍 Environment:', process.env.NODE_ENV || 'development');
-  console.log('');
-  console.log('Configuration Status:');
-  console.log('  🔧 Supabase URL:', process.env.SUPABASE_URL ? '✓ Configured' : '✗ Missing');
-  console.log('  🔑 Supabase Key:', process.env.SUPABASE_ANON_KEY ? '✓ Configured' : '✗ Missing');
-  console.log('  🔐 JWT Secret:', process.env.JWT_SECRET ? '✓ Configured' : '✗ Missing');
-  console.log('');
-  console.log('📍 Available Endpoints:');
-  console.log('  GET  / → API info');
-  console.log('  GET  /api/health → Health check');
-  console.log('  GET  /api/test → Test endpoint');
-  console.log('  POST /api/auth/login → User login');
-  console.log('  POST /api/auth/register → User registration');
-  console.log('  GET  /api/auth/verify → Verify token');
-  console.log('  GET  /api/users → Get all users (admin)');
-  console.log('  GET  /api/users/profile → Get current user profile');
-  console.log('  PUT  /api/users/profile → Update profile');
-  console.log('  GET  /api/courses → Get courses');
-  console.log('  GET  /api/projects → Get projects');
-  console.log('  GET  /api/events → Get events');
-  console.log('  GET  /api/quizzes → Get quizzes');
-  console.log('  GET  /api/config → Get site config');
-  console.log('  GET  /api/admin/dashboard → Admin dashboard');
-  console.log('  GET  /api/announcements → Get announcements');
-  console.log('  GET  /api/public/committee → Get committee members');
-  console.log('');
-  console.log('✅ Server is ready and listening!');
-  console.log('═'.repeat(50));
-  console.log('');
+app.listen(PORT, '0.0.0.0', () => {
+  console.log('\n╔═══════════════════════════════════════════════════╗');
+  console.log('║   🚀 Science & Tech Club API Server             ║');
+  console.log('╚═══════════════════════════════════════════════════╝\n');
+  
+  console.log('📡 Server Information:');
+  console.log(`   Port: ${PORT}`);
+  console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`   URL: http://localhost:${PORT}\n`);
+  
+  console.log('⚙️  Configuration Status:');
+  console.log(`   ${process.env.SUPABASE_URL ? '✓' : '✗'} Supabase URL`);
+  console.log(`   ${process.env.SUPABASE_ANON_KEY ? '✓' : '✗'} Supabase Key`);
+  console.log(`   ${process.env.JWT_SECRET ? '✓' : '✗'} JWT Secret`);
+  console.log(`   ${process.env.GROQ_API_KEY ? '✓' : '✗'} Groq API Key\n`);
+  
+  console.log('📍 Key Endpoints:');
+  console.log('   GET    /                     → API Info');
+  console.log('   GET    /api/health           → Health Check');
+  console.log('   GET    /api/test             → Test Config');
+  console.log('   POST   /api/auth/login       → Login');
+  console.log('   POST   /api/auth/register    → Register');
+  console.log('   GET    /api/users/profile    → User Profile');
+  console.log('   PUT    /api/users/profile    → Update Profile');
+  console.log('   GET    /api/projects         → Projects List');
+  console.log('   GET    /api/courses          → Courses List');
+  console.log('   GET    /api/announcements    → Announcements');
+  console.log('   POST   /api/chatbot          → AI Chatbot');
+  console.log('   GET    /api/messages         → Messages');
+  console.log('   GET    /api/tasks            → Tasks\n');
+  
+  console.log('✅ Server is ready and listening!\n');
+  console.log('═══════════════════════════════════════════════════\n');
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('\n⚠️  SIGTERM received. Shutting down gracefully...');
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  console.log('\n⚠️  SIGINT received. Shutting down gracefully...');
+  process.exit(0);
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+  console.error('💥 Uncaught Exception:', error);
+  process.exit(1);
+});
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('💥 Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
 });
 
 module.exports = app;
