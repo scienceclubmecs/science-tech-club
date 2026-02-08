@@ -1,50 +1,22 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Search, Filter, X, Code, Users, Calendar, ExternalLink } from 'lucide-react'
+import { Briefcase, Calendar, Users, ArrowLeft, ExternalLink, CheckCircle, Clock } from 'lucide-react'
 import api from '../services/api'
+import Loading from '../components/Loading'
 
-export default function ProjectsPage() {
+export default function MyProjectsPage() {
   const navigate = useNavigate()
   const [projects, setProjects] = useState([])
-  const [filteredProjects, setFilteredProjects] = useState([])
   const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [showFilters, setShowFilters] = useState(false)
-  const [filters, setFilters] = useState({
-    branch: 'all',
-    domain: 'all',
-    status: 'all'
-  })
-
-  const user = JSON.parse(localStorage.getItem('user'))
-
-  const branches = ['CSE', 'AIML', 'CSD', 'IT', 'CME', 'Civil', 'Mech', 'ECE', 'EEE']
-  const domains = [
-    'Web Development',
-    'Mobile Development',
-    'AI/ML',
-    'Data Science',
-    'IoT',
-    'Robotics',
-    'Cloud Computing',
-    'Cybersecurity',
-    'Blockchain',
-    'AR/VR',
-    'Game Development',
-    'DevOps'
-  ]
+  const [filter, setFilter] = useState('all') // all, ongoing, completed
 
   useEffect(() => {
-    fetchProjects()
+    fetchMyProjects()
   }, [])
 
-  useEffect(() => {
-    applyFilters()
-  }, [projects, searchQuery, filters])
-
-  const fetchProjects = async () => {
+  const fetchMyProjects = async () => {
     try {
-      const { data } = await api.get('/projects')
+      const { data } = await api.get('/projects/my-projects')
       setProjects(data)
     } catch (error) {
       console.error('Failed to fetch projects:', error)
@@ -53,257 +25,222 @@ export default function ProjectsPage() {
     }
   }
 
-  const applyFilters = () => {
-    let filtered = [...projects]
+  const filteredProjects = projects.filter(project => {
+    if (filter === 'ongoing') return project.status === 'ongoing'
+    if (filter === 'completed') return project.status === 'completed'
+    return true
+  })
 
-    // Search filter
-    if (searchQuery) {
-      filtered = filtered.filter(project =>
-        project.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        project.description?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    }
+  const ongoingCount = projects.filter(p => p.status === 'ongoing').length
+  const completedCount = projects.filter(p => p.status === 'completed').length
 
-    // Branch filter
-    if (filters.branch !== 'all') {
-      filtered = filtered.filter(project =>
-        project.branch === filters.branch || project.branches?.includes(filters.branch)
-      )
-    }
-
-    // Domain filter
-    if (filters.domain !== 'all') {
-      filtered = filtered.filter(project =>
-        project.domain === filters.domain ||
-        project.domains?.includes(filters.domain) ||
-        project.tech_stack?.includes(filters.domain)
-      )
-    }
-
-    // Status filter
-    if (filters.status !== 'all') {
-      filtered = filtered.filter(project => project.status === filters.status)
-    }
-
-    setFilteredProjects(filtered)
-  }
-
-  const resetFilters = () => {
-    setFilters({
-      branch: 'all',
-      domain: 'all',
-      status: 'all'
-    })
-    setSearchQuery('')
-  }
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'open': return 'bg-green-600'
-      case 'in_progress': return 'bg-yellow-600'
-      case 'completed': return 'bg-blue-600'
-      case 'closed': return 'bg-gray-600'
-      default: return 'bg-gray-600'
-    }
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-black pt-20 flex items-center justify-center">
-        <div className="text-white text-xl">Loading projects...</div>
-      </div>
-    )
-  }
+  if (loading) return <Loading />
 
   return (
-    <div className="min-h-screen bg-black pt-20 px-4 pb-12">
+    <div className="min-h-screen bg-black text-white pt-20 px-4 pb-12">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-          <div>
-            <h1 className="text-4xl font-bold text-white mb-2">Projects</h1>
-            <p className="text-gray-400">Discover and join exciting projects</p>
-          </div>
-          
-          {(user?.role === 'admin' || user?.role === 'faculty' || user?.is_committee) && (
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
             <button
-              onClick={() => navigate('/projects/create')}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg transition"
+              onClick={() => navigate('/projects')}
+              className="p-2 hover:bg-gray-800 rounded-lg transition"
             >
-              <Plus className="w-5 h-5" />
-              Create Project
+              <ArrowLeft className="w-6 h-6" />
             </button>
-          )}
-        </div>
-
-        {/* Search and Filters */}
-        <div className="mb-8 space-y-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            {/* Search Bar */}
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search projects..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-11 pr-4 py-3 bg-gray-900 border border-gray-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-600"
-              />
+            <div>
+              <h1 className="text-4xl font-bold">My Projects</h1>
+              <p className="text-gray-400 mt-1">Projects you're working on</p>
             </div>
-
-            {/* Filter Toggle */}
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2 bg-gray-900 hover:bg-gray-800 border border-gray-800 px-6 py-3 rounded-lg transition"
-            >
-              <Filter className="w-5 h-5" />
-              Filters
-              {(filters.branch !== 'all' || filters.domain !== 'all' || filters.status !== 'all') && (
-                <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-              )}
-            </button>
           </div>
 
-          {/* Filter Options */}
-          {showFilters && (
-            <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-white">Filters</h3>
-                <button
-                  onClick={resetFilters}
-                  className="text-sm text-blue-400 hover:text-blue-300"
-                >
-                  Reset All
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Branch Filter */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Branch
-                  </label>
-                  <select
-                    value={filters.branch}
-                    onChange={(e) => setFilters({ ...filters, branch: e.target.value })}
-                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-600"
-                  >
-                    <option value="all">All Branches</option>
-                    {branches.map(branch => (
-                      <option key={branch} value={branch}>{branch}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Domain Filter */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Domain
-                  </label>
-                  <select
-                    value={filters.domain}
-                    onChange={(e) => setFilters({ ...filters, domain: e.target.value })}
-                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-600"
-                  >
-                    <option value="all">All Domains</option>
-                    {domains.map(domain => (
-                      <option key={domain} value={domain}>{domain}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Status Filter */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Status
-                  </label>
-                  <select
-                    value={filters.status}
-                    onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-600"
-                  >
-                    <option value="all">All Status</option>
-                    <option value="open">Open</option>
-                    <option value="in_progress">In Progress</option>
-                    <option value="completed">Completed</option>
-                    <option value="closed">Closed</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          )}
+          <button
+            onClick={() => navigate('/projects')}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg transition"
+          >
+            <ExternalLink className="w-5 h-5" />
+            Browse All Projects
+          </button>
         </div>
 
-        {/* Results Count */}
-        <div className="mb-6 text-gray-400">
-          Showing {filteredProjects.length} of {projects.length} projects
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-gradient-to-br from-blue-600 to-blue-800 p-6 rounded-xl">
+            <Briefcase className="w-8 h-8 mb-3" />
+            <h3 className="text-3xl font-bold">{projects.length}</h3>
+            <p className="text-blue-100 text-sm">Total Projects</p>
+          </div>
+
+          <div className="bg-gradient-to-br from-yellow-600 to-orange-600 p-6 rounded-xl">
+            <Clock className="w-8 h-8 mb-3" />
+            <h3 className="text-3xl font-bold">{ongoingCount}</h3>
+            <p className="text-yellow-100 text-sm">Ongoing</p>
+          </div>
+
+          <div className="bg-gradient-to-br from-green-600 to-teal-600 p-6 rounded-xl">
+            <CheckCircle className="w-8 h-8 mb-3" />
+            <h3 className="text-3xl font-bold">{completedCount}</h3>
+            <p className="text-green-100 text-sm">Completed</p>
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="flex gap-3 mb-8">
+          <button
+            onClick={() => setFilter('all')}
+            className={`px-6 py-2 rounded-lg transition ${
+              filter === 'all'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+            }`}
+          >
+            All ({projects.length})
+          </button>
+          <button
+            onClick={() => setFilter('ongoing')}
+            className={`px-6 py-2 rounded-lg transition ${
+              filter === 'ongoing'
+                ? 'bg-yellow-600 text-white'
+                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+            }`}
+          >
+            Ongoing ({ongoingCount})
+          </button>
+          <button
+            onClick={() => setFilter('completed')}
+            className={`px-6 py-2 rounded-lg transition ${
+              filter === 'completed'
+                ? 'bg-green-600 text-white'
+                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+            }`}
+          >
+            Completed ({completedCount})
+          </button>
         </div>
 
         {/* Projects Grid */}
-        {filteredProjects.length > 0 ? (
+        {filteredProjects.length === 0 ? (
+          <div className="text-center py-16">
+            <Briefcase className="w-16 h-16 mx-auto mb-4 text-gray-600" />
+            <h3 className="text-xl font-semibold mb-2">No projects found</h3>
+            <p className="text-gray-400 mb-6">
+              {filter === 'all' 
+                ? "You haven't joined any projects yet"
+                : `You don't have any ${filter} projects`
+              }
+            </p>
+            <button
+              onClick={() => navigate('/projects')}
+              className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg transition"
+            >
+              Browse Available Projects
+            </button>
+          </div>
+        ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredProjects.map((project) => (
               <div
                 key={project.id}
-                className="bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-gray-700 transition group cursor-pointer"
-                onClick={() => navigate(`/projects/${project.id}`)}
+                className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden hover:border-blue-500 transition group"
               >
-                <div className="flex items-start justify-between mb-4">
-                  <h3 className="text-xl font-bold text-white group-hover:text-blue-400 transition">
-                    {project.title}
-                  </h3>
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}>
-                    {project.status?.replace('_', ' ')}
-                  </span>
-                </div>
+                {/* Project Image */}
+                {project.image_url && (
+                  <img
+                    src={project.image_url}
+                    alt={project.title}
+                    className="w-full h-48 object-cover group-hover:scale-105 transition duration-300"
+                  />
+                )}
 
-                <p className="text-gray-400 mb-4 line-clamp-3">
-                  {project.description}
-                </p>
-
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {project.tech_stack?.slice(0, 3).map((tech, idx) => (
-                    <span key={idx} className="px-2 py-1 bg-gray-800 rounded text-xs text-gray-300">
-                      {tech}
+                <div className="p-6">
+                  {/* Status Badge */}
+                  <div className="flex items-center justify-between mb-3">
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        project.status === 'ongoing'
+                          ? 'bg-yellow-600'
+                          : project.status === 'completed'
+                          ? 'bg-green-600'
+                          : 'bg-gray-600'
+                      }`}
+                    >
+                      {project.status === 'ongoing' ? '🔄 Ongoing' : '✅ Completed'}
                     </span>
-                  ))}
-                  {project.tech_stack?.length > 3 && (
-                    <span className="px-2 py-1 bg-gray-800 rounded text-xs text-gray-500">
-                      +{project.tech_stack.length - 3} more
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between text-sm text-gray-500">
-                  <div className="flex items-center gap-4">
-                    {project.vacancies > 0 && (
-                      <div className="flex items-center gap-1">
-                        <Users className="w-4 h-4" />
-                        {project.vacancies} spots
-                      </div>
-                    )}
-                    {project.created_at && (
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
-                        {new Date(project.created_at).toLocaleDateString()}
-                      </div>
+                    
+                    {project.role && (
+                      <span className="text-xs text-gray-400 capitalize">
+                        {project.role}
+                      </span>
                     )}
                   </div>
+
+                  {/* Title */}
+                  <h3 className="text-xl font-bold mb-2 group-hover:text-blue-400 transition">
+                    {project.title}
+                  </h3>
+
+                  {/* Description */}
+                  <p className="text-gray-400 text-sm mb-4 line-clamp-2">
+                    {project.description}
+                  </p>
+
+                  {/* Meta Info */}
+                  <div className="space-y-2 mb-4">
+                    <div className="flex items-center gap-2 text-sm text-gray-400">
+                      <Users className="w-4 h-4" />
+                      <span>{project.current_members || 0} members</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-400">
+                      <Calendar className="w-4 h-4" />
+                      <span>Joined {new Date(project.joined_at).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+
+                  {/* Technologies */}
+                  {project.technologies && project.technologies.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {project.technologies.slice(0, 3).map((tech, idx) => (
+                        <span
+                          key={idx}
+                          className="px-2 py-1 bg-gray-800 rounded text-xs"
+                        >
+                          {tech}
+                        </span>
+                      ))}
+                      {project.technologies.length > 3 && (
+                        <span className="px-2 py-1 bg-gray-800 rounded text-xs">
+                          +{project.technologies.length - 3}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Progress Bar (for ongoing projects) */}
+                  {project.status === 'ongoing' && project.progress !== undefined && (
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs text-gray-400">Progress</span>
+                        <span className="text-xs font-semibold">{project.progress}%</span>
+                      </div>
+                      <div className="w-full bg-gray-800 rounded-full h-2">
+                        <div
+                          className="bg-blue-600 h-2 rounded-full transition-all"
+                          style={{ width: `${project.progress}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* View Button */}
+                  <button
+                    onClick={() => navigate(`/projects/${project.id}`)}
+                    className="w-full bg-gray-800 hover:bg-blue-600 py-2 rounded-lg transition"
+                  >
+                    View Details
+                  </button>
                 </div>
               </div>
             ))}
-          </div>
-        ) : (
-          <div className="text-center py-20">
-            <Code className="w-16 h-16 mx-auto mb-4 text-gray-700" />
-            <h3 className="text-xl font-semibold text-gray-400 mb-2">No projects found</h3>
-            <p className="text-gray-500 mb-6">Try adjusting your filters or search query</p>
-            <button
-              onClick={resetFilters}
-              className="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg transition"
-            >
-              Clear Filters
-            </button>
           </div>
         )}
       </div>
