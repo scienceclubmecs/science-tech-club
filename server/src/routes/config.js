@@ -19,11 +19,11 @@ router.get('/', async (req, res) => {
     res.json(data || {
       site_name: 'Science & Tech Club',
       logo_url: '',
-      git_repo_url: 'https://github.com/scienceclubmecs/science-tech-club',
-      contact_email: 'scienceclubmecs@gmail.com',
-      hero_title: 'Innovate. Create. Inspire.',
-      hero_subtitle: 'Join the premier tech community',
-      theme_color: 'blue'
+      mecs_logo_url: '',
+      theme_mode: 'dark',
+      primary_color: '#3b82f6',
+      watermark_opacity: '0.25',
+      contact_email: 'scienceclubmecs@gmail.com'
     });
   } catch (error) {
     console.error('Config error:', error);
@@ -31,13 +31,10 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Update config (admin/developer only)
+// Update config (admin only)
 router.put('/', auth, async (req, res) => {
   try {
-    const canEdit = req.user.role === 'admin' || 
-                    req.user.committee_post === 'Developer';
-    
-    if (!canEdit) {
+    if (req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Access denied' });
     }
     
