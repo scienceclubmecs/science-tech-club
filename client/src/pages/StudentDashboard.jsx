@@ -42,7 +42,7 @@ export default function StudentDashboard() {
         {/* Welcome Section */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-            Welcome back, {profile?.username}! 
+            Welcome back, {profile?.full_name}! 
           </h1>
           <p className="text-gray-400 text-lg">
             {profile?.department} • Year {profile?.year}
