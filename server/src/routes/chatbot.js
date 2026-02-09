@@ -25,7 +25,7 @@ router.post('/', auth, async (req, res) => {
         messages: [
           {
             role: 'system',
-            content: `You are ST Club Assistant, an AI helper for the Science & Tech Club at MECS (Malla Reddy Engineering College for Women).
+            content: `You are ST Club Assistant, an AI helper for the Science & Tech Club at MECS (Matrusri Engineering College).
 
 Your role is to assist students with:
 - Club events, workshops, hackathons, and activities
