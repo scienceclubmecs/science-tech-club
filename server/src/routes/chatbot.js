@@ -40,7 +40,7 @@ Your role is to assist students with:
 
 Key Information:
 - Club Email: scienceclubmecs@gmail.com
-- Location: Lal Bahadur Nagar, Telangana, India
+- Location: Saidabad, Telangana, India
 - Features: Projects, Courses, Events, Quizzes, Messaging, Tasks, Research opportunities
 - Committee: Admin and committee members available via DM system
 
