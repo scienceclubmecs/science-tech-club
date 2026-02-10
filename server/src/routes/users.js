@@ -40,6 +40,94 @@ router.get('/profile', auth, async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch user', error: error.message });
   }
 });
+router.get('/me', auth, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', req.user.id)
+      .single();
+
+    if (error) throw error;
+
+    if (data) {
+      delete data.password;
+    }
+
+    res.json(data);
+  } catch (error) {
+    console.error('❌ Fetch user error:', error);
+    res.status(500).json({ message: 'Failed to fetch user', error: error.message });
+  }
+});
+
+// Get current user profile (alias for /me)
+router.get('/profile', auth, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', req.user.id)
+      .single();
+
+    if (error) throw error;
+
+    if (data) {
+      delete data.password;
+    }
+
+    res.json(data);
+  } catch (error) {
+    console.error('❌ Fetch user error:', error);
+    res.status(500).json({ message: 'Failed to fetch user', error: error.message });
+  }
+});
+
+// Get all users (admin only - for user management)
+router.get('/', auth, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    const { data, error } = await supabase
+      .from('users')
+      .select('id, username, full_name, email, role, is_committee, department, year, created_at')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    res.json(data || []);
+  } catch (error) {
+    console.error('❌ Fetch users error:', error);
+    res.status(500).json({ message: 'Failed to fetch users', error: error.message });
+  }
+});
+
+// Get user by ID (must be AFTER /me and /profile)
+router.get('/:id', auth, async (req, res) => {
+  try {
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    
+    if (!uuidRegex.test(req.params.id)) {
+      return res.status(400).json({ message: 'Invalid user ID format' });
+    }
+
+    const { data, error } = await supabase
+      .from('users')
+      .select('id, username, full_name, email, profile_photo_url, department, year, role, is_committee, bio')
+      .eq('id', req.params.id)
+      .single();
+
+    if (error) throw error;
+
+    res.json(data);
+  } catch (error) {
+    console.error('❌ Fetch user error:', error);
+    res.status(500).json({ message: 'Failed to fetch user', error: error.message });
+  }
+});
 
 // Get user by ID (change this to NOT conflict with /profile)
 router.get('/:id', auth, async (req, res) => {
