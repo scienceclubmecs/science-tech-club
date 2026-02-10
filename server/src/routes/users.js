@@ -111,9 +111,15 @@ router.post('/profile/upload-photo', auth, upload.single('photo'), async (req, r
       return res.status(400).json({ message: 'No file uploaded' });
     }
 
-    // Upload to Supabase Storage
-    const fileName = `profile-photos/${req.user.id}-${Date.now()}.${req.file.mimetype.split('/')[1]}`;
+    console.log('📤 Uploading photo for user:', req.user.id);
+    console.log('📦 File info:', {
+      size: req.file.size,
+      type: req.file.mimetype
+    });
+
+    const fileName = `${req.user.id}-${Date.now()}.${req.file.mimetype.split('/')[1]}`;
     
+    // Try to upload to Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('profile-photos')
       .upload(fileName, req.file.buffer, {
@@ -123,13 +129,32 @@ router.post('/profile/upload-photo', auth, upload.single('photo'), async (req, r
 
     if (uploadError) {
       console.error('❌ Upload error:', uploadError);
+      
+      // If bucket doesn't exist, return helpful message
+      if (uploadError.message?.includes('Bucket not found')) {
+        return res.status(400).json({ 
+          message: 'Storage bucket not configured. Please create "profile-photos" bucket in Supabase.' 
+        });
+      }
+      
+      // If RLS error, return helpful message
+      if (uploadError.statusCode === '403' || uploadError.message?.includes('policy')) {
+        return res.status(403).json({ 
+          message: 'Storage permissions error. Please check Supabase storage policies.' 
+        });
+      }
+      
       throw uploadError;
     }
+
+    console.log('✅ File uploaded:', fileName);
 
     // Get public URL
     const { data: urlData } = supabase.storage
       .from('profile-photos')
       .getPublicUrl(fileName);
+
+    console.log('🔗 Public URL:', urlData.publicUrl);
 
     // Update user profile with photo URL
     const { data, error } = await supabase
@@ -152,6 +177,8 @@ router.post('/profile/upload-photo', auth, upload.single('photo'), async (req, r
       delete data.password;
     }
 
+    console.log('✅ Profile updated with photo URL');
+
     res.json({
       message: 'Photo uploaded successfully',
       photo_url: urlData.publicUrl,
@@ -161,7 +188,8 @@ router.post('/profile/upload-photo', auth, upload.single('photo'), async (req, r
     console.error('❌ Photo upload error:', error);
     res.status(500).json({ 
       message: 'Failed to upload photo',
-      error: error.message 
+      error: error.message,
+      details: error.statusCode || error.status
     });
   }
 });
