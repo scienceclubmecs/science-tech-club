@@ -36,26 +36,26 @@ export default function StudentDashboard() {
   }, [])
 
   const fetchData = async () => {
-    try {
-      const [profileRes, announcementsRes, allRes, myRes, formatRes] = await Promise.all([
-        api.get('/users/profile'),
-        api.get('/announcements'),
-        api.get('/api/projects'),
-        api.get('/api/projects/my-projects'),
-        api.get('/api/report-formats/active').catch(() => ({ data: null }))
-      ])
-      
-      setProfile(profileRes.data)
-      setAnnouncements(announcementsRes.data.slice(0, 5))
-      setProjects(allRes.data)
-      setMyProjects(myRes.data)
-      setReportFormat(formatRes.data)
-    } catch (error) {
-      console.error('Failed to fetch data:', error)
-    } finally {
-      setLoading(false)
-    }
+  try {
+    const [profileRes, announcementsRes, allRes, myRes, formatRes] = await Promise.all([
+      api.get('/users/profile'),
+      api.get('/announcements'),
+      api.get('/projects'),              // ✅ Remove /api prefix
+      api.get('/projects/my-projects'),  // ✅ Remove /api prefix
+      api.get('/report-formats/active').catch(() => ({ data: null }))  // ✅ Remove /api prefix
+    ])
+    
+    setProfile(profileRes.data)
+    setAnnouncements(announcementsRes.data.slice(0, 5))
+    setProjects(allRes.data)
+    setMyProjects(myRes.data)
+    setReportFormat(formatRes.data)
+  } catch (error) {
+    console.error('Failed to fetch data:', error)
+  } finally {
+    setLoading(false)
   }
+}
 
   const handleCreateProject = async (e) => {
     e.preventDefault()
