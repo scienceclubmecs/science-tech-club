@@ -67,7 +67,7 @@ export default function StudentDashboard() {
         .map(t => t.trim())
         .filter(t => t)
 
-      await api.post('/api/projects', {
+      await api.post('/projects', {
         ...formData,
         technologies: techArray
       })
