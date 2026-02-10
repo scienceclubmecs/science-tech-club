@@ -33,6 +33,42 @@ export default function ProfilePage() {
     }
   }
 
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file')
+      return
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size should be less than 5MB')
+      return
+    }
+
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append('photo', file)
+
+      const { data } = await api.post('/users/profile/upload-photo', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
+
+      alert('✅ Photo uploaded successfully!')
+      setProfile({ ...profile, profile_photo_url: data.photo_url })
+    } catch (error) {
+      console.error('Upload failed:', error)
+      alert(error.response?.data?.message || 'Failed to upload photo')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  
   const handleEdit = () => {
     setEditing(true)
     setEditedProfile({ ...profile })
@@ -142,44 +178,96 @@ const handleSubmit = async (e) => {
 
         {/* Profile Content */}
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-8">
-          {/* Profile Picture */}
-          <div className="flex items-center gap-6 mb-8 pb-8 border-b border-gray-800">
+          {/* Profile Photo Section */}
+        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8 mb-6">
+          <h2 className="text-2xl font-bold mb-6">Profile Photo</h2>
+          
+          <div className="flex items-center gap-8">
+            {/* Avatar Display */}
             <div className="relative">
-              {profile.profile_photo_url ? (
+              {profile?.profile_photo_url ? (
                 <img 
                   src={profile.profile_photo_url} 
-                  alt={profile.username}
-                  className="w-24 h-24 rounded-full object-cover border-4 border-blue-500"
+                  alt="Profile" 
+                  className="w-32 h-32 rounded-full object-cover border-4 border-blue-600"
                 />
               ) : (
-                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-4xl font-bold">
-                  {profile.username?.[0]?.toUpperCase()}
+                <div className="w-32 h-32 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-4xl font-bold">
+                  {profile?.full_name?.[0]?.toUpperCase() || profile?.username?.[0]?.toUpperCase() || 'U'}
                 </div>
               )}
               
-              {editing && (
-                <button className="absolute bottom-0 right-0 bg-blue-600 hover:bg-blue-700 p-2 rounded-full">
-                  <Upload className="w-4 h-4" />
+              {/* Upload Button Overlay */}
+              <label 
+                htmlFor="photo-upload"
+                className="absolute bottom-0 right-0 bg-blue-600 hover:bg-blue-700 p-3 rounded-full cursor-pointer shadow-lg transition-all hover:scale-110"
+              >
+                <Camera className="w-5 h-5" />
+                <input
+                  id="photo-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoUpload}
+                  disabled={uploading}
+                  className="hidden"
+                />
+              </label>
+            </div>
+
+            {/* Upload Info */}
+            <div className="flex-1">
+              <h3 className="text-lg font-bold mb-2">Upload Profile Picture</h3>
+              <p className="text-gray-400 text-sm mb-4">
+                JPG, PNG or GIF • Max 5MB
+              </p>
+              
+              {/* Alternative Upload Button */}
+              <label 
+                htmlFor="photo-upload-alt"
+                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-6 py-3 rounded-lg font-medium cursor-pointer transition-all"
+              >
+                {uploading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-5 h-5" />
+                    Choose Photo
+                  </>
+                )}
+                <input
+                  id="photo-upload-alt"
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoUpload}
+                  disabled={uploading}
+                  className="hidden"
+                />
+              </label>
+
+              {profile?.profile_photo_url && (
+                <button
+                  onClick={async () => {
+                    if (confirm('Remove profile photo?')) {
+                      try {
+                        await api.put('/users/profile', { profile_photo_url: null })
+                        setProfile({ ...profile, profile_photo_url: null })
+                        alert('Photo removed')
+                      } catch (error) {
+                        alert('Failed to remove photo')
+                      }
+                    }
+                  }}
+                  className="ml-4 text-red-400 hover:text-red-300 text-sm font-medium"
+                >
+                  Remove Photo
                 </button>
               )}
             </div>
-            
-            <div>
-              <h2 className="text-2xl font-bold mb-1">{profile.full_name || profile.username}</h2>
-              <p className="text-gray-400 mb-2">{profile.email}</p>
-              <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                profile.role === 'admin' ? 'bg-red-600' :
-                profile.role === 'faculty' ? 'bg-purple-600' :
-                profile.is_committee ? 'bg-blue-600' :
-                'bg-green-600'
-              }`}>
-                {profile.role === 'admin' ? 'Admin' :
-                 profile.role === 'faculty' ? 'Faculty' :
-                 profile.is_committee ? 'Committee Member' :
-                 'Student'}
-              </span>
-            </div>
           </div>
+        </div>
 
           {/* Profile Fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
