@@ -3,6 +3,79 @@ const router = express.Router();
 const supabase = require('../config/supabase');
 const auth = require('../middleware/auth');
 
+// Create new project (students & admin)
+router.post('/', auth, async (req, res) => {
+  try {
+    const { 
+      title, 
+      description, 
+      domain, 
+      technologies, 
+      image_url,
+      github_url, 
+      live_url,
+      max_members 
+    } = req.body;
+
+    // Basic validation
+    if (!title || title.length < 3) {
+      return res.status(400).json({ 
+        message: 'Title must be at least 3 characters' 
+      });
+    }
+
+    if (!description || description.length < 10) {
+      return res.status(400).json({ 
+        message: 'Description must be at least 10 characters' 
+      });
+    }
+
+    // Insert project
+    const { data: project, error } = await supabase
+      .from('projects')
+      .insert([{
+        title,
+        description,
+        domain,
+        technologies: technologies || [],
+        image_url,
+        github_url,
+        live_url,
+        max_members: max_members || 5,
+        current_members: 1, // Creator counts as first member
+        creator_id: req.user.id,
+        status: 'open' // Default: open for members
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('❌ Create project error:', error);
+      throw error;
+    }
+
+    // Add creator as project member
+    await supabase
+      .from('project_members')
+      .insert([{
+        project_id: project.id,
+        user_id: req.user.id,
+        role: 'creator',
+        progress: 0
+      }]);
+
+    res.status(201).json({
+      message: 'Project created successfully!',
+      project
+    });
+  } catch (error) {
+    console.error('❌ Create project error:', error);
+    res.status(500).json({ 
+      message: 'Failed to create project',
+      error: error.message 
+    });
+  }
+});
 // Get current user's projects
 // Get my projects - BULLETPROOF VERSION
 router.get('/my-projects', auth, async (req, res) => {
