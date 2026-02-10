@@ -85,4 +85,20 @@ router.put('/:id/respond', auth, async (req, res) => {
   }
 });
 
+router.get('/', auth, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('queries')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    res.json(data || []);
+  } catch (error) {
+    console.error('❌ Fetch queries error:', error);
+    res.status(500).json({ message: 'Failed to fetch queries', error: error.message });
+  }
+});
+
 module.exports = router;
