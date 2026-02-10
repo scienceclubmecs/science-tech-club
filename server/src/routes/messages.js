@@ -3,202 +3,27 @@ const router = express.Router();
 const supabase = require('../config/supabase');
 const auth = require('../middleware/auth');
 
-// Get all channels user has access to
-router.get('/channels', auth, async (req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from('channels')
-      .select('*')
-      .or(`is_private.eq.false,members.cs.{${req.user.id}}`)
-      .order('name');
-
-    if (error) throw error;
-    res.json(data || []);
-  } catch (error) {
-    console.error('Fetch channels error:', error);
-    res.status(500).json({ message: 'Failed to fetch channels', error: error.message });
-  }
-});
-
 // Get unread message count
 router.get('/unread-count', auth, async (req, res) => {
   try {
-    // Count unread messages in DMs
-    const { data: dmData, error: dmError } = await supabase
+    // Count unread direct messages
+    const { count: dmCount, error: dmError } = await supabase
       .from('direct_messages')
-      .select('user1_unread, user2_unread, user1_id, user2_id')
-      .or(`user1_id.eq.${req.user.id},user2_id.eq.${req.user.id}`)
-      .eq('status', 'accepted');
+      .select('*', { count: 'exact', head: true })
+      .eq('receiver_id', req.user.id)
+      .eq('read', false);
 
-    if (dmError) throw dmError;
-
-    let dmUnread = 0;
-    dmData.forEach(dm => {
-      if (dm.user1_id === req.user.id) {
-        dmUnread += dm.user1_unread || 0;
-      } else {
-        dmUnread += dm.user2_unread || 0;
-      }
-    });
-
-    // Count unread channel messages (you can implement this later)
-    const channelUnread = 0;
-
-    res.json({ count: dmUnread + channelUnread });
-  } catch (error) {
-    console.error('Fetch unread count error:', error);
-    res.status(500).json({ message: 'Failed to fetch unread count', error: error.message });
-  }
-});
-
-// Get direct messages
-router.get('/direct', auth, async (req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from('direct_messages')
-      .select(`
-        *,
-        user1:users!direct_messages_user1_id_fkey(id, username, profile_photo_url),
-        user2:users!direct_messages_user2_id_fkey(id, username, profile_photo_url)
-      `)
-      .or(`user1_id.eq.${req.user.id},user2_id.eq.${req.user.id}`)
-      .eq('status', 'accepted')
-      .order('last_message_at', { ascending: false });
-
-    if (error) throw error;
-
-    // Format DMs to show the other user
-    const formattedDMs = data.map(dm => {
-      const otherUser = dm.user1.id === req.user.id ? dm.user2 : dm.user1;
-      return {
-        id: dm.id,
-        ...otherUser,
-        unread_count: dm[`user${dm.user1.id === req.user.id ? '1' : '2'}_unread`] || 0,
-        last_message: dm.last_message,
-        last_message_at: dm.last_message_at
-      };
-    });
-
-    res.json(formattedDMs);
-  } catch (error) {
-    console.error('Fetch DMs error:', error);
-    res.status(500).json({ message: 'Failed to fetch direct messages', error: error.message });
-  }
-});
-
-// Get messages in a channel
-router.get('/channel/:channelId', auth, async (req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from('messages')
-      .select(`
-        *,
-        sender:users(id, username, profile_photo_url)
-      `)
-      .eq('channel_id', req.params.channelId)
-      .order('created_at', { ascending: true })
-      .limit(100);
-
-    if (error) throw error;
-
-    const formatted = data.map(msg => ({
-      ...msg,
-      sender_name: msg.sender.username,
-      sender_photo: msg.sender.profile_photo_url
-    }));
-
-    res.json(formatted);
-  } catch (error) {
-    console.error('Fetch messages error:', error);
-    res.status(500).json({ message: 'Failed to fetch messages', error: error.message });
-  }
-});
-
-// Send message
-router.post('/', auth, async (req, res) => {
-  try {
-    const { channel_id, content, dm_id } = req.body;
-
-    const messageData = {
-      sender_id: req.user.id,
-      content,
-      created_at: new Date().toISOString()
-    };
-
-    if (channel_id) {
-      messageData.channel_id = channel_id;
-    } else if (dm_id) {
-      messageData.dm_id = dm_id;
+    if (dmError) {
+      console.error('❌ DM count error:', dmError);
+      // Don't throw, just return 0
+      return res.json({ unread_count: 0 });
     }
 
-    const { data, error } = await supabase
-      .from('messages')
-      .insert([messageData])
-      .select()
-      .single();
-
-    if (error) throw error;
-    res.status(201).json(data);
+    res.json({ unread_count: dmCount || 0 });
   } catch (error) {
-    console.error('Send message error:', error);
-    res.status(500).json({ message: 'Failed to send message', error: error.message });
-  }
-});
-
-// Request DM connection
-router.post('/dm/request', auth, async (req, res) => {
-  try {
-    const { recipient_id } = req.body;
-
-    // Check if DM already exists
-    const { data: existing } = await supabase
-      .from('direct_messages')
-      .select('*')
-      .or(`and(user1_id.eq.${req.user.id},user2_id.eq.${recipient_id}),and(user1_id.eq.${recipient_id},user2_id.eq.${req.user.id})`)
-      .single();
-
-    if (existing) {
-      return res.status(400).json({ message: 'DM connection already exists' });
-    }
-
-    // Create DM request
-    const { data, error } = await supabase
-      .from('direct_messages')
-      .insert([{
-        user1_id: req.user.id,
-        user2_id: recipient_id,
-        status: 'pending',
-        created_at: new Date().toISOString()
-      }])
-      .select()
-      .single();
-
-    if (error) throw error;
-    res.status(201).json(data);
-  } catch (error) {
-    console.error('Request DM error:', error);
-    res.status(500).json({ message: 'Failed to request DM', error: error.message });
-  }
-});
-
-// Accept/Reject DM request
-router.put('/dm/:id/status', auth, async (req, res) => {
-  try {
-    const { status } = req.body; // 'accepted' or 'rejected'
-
-    const { data, error } = await supabase
-      .from('direct_messages')
-      .update({ status, updated_at: new Date().toISOString() })
-      .eq('id', req.params.id)
-      .eq('user2_id', req.user.id)
-      .select()
-      .single();
-
-    if (error) throw error;
-    res.json(data);
-  } catch (error) {
-    console.error('Update DM status error:', error);
-    res.status(500).json({ message: 'Failed to update DM status', error: error.message });
+    console.error('❌ Unread count error:', error);
+    // Return 0 instead of error to prevent UI breaking
+    res.json({ unread_count: 0 });
   }
 });
 
@@ -212,6 +37,14 @@ router.get('/direct/:friendId', auth, async (req, res) => {
       .order('created_at', { ascending: true });
 
     if (error) throw error;
+
+    // Mark messages as read
+    await supabase
+      .from('direct_messages')
+      .update({ read: true })
+      .eq('receiver_id', req.user.id)
+      .eq('sender_id', req.params.friendId)
+      .eq('read', false);
 
     res.json(data || []);
   } catch (error) {
@@ -234,7 +67,8 @@ router.post('/direct', auth, async (req, res) => {
       .insert([{
         sender_id: req.user.id,
         receiver_id,
-        message: message.trim()
+        message: message.trim(),
+        read: false
       }])
       .select()
       .single();
@@ -244,6 +78,93 @@ router.post('/direct', auth, async (req, res) => {
     res.status(201).json(data);
   } catch (error) {
     console.error('❌ Send DM error:', error);
+    res.status(500).json({ message: 'Failed to send message', error: error.message });
+  }
+});
+
+// Get all channels
+router.get('/channels', auth, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('channels')
+      .select('*')
+      .order('name');
+
+    if (error) throw error;
+
+    res.json(data || []);
+  } catch (error) {
+    console.error('❌ Fetch channels error:', error);
+    res.status(500).json({ message: 'Failed to fetch channels', error: error.message });
+  }
+});
+
+// Get channel by ID
+router.get('/channel/:id', auth, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('channels')
+      .select('*')
+      .eq('id', req.params.id)
+      .single();
+
+    if (error) throw error;
+
+    res.json(data);
+  } catch (error) {
+    console.error('❌ Fetch channel error:', error);
+    res.status(500).json({ message: 'Failed to fetch channel', error: error.message });
+  }
+});
+
+// Get messages for a channel
+router.get('/channel/:id/messages', auth, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('messages')
+      .select(`
+        *,
+        sender:users!messages_sender_id_fkey(id, username, full_name, profile_photo_url)
+      `)
+      .eq('channel_id', req.params.id)
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+
+    res.json(data || []);
+  } catch (error) {
+    console.error('❌ Fetch channel messages error:', error);
+    res.status(500).json({ message: 'Failed to fetch messages', error: error.message });
+  }
+});
+
+// Send message to channel
+router.post('/channel/:id', auth, async (req, res) => {
+  try {
+    const { content } = req.body;
+
+    if (!content || content.trim() === '') {
+      return res.status(400).json({ message: 'Message content required' });
+    }
+
+    const { data, error } = await supabase
+      .from('messages')
+      .insert([{
+        channel_id: req.params.id,
+        sender_id: req.user.id,
+        content: content.trim()
+      }])
+      .select(`
+        *,
+        sender:users!messages_sender_id_fkey(id, username, full_name, profile_photo_url)
+      `)
+      .single();
+
+    if (error) throw error;
+
+    res.status(201).json(data);
+  } catch (error) {
+    console.error('❌ Send message error:', error);
     res.status(500).json({ message: 'Failed to send message', error: error.message });
   }
 });
