@@ -3,6 +3,62 @@ const router = express.Router();
 const supabase = require('../config/supabase');
 const auth = require('../middleware/auth');
 
+// Auto-friend all admin and committee members (admin only)
+router.post('/sync-admin-committee', auth, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Admin only' });
+    }
+
+    // Get all admin and committee users
+    const { data: adminCommittee, error: fetchError } = await supabase
+      .from('users')
+      .select('id, username, role, is_committee')
+      .or('role.eq.admin,is_committee.eq.true');
+
+    if (fetchError) throw fetchError;
+
+    let created = 0;
+    let skipped = 0;
+
+    // Create friendships between all pairs
+    for (let i = 0; i < adminCommittee.length; i++) {
+      for (let j = i + 1; j < adminCommittee.length; j++) {
+        const user1 = adminCommittee[i];
+        const user2 = adminCommittee[j];
+        
+        const [user1_id, user2_id] = [user1.id, user2.id].sort();
+
+        const { error } = await supabase
+          .from('friendships')
+          .insert([{ user1_id, user2_id }])
+          .select()
+          .single();
+
+        if (error) {
+          if (error.code === '23505') { // Duplicate key
+            skipped++;
+          } else {
+            console.error('Friendship creation error:', error);
+          }
+        } else {
+          created++;
+        }
+      }
+    }
+
+    res.json({
+      message: 'Admin/Committee friendships synced',
+      created,
+      skipped,
+      total: adminCommittee.length
+    });
+  } catch (error) {
+    console.error('❌ Sync error:', error);
+    res.status(500).json({ message: 'Failed to sync', error: error.message });
+  }
+});
+
 // Get all users (for Find My Friend)
 router.get('/users', auth, async (req, res) => {
   try {
