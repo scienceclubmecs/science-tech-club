@@ -9,6 +9,7 @@ const app = express();
 const reportFormatsRoutes = require('./routes/reportFormats');
 const messagesRoutes = require('./routes/messages');
 const channelsRoutes = require('./routes/channels');
+const queriesRoutes = require('./routes/queries');
 
 
 // CORS Configuration
@@ -44,6 +45,7 @@ app.use('/api/report-formats', reportFormatsRoutes);
 app.use('/api/friends', friendsRoutes);
 app.use('/api/messages', messagesRoutes);
 app.use('/api/channels', channelsRoutes);
+app.use('/api/queries', queriesRoutes);
 // Request logging middleware
 app.use((req, res, next) => {
   const timestamp = new Date().toISOString();
