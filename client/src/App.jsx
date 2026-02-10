@@ -16,8 +16,6 @@ import EventsPage from './pages/EventsPage'
 import CreateEventPage from './pages/CreateEventPage'
 import TeamViewPage from './pages/TeamViewPage'
 import DeveloperPanel from './pages/DeveloperPanel'
-import HomePage from './pages/HomePage'
-import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import DashboardRouter from './components/DashboardRouter'
 import ProfilePage from './pages/ProfilePage'
@@ -86,10 +84,10 @@ function AppContent() {
       
       <Routes>
         {/* Public Routes */}
-        <Route path="/" element={user ? <Navigate to="/dashboard" /> : <HomePage />} />
+        <Route path="/" element={user ? <Navigate to="/dashboard" /> : <Home />} />
         <Route 
           path="/login" 
-          element={!user ? <LoginPage setUser={setUser} /> : <Navigate to="/dashboard" />} 
+          element={!user ? <Login setUser={setUser} /> : <Navigate to="/dashboard" />} 
         />
         <Route 
           path="/register" 
