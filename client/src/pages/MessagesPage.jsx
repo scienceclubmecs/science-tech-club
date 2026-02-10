@@ -62,22 +62,27 @@ export default function MessagesPage() {
   }
 
   const fetchFriendData = async () => {
-    try {
-      const [friendsRes, usersRes, sentRes, receivedRes] = await Promise.all([
-        api.get('/friends/list'),
-        api.get('/friends/users'),
-        api.get('/friends/requests/sent'),
-        api.get('/friends/requests/received')
-      ])
-      
-      setFriends(friendsRes.data || [])
-      setAllUsers(usersRes.data || [])
-      setSentRequests(sentRes.data || [])
-      setReceivedRequests(receivedRes.data || [])
-    } catch (error) {
-      console.error('Failed to fetch friend data:', error)
-    }
+  try {
+    const [friendsRes, usersRes, sentRes, receivedRes] = await Promise.all([
+      api.get('/friends/list'),
+      api.get('/friends/users'),  
+      api.get('/friends/requests/sent'),
+      api.get('/friends/requests/received')
+    ])
+    
+    setFriends(friendsRes.data || [])
+    setAllUsers(usersRes.data || [])
+    setSentRequests(sentRes.data || [])
+    setReceivedRequests(receivedRes.data || [])
+  } catch (error) {
+    console.error('Failed to fetch friend data:', error)
+    setFriends([])
+    setAllUsers([])
+    setSentRequests([])
+    setReceivedRequests([])
   }
+}
+
 
   const fetchChannel = async (id) => {
     try {
