@@ -20,14 +20,36 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
-// Create task
+// Create new task
 router.post('/', auth, async (req, res) => {
   try {
+    const { title, description, due_date, priority, assigned_to } = req.body;
+
+    // Validate required fields
+    if (!title) {
+      return res.status(400).json({ message: 'Title is required' });
+    }
+
+    // Build task data
     const taskData = {
-      ...req.body,
-      user_id: req.user.id,
-      created_at: new Date().toISOString()
+      title,
+      description: description || null,
+      priority: priority || 'medium',
+      status: 'pending',
+      created_by: req.user.id
     };
+
+    // Only add due_date if it's a valid date
+    if (due_date && due_date !== '') {
+      taskData.due_date = due_date;
+    }
+
+    // Only add assigned_to if provided
+    if (assigned_to && assigned_to !== '') {
+      taskData.assigned_to = assigned_to;
+    }
+
+    console.log('📝 Creating task with data:', taskData);
 
     const { data, error } = await supabase
       .from('tasks')
@@ -35,11 +57,19 @@ router.post('/', auth, async (req, res) => {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('❌ Create task error:', error);
+      throw error;
+    }
+
+    console.log('✅ Task created:', data.id);
     res.status(201).json(data);
   } catch (error) {
-    console.error('Create task error:', error);
-    res.status(500).json({ message: 'Failed to create task', error: error.message });
+    console.error('❌ Create task error:', error);
+    res.status(500).json({ 
+      message: 'Failed to create task',
+      error: error.message 
+    });
   }
 });
 
