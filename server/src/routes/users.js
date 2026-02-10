@@ -3,6 +3,21 @@ const router = express.Router();
 const supabase = require('../config/supabase');
 const auth = require('../middleware/auth');
 const bcrypt = require('bcryptjs');
+const multer = require('multer');
+
+// Configure multer for memory storage
+const storage = multer.memoryStorage();
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'));
+    }
+  }
+});
 
 // Get current user profile
 router.get('/profile', auth, async (req, res) => {
@@ -14,7 +29,7 @@ router.get('/profile', auth, async (req, res) => {
       .single();
 
     if (error) {
-      console.error('Supabase error:', error);
+      console.error('❌ Supabase error:', error);
       throw error;
     }
 
@@ -25,7 +40,7 @@ router.get('/profile', auth, async (req, res) => {
 
     res.json(data);
   } catch (error) {
-    console.error('Fetch profile error:', error);
+    console.error('❌ Fetch profile error:', error);
     res.status(500).json({ 
       message: 'Failed to fetch profile',
       error: error.message 
@@ -36,26 +51,46 @@ router.get('/profile', auth, async (req, res) => {
 // Update current user profile
 router.put('/profile', auth, async (req, res) => {
   try {
-    const updates = { ...req.body };
-    
-    // Don't allow updating these fields via profile
-    delete updates.password;
-    delete updates.role;
-    delete updates.id;
-    delete updates.created_at;
-    
-    // Add updated_at timestamp
-    updates.updated_at = new Date().toISOString();
+    const { 
+      full_name, 
+      bio, 
+      department, 
+      year, 
+      roll_number,
+      phone,
+      github_url,
+      linkedin_url,
+      interests,
+      skills,
+      profile_photo_url
+    } = req.body;
+
+    const updateData = {
+      updated_at: new Date().toISOString()
+    };
+
+    // Only update provided fields
+    if (full_name !== undefined) updateData.full_name = full_name;
+    if (bio !== undefined) updateData.bio = bio;
+    if (department !== undefined) updateData.department = department;
+    if (year !== undefined) updateData.year = year;
+    if (roll_number !== undefined) updateData.roll_number = roll_number;
+    if (phone !== undefined) updateData.phone = phone;
+    if (github_url !== undefined) updateData.github_url = github_url;
+    if (linkedin_url !== undefined) updateData.linkedin_url = linkedin_url;
+    if (interests !== undefined) updateData.interests = interests;
+    if (skills !== undefined) updateData.skills = skills;
+    if (profile_photo_url !== undefined) updateData.profile_photo_url = profile_photo_url;
 
     const { data, error } = await supabase
       .from('users')
-      .update(updates)
+      .update(updateData)
       .eq('id', req.user.id)
       .select()
       .single();
 
     if (error) {
-      console.error('Supabase update error:', error);
+      console.error('❌ Supabase update error:', error);
       throw error;
     }
 
@@ -66,9 +101,71 @@ router.put('/profile', auth, async (req, res) => {
 
     res.json(data);
   } catch (error) {
-    console.error('Update profile error:', error);
+    console.error('❌ Update profile error:', error);
     res.status(500).json({ 
       message: 'Failed to update profile',
+      error: error.message 
+    });
+  }
+});
+
+// Upload profile photo
+router.post('/profile/upload-photo', auth, upload.single('photo'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    // Upload to Supabase Storage
+    const fileName = `profile-photos/${req.user.id}-${Date.now()}.${req.file.mimetype.split('/')[1]}`;
+    
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('profile-photos')
+      .upload(fileName, req.file.buffer, {
+        contentType: req.file.mimetype,
+        upsert: true
+      });
+
+    if (uploadError) {
+      console.error('❌ Upload error:', uploadError);
+      throw uploadError;
+    }
+
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from('profile-photos')
+      .getPublicUrl(fileName);
+
+    // Update user profile with photo URL
+    const { data, error } = await supabase
+      .from('users')
+      .update({ 
+        profile_photo_url: urlData.publicUrl,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', req.user.id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('❌ Update user error:', error);
+      throw error;
+    }
+
+    // Remove password from response
+    if (data) {
+      delete data.password;
+    }
+
+    res.json({
+      message: 'Photo uploaded successfully',
+      photo_url: urlData.publicUrl,
+      user: data
+    });
+  } catch (error) {
+    console.error('❌ Photo upload error:', error);
+    res.status(500).json({ 
+      message: 'Failed to upload photo',
       error: error.message 
     });
   }
@@ -87,7 +184,7 @@ router.get('/', auth, async (req, res) => {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Supabase error:', error);
+      console.error('❌ Supabase error:', error);
       throw error;
     }
 
@@ -99,7 +196,7 @@ router.get('/', auth, async (req, res) => {
 
     res.json(users || []);
   } catch (error) {
-    console.error('Fetch users error:', error);
+    console.error('❌ Fetch users error:', error);
     res.status(500).json({ 
       message: 'Failed to fetch users',
       error: error.message 
@@ -117,7 +214,7 @@ router.get('/:id', auth, async (req, res) => {
       .single();
 
     if (error) {
-      console.error('Supabase error:', error);
+      console.error('❌ Supabase error:', error);
       throw error;
     }
 
@@ -127,7 +224,7 @@ router.get('/:id', auth, async (req, res) => {
 
     res.json(data);
   } catch (error) {
-    console.error('Fetch user error:', error);
+    console.error('❌ Fetch user error:', error);
     res.status(500).json({ 
       message: 'Failed to fetch user',
       error: error.message 
@@ -167,7 +264,7 @@ router.put('/:id', auth, async (req, res) => {
       .single();
 
     if (error) {
-      console.error('Supabase update error:', error);
+      console.error('❌ Supabase update error:', error);
       throw error;
     }
 
@@ -177,7 +274,7 @@ router.put('/:id', auth, async (req, res) => {
 
     res.json(data);
   } catch (error) {
-    console.error('Update user error:', error);
+    console.error('❌ Update user error:', error);
     res.status(500).json({ 
       message: error.message || 'Failed to update user',
       error: error.message 
@@ -205,7 +302,7 @@ router.put('/:id/role', auth, async (req, res) => {
       .single();
 
     if (error) {
-      console.error('Supabase error:', error);
+      console.error('❌ Supabase error:', error);
       throw error;
     }
 
@@ -215,7 +312,7 @@ router.put('/:id/role', auth, async (req, res) => {
 
     res.json(data);
   } catch (error) {
-    console.error('Update role error:', error);
+    console.error('❌ Update role error:', error);
     res.status(500).json({ 
       message: 'Failed to update role',
       error: error.message 
@@ -236,13 +333,13 @@ router.delete('/:id', auth, async (req, res) => {
       .eq('id', req.params.id);
 
     if (error) {
-      console.error('Supabase error:', error);
+      console.error('❌ Supabase error:', error);
       throw error;
     }
 
     res.json({ message: 'User deleted successfully' });
   } catch (error) {
-    console.error('Delete user error:', error);
+    console.error('❌ Delete user error:', error);
     res.status(500).json({ 
       message: 'Failed to delete user',
       error: error.message 
@@ -294,7 +391,7 @@ router.put('/change-password', auth, async (req, res) => {
 
     res.json({ message: 'Password changed successfully' });
   } catch (error) {
-    console.error('Change password error:', error);
+    console.error('❌ Change password error:', error);
     res.status(500).json({ 
       message: 'Failed to change password', 
       error: error.message 
@@ -332,7 +429,7 @@ router.put('/:id/reset-password', auth, async (req, res) => {
 
     res.json({ message: 'Password reset successfully' });
   } catch (error) {
-    console.error('Reset password error:', error);
+    console.error('❌ Reset password error:', error);
     res.status(500).json({ 
       message: 'Failed to reset password', 
       error: error.message 
@@ -366,7 +463,7 @@ router.post('/request-password-reset', auth, async (req, res) => {
       request: data 
     });
   } catch (error) {
-    console.error('Request password reset error:', error);
+    console.error('❌ Request password reset error:', error);
     res.status(500).json({ 
       message: 'Failed to submit request', 
       error: error.message 
@@ -390,7 +487,7 @@ router.get('/password-reset-requests', auth, async (req, res) => {
 
     res.json(data || []);
   } catch (error) {
-    console.error('Fetch reset requests error:', error);
+    console.error('❌ Fetch reset requests error:', error);
     res.status(500).json({ 
       message: 'Failed to fetch requests', 
       error: error.message 
@@ -456,7 +553,7 @@ router.put('/password-reset-requests/:id', auth, async (req, res) => {
       res.status(400).json({ message: 'Invalid status or missing new_password' });
     }
   } catch (error) {
-    console.error('Process reset request error:', error);
+    console.error('❌ Process reset request error:', error);
     res.status(500).json({ 
       message: 'Failed to process request', 
       error: error.message 
