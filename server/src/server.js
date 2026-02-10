@@ -6,6 +6,7 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 const app = express();
+const reportFormatsRoutes = require('./routes/reportFormats');
 
 // CORS Configuration
 const allowedOrigins = [
@@ -36,6 +37,7 @@ app.use(cors({
 // Body parsers
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use('/api/report-formats', reportFormatsRoutes);
 
 // Request logging middleware
 app.use((req, res, next) => {
