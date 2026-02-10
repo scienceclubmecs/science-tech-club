@@ -49,27 +49,28 @@ router.get('/profile', auth, async (req, res) => {
 });
 
 // Update current user profile
+// Update current user profile - SAFE VERSION
 router.put('/profile', auth, async (req, res) => {
   try {
-    const { 
-      full_name, 
-      bio, 
-      department, 
-      year, 
-      roll_number,
-      phone,
-      github_url,
-      linkedin_url,
-      interests,
-      skills,
-      profile_photo_url
-    } = req.body;
+    const allowedFields = [
+      'full_name', 
+      'bio', 
+      'department', 
+      'year', 
+      'roll_number',
+      'phone',
+      'github_url',
+      'linkedin_url',
+      'interests',
+      'skills',
+      'profile_photo_url'
+    ];
 
     const updateData = {
       updated_at: new Date().toISOString()
     };
 
-    // Only update provided fields
+    // Only add fields that are provided in request
     if (full_name !== undefined) updateData.full_name = full_name;
     if (bio !== undefined) updateData.bio = bio;
     if (department !== undefined) updateData.department = department;
@@ -82,6 +83,9 @@ router.put('/profile', auth, async (req, res) => {
     if (skills !== undefined) updateData.skills = skills;
     if (profile_photo_url !== undefined) updateData.profile_photo_url = profile_photo_url;
 
+
+    console.log('🔄 Updating profile with:', Object.keys(updateData));
+
     const { data, error } = await supabase
       .from('users')
       .update(updateData)
@@ -91,6 +95,16 @@ router.put('/profile', auth, async (req, res) => {
 
     if (error) {
       console.error('❌ Supabase update error:', error);
+      
+      // If column doesn't exist, return helpful message
+      if (error.code === 'PGRST204') {
+        return res.status(400).json({ 
+          message: `Database column missing: ${error.message}. Please contact admin.`,
+          error: error.message,
+          hint: 'Run the SQL migration to add missing columns'
+        });
+      }
+      
       throw error;
     }
 
@@ -99,6 +113,7 @@ router.put('/profile', auth, async (req, res) => {
       delete data.password;
     }
 
+    console.log('✅ Profile updated successfully');
     res.json(data);
   } catch (error) {
     console.error('❌ Update profile error:', error);
@@ -108,6 +123,7 @@ router.put('/profile', auth, async (req, res) => {
     });
   }
 });
+
 
 // Upload profile photo
 router.post('/profile/upload-photo', auth, upload.single('photo'), async (req, res) => {
