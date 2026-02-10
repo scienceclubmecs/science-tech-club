@@ -7,6 +7,9 @@ dotenv.config();
 
 const app = express();
 const reportFormatsRoutes = require('./routes/reportFormats');
+const messagesRoutes = require('./routes/messages');
+
+
 
 // CORS Configuration
 const allowedOrigins = [
@@ -39,6 +42,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/api/report-formats', reportFormatsRoutes);
 app.use('/api/friends', friendsRoutes);
+app.use('/api/messages', messagesRoutes);
 // Request logging middleware
 app.use((req, res, next) => {
   const timestamp = new Date().toISOString();
