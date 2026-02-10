@@ -28,23 +28,41 @@ router.get('/profile', auth, async (req, res) => {
       .eq('id', req.user.id)
       .single();
 
-    if (error) {
-      console.error('❌ Supabase error:', error);
-      throw error;
-    }
+    if (error) throw error;
 
-    // Remove password from response
     if (data) {
       delete data.password;
     }
 
     res.json(data);
   } catch (error) {
-    console.error('❌ Fetch profile error:', error);
-    res.status(500).json({ 
-      message: 'Failed to fetch profile',
-      error: error.message 
-    });
+    console.error('❌ Fetch user error:', error);
+    res.status(500).json({ message: 'Failed to fetch user', error: error.message });
+  }
+});
+
+// Get user by ID (change this to NOT conflict with /profile)
+router.get('/:id', auth, async (req, res) => {
+  try {
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    
+    if (!uuidRegex.test(req.params.id)) {
+      return res.status(400).json({ message: 'Invalid user ID format' });
+    }
+
+    const { data, error } = await supabase
+      .from('users')
+      .select('id, username, full_name, email, profile_photo_url, department, year, role, is_committee')
+      .eq('id', req.params.id)
+      .single();
+
+    if (error) throw error;
+
+    res.json(data);
+  } catch (error) {
+    console.error('❌ Fetch user error:', error);
+    res.status(500).json({ message: 'Failed to fetch user', error: error.message });
   }
 });
 
