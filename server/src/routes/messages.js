@@ -202,4 +202,50 @@ router.put('/dm/:id/status', auth, async (req, res) => {
   }
 });
 
+// Get direct messages with a friend
+router.get('/direct/:friendId', auth, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('direct_messages')
+      .select('*')
+      .or(`and(sender_id.eq.${req.user.id},receiver_id.eq.${req.params.friendId}),and(sender_id.eq.${req.params.friendId},receiver_id.eq.${req.user.id})`)
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+
+    res.json(data || []);
+  } catch (error) {
+    console.error('❌ Fetch DMs error:', error);
+    res.status(500).json({ message: 'Failed to fetch messages', error: error.message });
+  }
+});
+
+// Send direct message
+router.post('/direct', auth, async (req, res) => {
+  try {
+    const { receiver_id, message } = req.body;
+
+    if (!receiver_id || !message) {
+      return res.status(400).json({ message: 'Receiver and message required' });
+    }
+
+    const { data, error } = await supabase
+      .from('direct_messages')
+      .insert([{
+        sender_id: req.user.id,
+        receiver_id,
+        message: message.trim()
+      }])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.status(201).json(data);
+  } catch (error) {
+    console.error('❌ Send DM error:', error);
+    res.status(500).json({ message: 'Failed to send message', error: error.message });
+  }
+});
+
 module.exports = router;
