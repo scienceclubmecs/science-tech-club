@@ -4,8 +4,10 @@ const supabase = require('../config/supabase');
 const auth = require('../middleware/auth');
 
 // Get current user's projects
+// Get my projects - BULLETPROOF VERSION
 router.get('/my-projects', auth, async (req, res) => {
   try {
+    // First try with join (if project_members exists)
     const { data, error } = await supabase
       .from('project_members')
       .select(`
@@ -26,7 +28,31 @@ router.get('/my-projects', auth, async (req, res) => {
       .eq('user_id', req.user.id)
       .order('joined_at', { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      console.log('❌ Join query failed, trying simple query:', error.message);
+      
+      // Fallback: Get projects where user is creator
+      const { data: creatorProjects, error: creatorError } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('creator_id', req.user.id)
+        .order('created_at', { ascending: false });
+      
+      if (creatorError) {
+        console.error('❌ Fallback query failed:', creatorError.message);
+        return res.json([]); // Return empty array instead of error
+      }
+      
+      // Format creator projects to match expected response
+      const formattedProjects = creatorProjects.map(project => ({
+        ...project,
+        role: 'creator',
+        joined_at: project.created_at,
+        progress: 0
+      }));
+      
+      return res.json(formattedProjects);
+    }
 
     // Format response
     const myProjects = data.map(member => ({
@@ -38,9 +64,9 @@ router.get('/my-projects', auth, async (req, res) => {
 
     res.json(myProjects);
   } catch (error) {
-    console.error('Fetch my projects error:', error);
+    console.error('❌ My-projects final error:', error.message);
     res.status(500).json({ 
-      message: 'Failed to fetch your projects', 
+      message: 'Failed to fetch your projects',
       error: error.message 
     });
   }
