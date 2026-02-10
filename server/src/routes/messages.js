@@ -6,7 +6,6 @@ const auth = require('../middleware/auth');
 // Get unread message count
 router.get('/unread-count', auth, async (req, res) => {
   try {
-    // Count unread direct messages
     const { count: dmCount, error: dmError } = await supabase
       .from('direct_messages')
       .select('*', { count: 'exact', head: true })
@@ -15,14 +14,12 @@ router.get('/unread-count', auth, async (req, res) => {
 
     if (dmError) {
       console.error('❌ DM count error:', dmError);
-      // Don't throw, just return 0
       return res.json({ unread_count: 0 });
     }
 
     res.json({ unread_count: dmCount || 0 });
   } catch (error) {
     console.error('❌ Unread count error:', error);
-    // Return 0 instead of error to prevent UI breaking
     res.json({ unread_count: 0 });
   }
 });
@@ -82,43 +79,8 @@ router.post('/direct', auth, async (req, res) => {
   }
 });
 
-// Get all channels
-router.get('/channels', auth, async (req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from('channels')
-      .select('*')
-      .order('name');
-
-    if (error) throw error;
-
-    res.json(data || []);
-  } catch (error) {
-    console.error('❌ Fetch channels error:', error);
-    res.status(500).json({ message: 'Failed to fetch channels', error: error.message });
-  }
-});
-
-// Get channel by ID
-router.get('/channel/:id', auth, async (req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from('channels')
-      .select('*')
-      .eq('id', req.params.id)
-      .single();
-
-    if (error) throw error;
-
-    res.json(data);
-  } catch (error) {
-    console.error('❌ Fetch channel error:', error);
-    res.status(500).json({ message: 'Failed to fetch channel', error: error.message });
-  }
-});
-
 // Get messages for a channel
-router.get('/channel/:id/messages', auth, async (req, res) => {
+router.get('/channel/:id', auth, async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('messages')
@@ -131,7 +93,17 @@ router.get('/channel/:id/messages', auth, async (req, res) => {
 
     if (error) throw error;
 
-    res.json(data || []);
+    // Format the response
+    const formattedMessages = data.map(msg => ({
+      id: msg.id,
+      content: msg.content,
+      created_at: msg.created_at,
+      sender_id: msg.sender_id,
+      sender_name: msg.sender?.full_name || msg.sender?.username,
+      sender_photo: msg.sender?.profile_photo_url
+    }));
+
+    res.json(formattedMessages || []);
   } catch (error) {
     console.error('❌ Fetch channel messages error:', error);
     res.status(500).json({ message: 'Failed to fetch messages', error: error.message });
@@ -139,18 +111,18 @@ router.get('/channel/:id/messages', auth, async (req, res) => {
 });
 
 // Send message to channel
-router.post('/channel/:id', auth, async (req, res) => {
+router.post('/', auth, async (req, res) => {
   try {
-    const { content } = req.body;
+    const { channel_id, content } = req.body;
 
-    if (!content || content.trim() === '') {
-      return res.status(400).json({ message: 'Message content required' });
+    if (!channel_id || !content || content.trim() === '') {
+      return res.status(400).json({ message: 'Channel ID and content required' });
     }
 
     const { data, error } = await supabase
       .from('messages')
       .insert([{
-        channel_id: req.params.id,
+        channel_id,
         sender_id: req.user.id,
         content: content.trim()
       }])
@@ -162,7 +134,17 @@ router.post('/channel/:id', auth, async (req, res) => {
 
     if (error) throw error;
 
-    res.status(201).json(data);
+    // Format response
+    const formattedMessage = {
+      id: data.id,
+      content: data.content,
+      created_at: data.created_at,
+      sender_id: data.sender_id,
+      sender_name: data.sender?.full_name || data.sender?.username,
+      sender_photo: data.sender?.profile_photo_url
+    };
+
+    res.status(201).json(formattedMessage);
   } catch (error) {
     console.error('❌ Send message error:', error);
     res.status(500).json({ message: 'Failed to send message', error: error.message });
