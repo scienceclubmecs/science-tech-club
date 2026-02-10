@@ -49,42 +49,30 @@ router.get('/profile', auth, async (req, res) => {
 });
 
 // Update current user profile
-// Update current user profile - SAFE VERSION
 router.put('/profile', auth, async (req, res) => {
   try {
-    const allowedFields = [
-      'full_name', 
-      'bio', 
-      'department', 
-      'year', 
-      'roll_number',
-      'phone',
-      'github_url',
-      'linkedin_url',
-      'interests',
-      'skills',
-      'profile_photo_url'
-    ];
+    console.log('📝 Profile update request from user:', req.user.id);
+    console.log('📦 Request body:', req.body);
 
+    // Build update object from request body
     const updateData = {
       updated_at: new Date().toISOString()
     };
 
-    // Only add fields that are provided in request
-    if (full_name !== undefined) updateData.full_name = full_name;
-    if (bio !== undefined) updateData.bio = bio;
-    if (department !== undefined) updateData.department = department;
-    if (year !== undefined) updateData.year = year;
-    if (roll_number !== undefined) updateData.roll_number = roll_number;
-    if (phone !== undefined) updateData.phone = phone;
-    if (github_url !== undefined) updateData.github_url = github_url;
-    if (linkedin_url !== undefined) updateData.linkedin_url = linkedin_url;
-    if (interests !== undefined) updateData.interests = interests;
-    if (skills !== undefined) updateData.skills = skills;
-    if (profile_photo_url !== undefined) updateData.profile_photo_url = profile_photo_url;
+    // Only add fields that exist in request body
+    if (req.body.full_name !== undefined) updateData.full_name = req.body.full_name;
+    if (req.body.bio !== undefined) updateData.bio = req.body.bio;
+    if (req.body.department !== undefined) updateData.department = req.body.department;
+    if (req.body.year !== undefined) updateData.year = req.body.year;
+    if (req.body.roll_number !== undefined) updateData.roll_number = req.body.roll_number;
+    if (req.body.phone !== undefined) updateData.phone = req.body.phone;
+    if (req.body.github_url !== undefined) updateData.github_url = req.body.github_url;
+    if (req.body.linkedin_url !== undefined) updateData.linkedin_url = req.body.linkedin_url;
+    if (req.body.interests !== undefined) updateData.interests = req.body.interests;
+    if (req.body.skills !== undefined) updateData.skills = req.body.skills;
+    if (req.body.profile_photo_url !== undefined) updateData.profile_photo_url = req.body.profile_photo_url;
 
-
-    console.log('🔄 Updating profile with:', Object.keys(updateData));
+    console.log('🔄 Updating with data:', updateData);
 
     const { data, error } = await supabase
       .from('users')
@@ -95,28 +83,19 @@ router.put('/profile', auth, async (req, res) => {
 
     if (error) {
       console.error('❌ Supabase update error:', error);
-      
-      // If column doesn't exist, return helpful message
-      if (error.code === 'PGRST204') {
-        return res.status(400).json({ 
-          message: `Database column missing: ${error.message}. Please contact admin.`,
-          error: error.message,
-          hint: 'Run the SQL migration to add missing columns'
-        });
-      }
-      
       throw error;
     }
+
+    console.log('✅ Profile updated successfully');
 
     // Remove password from response
     if (data) {
       delete data.password;
     }
 
-    console.log('✅ Profile updated successfully');
     res.json(data);
   } catch (error) {
-    console.error('❌ Update profile error:', error);
+    console.error('❌ Update profile error:', error.message);
     res.status(500).json({ 
       message: 'Failed to update profile',
       error: error.message 
