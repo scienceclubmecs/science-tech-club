@@ -114,18 +114,14 @@ router.post('/:id/join', auth, async (req, res) => {
   }
 });
 
-// Update the get all projects route
+// Get all projects - SAFE VERSION
 router.get('/', auth, async (req, res) => {
   try {
     const { status } = req.query;
     
     let query = supabase
       .from('projects')
-      .select(`
-        *,
-        creator:creator_id(id, username, email),
-        guide:guide_id(id, username, email)
-      `)
+      .select('*') // Simple select first - no joins
       .order('created_at', { ascending: false });
     
     if (status) {
@@ -134,10 +130,57 @@ router.get('/', auth, async (req, res) => {
     
     const { data, error } = await query;
     
-    if (error) throw error;
+    if (error) {
+      console.error('❌ Projects error details:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
+      throw error;
+    }
+    
     res.json(data || []);
   } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch projects' });
+    console.error('❌ GET /projects error:', error);
+    res.status(500).json({ 
+      message: 'Failed to fetch projects',
+      error: error.message,
+      code: error.code
+    });
+  }
+});
+
+// Get my projects - SAFE VERSION
+router.get('/my-projects', auth, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('project_members')
+      .select(`
+        *,
+        projects!inner(id, title, description, status, domain, technologies, image_url, created_at, max_members, current_members)
+      `)
+      .eq('user_id', req.user.id)
+      .order('joined_at', { ascending: false });
+
+    if (error) {
+      console.error('❌ My projects error details:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
+      throw error;
+    }
+
+    res.json(data || []);
+  } catch (error) {
+    console.error('❌ GET /my-projects error:', error);
+    res.status(500).json({ 
+      message: 'Failed to fetch your projects',
+      error: error.message,
+      code: error.code
+    });
   }
 });
 
