@@ -114,14 +114,14 @@ router.post('/:id/join', auth, async (req, res) => {
   }
 });
 
-// Get all projects - SAFE VERSION
+// Get all projects
 router.get('/', auth, async (req, res) => {
   try {
     const { status } = req.query;
     
     let query = supabase
       .from('projects')
-      .select('*') // Simple select first - no joins
+      .select('*')
       .order('created_at', { ascending: false });
     
     if (status) {
@@ -130,24 +130,30 @@ router.get('/', auth, async (req, res) => {
     
     const { data, error } = await query;
     
-    if (error) {
-      console.error('❌ Projects error details:', {
-        message: error.message,
-        code: error.code,
-        details: error.details,
-        hint: error.hint
-      });
-      throw error;
-    }
-    
+    if (error) throw error;
     res.json(data || []);
   } catch (error) {
-    console.error('❌ GET /projects error:', error);
-    res.status(500).json({ 
-      message: 'Failed to fetch projects',
-      error: error.message,
-      code: error.code
-    });
+    console.error('❌ Projects error:', error.message);
+    res.status(500).json({ message: 'Failed to fetch projects' });
+  }
+});
+
+// Get my projects
+router.get('/my-projects', auth, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('project_members')
+      .select(`
+        *,
+        projects!inner(id, title, description, status, domain, technologies, image_url, created_at)
+      `)
+      .eq('user_id', req.user.id);
+
+    if (error) throw error;
+    res.json(data || []);
+  } catch (error) {
+    console.error('❌ My projects error:', error.message);
+    res.status(500).json({ message: 'Failed to fetch your projects' });
   }
 });
 
