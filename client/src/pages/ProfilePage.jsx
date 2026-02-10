@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { User, Mail, Phone, MapPin, Calendar, Edit2, Save, X, Upload } from 'lucide-react'
+import { User, Mail, Phone, MapPin, Calendar, Edit2, Save, X, Upload, Camera } from 'lucide-react'
 import api from '../services/api'
 import Loading from '../components/Loading'
 
@@ -10,6 +10,7 @@ export default function ProfilePage() {
   const [editing, setEditing] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [editedProfile, setEditedProfile] = useState({})
 
   useEffect(() => {
@@ -60,6 +61,7 @@ export default function ProfilePage() {
 
       alert('✅ Photo uploaded successfully!')
       setProfile({ ...profile, profile_photo_url: data.photo_url })
+      setEditedProfile({ ...editedProfile, profile_photo_url: data.photo_url })
     } catch (error) {
       console.error('Upload failed:', error)
       alert(error.response?.data?.message || 'Failed to upload photo')
@@ -68,7 +70,6 @@ export default function ProfilePage() {
     }
   }
 
-  
   const handleEdit = () => {
     setEditing(true)
     setEditedProfile({ ...profile })
@@ -82,7 +83,19 @@ export default function ProfilePage() {
   const handleSave = async () => {
     setSaving(true)
     try {
-      const { data } = await api.put('/users/profile', editedProfile)
+      // Build update data with only provided fields
+      const updateData = {}
+      
+      if (editedProfile.full_name) updateData.full_name = editedProfile.full_name
+      if (editedProfile.email) updateData.email = editedProfile.email
+      if (editedProfile.phone) updateData.phone = editedProfile.phone
+      if (editedProfile.bio) updateData.bio = editedProfile.bio
+      if (editedProfile.department) updateData.department = editedProfile.department
+      if (editedProfile.year) updateData.year = editedProfile.year
+      if (editedProfile.location) updateData.location = editedProfile.location
+      if (editedProfile.interests) updateData.interests = editedProfile.interests
+
+      const { data } = await api.put('/users/profile', updateData)
       setProfile(data)
       setEditing(false)
       
@@ -90,7 +103,7 @@ export default function ProfilePage() {
       const user = JSON.parse(localStorage.getItem('user'))
       localStorage.setItem('user', JSON.stringify({ ...user, ...data }))
       
-      alert('Profile updated successfully!')
+      alert('✅ Profile updated successfully!')
     } catch (error) {
       console.error('Failed to update profile:', error)
       alert(error.response?.data?.message || 'Failed to update profile')
@@ -105,36 +118,6 @@ export default function ProfilePage() {
       [field]: value
     }))
   }
-
-  // In Profile.jsx
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setLoading(true);
-
-  try {
-    // Only send fields that have values
-    const updateData = {};
-    
-    if (formData.full_name) updateData.full_name = formData.full_name;
-    if (formData.bio) updateData.bio = formData.bio;
-    if (formData.department) updateData.department = formData.department;
-    if (formData.year) updateData.year = formData.year;
-    if (formData.roll_number) updateData.roll_number = formData.roll_number;
-    if (formData.phone) updateData.phone = formData.phone;
-    if (formData.github_url) updateData.github_url = formData.github_url;
-    if (formData.linkedin_url) updateData.linkedin_url = formData.linkedin_url;
-
-    const { data } = await api.put('/users/profile', updateData);
-    
-    alert('✅ Profile updated successfully!');
-    setProfile(data);
-  } catch (error) {
-    console.error('Profile update failed:', error);
-    alert(error.response?.data?.message || 'Failed to update profile');
-  } finally {
-    setLoading(false);
-  }
-};
 
   if (loading) return <Loading />
   if (!profile) return <div className="min-h-screen bg-black text-white flex items-center justify-center">Profile not found</div>
@@ -176,9 +159,7 @@ const handleSubmit = async (e) => {
           )}
         </div>
 
-        {/* Profile Content */}
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-8">
-          {/* Profile Photo Section */}
+        {/* Profile Photo Section */}
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8 mb-6">
           <h2 className="text-2xl font-bold mb-6">Profile Photo</h2>
           
@@ -224,7 +205,11 @@ const handleSubmit = async (e) => {
               {/* Alternative Upload Button */}
               <label 
                 htmlFor="photo-upload-alt"
-                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-6 py-3 rounded-lg font-medium cursor-pointer transition-all"
+                className={`inline-flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${
+                  uploading 
+                    ? 'bg-blue-400 cursor-not-allowed' 
+                    : 'bg-blue-600 hover:bg-blue-700 cursor-pointer'
+                }`}
               >
                 {uploading ? (
                   <>
@@ -254,6 +239,7 @@ const handleSubmit = async (e) => {
                       try {
                         await api.put('/users/profile', { profile_photo_url: null })
                         setProfile({ ...profile, profile_photo_url: null })
+                        setEditedProfile({ ...editedProfile, profile_photo_url: null })
                         alert('Photo removed')
                       } catch (error) {
                         alert('Failed to remove photo')
@@ -269,6 +255,8 @@ const handleSubmit = async (e) => {
           </div>
         </div>
 
+        {/* Profile Content */}
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-8">
           {/* Profile Fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Username */}
@@ -280,10 +268,10 @@ const handleSubmit = async (e) => {
               <input
                 type="text"
                 value={editing ? editedProfile.username : profile.username}
-                onChange={(e) => handleChange('username', e.target.value)}
-                disabled={!editing}
-                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white disabled:opacity-60 focus:outline-none focus:border-blue-500"
+                disabled
+                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white opacity-60 cursor-not-allowed"
               />
+              <p className="text-xs text-gray-500 mt-1">Username cannot be changed</p>
             </div>
 
             {/* Full Name */}
@@ -296,6 +284,7 @@ const handleSubmit = async (e) => {
                 value={editing ? editedProfile.full_name || '' : profile.full_name || ''}
                 onChange={(e) => handleChange('full_name', e.target.value)}
                 disabled={!editing}
+                placeholder="Enter your full name"
                 className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white disabled:opacity-60 focus:outline-none focus:border-blue-500"
               />
             </div>
@@ -431,6 +420,10 @@ const handleSubmit = async (e) => {
           <div className="mt-8 pt-8 border-t border-gray-800">
             <h3 className="text-lg font-semibold mb-4">Account Information</h3>
             <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="text-gray-400">Role:</span>
+                <p className="text-white mt-1 capitalize">{profile.role}</p>
+              </div>
               <div>
                 <span className="text-gray-400">Member Since:</span>
                 <p className="text-white mt-1">{new Date(profile.created_at).toLocaleDateString()}</p>
