@@ -70,6 +70,36 @@ export default function ProfilePage() {
     }))
   }
 
+  // In Profile.jsx
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+
+  try {
+    // Only send fields that have values
+    const updateData = {};
+    
+    if (formData.full_name) updateData.full_name = formData.full_name;
+    if (formData.bio) updateData.bio = formData.bio;
+    if (formData.department) updateData.department = formData.department;
+    if (formData.year) updateData.year = formData.year;
+    if (formData.roll_number) updateData.roll_number = formData.roll_number;
+    if (formData.phone) updateData.phone = formData.phone;
+    if (formData.github_url) updateData.github_url = formData.github_url;
+    if (formData.linkedin_url) updateData.linkedin_url = formData.linkedin_url;
+
+    const { data } = await api.put('/users/profile', updateData);
+    
+    alert('✅ Profile updated successfully!');
+    setProfile(data);
+  } catch (error) {
+    console.error('Profile update failed:', error);
+    alert(error.response?.data?.message || 'Failed to update profile');
+  } finally {
+    setLoading(false);
+  }
+};
+
   if (loading) return <Loading />
   if (!profile) return <div className="min-h-screen bg-black text-white flex items-center justify-center">Profile not found</div>
 
