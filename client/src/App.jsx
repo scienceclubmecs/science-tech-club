@@ -109,7 +109,7 @@ function AppContent() {
         {/* Admin Routes */}
         <Route 
           path="/admin" 
-          element={user?.role === 'admin' ? <AdminDashboard /> : <Navigate to="/dashboard" replace />} 
+          element={user?.role === 'admin' ? <AdminPanel /> : <Navigate to="/dashboard" replace />} 
         />
 
         {/* Faculty Route */}
