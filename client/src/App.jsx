@@ -26,7 +26,6 @@ import MessagesPage from './pages/MessagesPage'
 import TasksFloatingButton from './components/TasksFloatingButton'
 import MyProjectsPage from './pages/MyProjectsPage'
 
-
 // Import all role-specific dashboards
 import ChairDashboard from './pages/ChairDashboard'
 import SecretaryDashboard from './pages/SecretaryDashboard'
@@ -75,7 +74,7 @@ function AppContent() {
     )
   }
 
-  const hideNavbar = location.pathname === '/' || location.pathname === '/login' || location.pathname === '/register'
+  const hideNavbar = location.pathname === '/' || location.pathname === '/login'
 
   return (
     <div className="min-h-screen bg-black">
@@ -87,10 +86,6 @@ function AppContent() {
         <Route 
           path="/login" 
           element={!user ? <Login setUser={setUser} /> : <Navigate to="/dashboard" />} 
-        />
-        <Route 
-          path="/register" 
-          element={!user ? <RegisterPage setUser={setUser} /> : <Navigate to="/dashboard" />} 
         />
 
         {/* Main Dashboard Route - Role-based routing */}
