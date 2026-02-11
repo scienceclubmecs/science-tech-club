@@ -4,8 +4,8 @@ const supabase = require('../config/supabase');
 const auth = require('../middleware/auth');
 const { checkCommitteeRole, canEdit } = require('../middleware/committeeAuth');
 
-// Get all events
-router.get('/', auth, async (req, res) => {
+// Get all events (public - no auth required)
+router.get('/', async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('events')
@@ -24,8 +24,8 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
-// Get single event
-router.get('/:id', auth, async (req, res) => {
+// Get single event (public - no auth required)
+router.get('/:id', async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('events')
