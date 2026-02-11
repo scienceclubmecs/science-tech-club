@@ -1,65 +1,56 @@
-const express = require('express');
-const router = express.Router();
-const supabase = require('../config/supabase');
-const auth = require('../middleware/auth');
+const express = require('express')
+const router = express.Router()
+const pool = require('../db')
 
 // Get all announcements
-router.get('/', auth, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const { data, error } = await supabase
-      .from('announcements')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    res.json(data || []);
+    const result = await pool.query(
+      'SELECT * FROM announcements ORDER BY created_at DESC'
+    )
+    res.json(result.rows)
   } catch (error) {
-    console.error('Fetch announcements error:', error);
-    res.status(500).json({ message: 'Failed to fetch announcements' });
+    console.error('Announcements error:', error)
+    res.status(500).json({ error: 'Failed to fetch announcements' })
   }
-});
+})
 
-// Create announcement (admin only)
-router.post('/', auth, async (req, res) => {
+// Create announcement (admin/committee only)
+router.post('/', async (req, res) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Access denied' });
+    const { title, content, target_audience } = req.body
+
+    if (!req.user.is_committee && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Committee access required' })
     }
 
-    const { title, content, target_audience } = req.body;
+    const result = await pool.query(
+      `INSERT INTO announcements (title, content, target_audience, author_id, created_at) 
+       VALUES ($1, $2, $3, $4, NOW()) 
+       RETURNING *`,
+      [title, content, target_audience || 'all', req.user.id]
+    )
 
-    const { data, error } = await supabase
-      .from('announcements')
-      .insert([{ title, content, target_audience }])
-      .select()
-      .single();
-
-    if (error) throw error;
-    res.status(201).json(data);
+    res.status(201).json(result.rows[0])
   } catch (error) {
-    console.error('Create announcement error:', error);
-    res.status(500).json({ message: 'Failed to create announcement' });
+    console.error('Create announcement error:', error)
+    res.status(500).json({ error: 'Failed to create announcement' })
   }
-});
+})
 
 // Delete announcement (admin only)
-router.delete('/:id', auth, async (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
     if (req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Access denied' });
+      return res.status(403).json({ error: 'Admin access required' })
     }
 
-    const { error } = await supabase
-      .from('announcements')
-      .delete()
-      .eq('id', req.params.id);
-
-    if (error) throw error;
-    res.json({ message: 'Announcement deleted' });
+    await pool.query('DELETE FROM announcements WHERE id = $1', [req.params.id])
+    res.json({ message: 'Announcement deleted' })
   } catch (error) {
-    console.error('Delete announcement error:', error);
-    res.status(500).json({ message: 'Failed to delete announcement' });
+    console.error('Delete announcement error:', error)
+    res.status(500).json({ error: 'Failed to delete announcement' })
   }
-});
+})
 
-module.exports = router;
+module.exports = router
