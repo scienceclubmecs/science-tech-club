@@ -11,8 +11,9 @@ router.get('/', async (req, res) => {
       .select('*')
       .single();
 
-    if (error) {
-      // Return default config if not found
+    // If error or no data, return default config
+    if (error || !data) {
+      console.log('⚠️ No site_config found, returning defaults');
       return res.json({
         site_name: 'Science & Tech Club',
         logo_url: 'https://i.ibb.co/v6WM95xK/2.jpg',
@@ -26,7 +27,15 @@ router.get('/', async (req, res) => {
     res.json(data);
   } catch (error) {
     console.error('❌ Config error:', error);
-    res.status(500).json({ message: 'Failed to fetch config', error: error.message });
+    // Still return default config on any error
+    res.json({
+      site_name: 'Science & Tech Club',
+      logo_url: 'https://i.ibb.co/v6WM95xK/2.jpg',
+      mecs_logo_url: 'https://i.ibb.co/sptF2qvk/mecs-logo.jpg',
+      theme_mode: 'dark',
+      primary_color: '#3b82f6',
+      watermark_opacity: '0.25'
+    });
   }
 });
 
@@ -54,7 +63,11 @@ router.put('/', auth, async (req, res) => {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('❌ Upsert error:', error);
+      throw error;
+    }
+    
     res.json(data);
   } catch (error) {
     console.error('❌ Config update error:', error);
