@@ -27,13 +27,15 @@
   --border-color: #d1d5db;
 }
 
+/* Body should be SOLID BLACK */
 body {
-  background: var(--bg-primary);
+  background: #000000;
   color: var(--text-primary);
   position: relative;
+  overflow-x: hidden;
 }
 
-/* Watermark Logo - MAXIMUM BRIGHTNESS */
+/* Watermark Logo */
 body::before {
   content: '';
   position: fixed;
@@ -51,30 +53,33 @@ body::before {
   pointer-events: none;
   z-index: 0;
   mix-blend-mode: lighten;
-  filter: brightness(5);
+  filter: brightness(3);
 }
 
-/* Make page content MORE transparent to show watermark */
-#root > * {
+/* Page content layer */
+#root {
   position: relative;
   z-index: 1;
+  min-height: 100vh;
 }
 
-/* Reduce opacity MORE - from 0.85 to 0.70 */
-.bg-black {
-  background-color: rgba(0, 0, 0, 0.5) !important;
-}
-
+/* ONLY make specific card/panel backgrounds slightly transparent to show watermark */
 .bg-gray-900 {
-  background-color: rgba(17, 24, 39, 0.5) !important;
-}
-
-.bg-gray-950 {
-  background-color: rgba(3, 7, 18, 0.45) !important;
+  background-color: rgba(17, 24, 39, 0.85) !important;
 }
 
 .bg-gray-800 {
-  background-color: rgba(31, 41, 55, 0.5) !important;
+  background-color: rgba(31, 41, 55, 0.85) !important;
+}
+
+.bg-gray-950 {
+  background-color: rgba(3, 7, 18, 0.85) !important;
+}
+
+/* Keep main background SOLID BLACK */
+.min-h-screen.bg-black,
+.bg-black.pt-20 {
+  background-color: #000000 !important;
 }
 
 /* Hide scrollbar */
@@ -93,4 +98,10 @@ body::before {
 }
 .float-animation {
   animation: float 6s ease-in-out infinite;
+}
+
+/* Gradient backgrounds should stay solid */
+.bg-gradient-to-br,
+.bg-gradient-to-r {
+  opacity: 1 !important;
 }
