@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { 
   Users, BookOpen, Upload, UserPlus, Key, Trash2, GraduationCap,
-  Settings, Calendar, Award, FileText, Bell, Download
+  Settings, Calendar, Award, FileText, Bell, Download, Shield,
+  Database, Activity, UserCheck, Check
 } from 'lucide-react'
 import api from '../services/api'
 
@@ -13,6 +14,7 @@ export default function AdminPanel() {
   const [events, setEvents] = useState([])
   const [projects, setProjects] = useState([])
   const [announcements, setAnnouncements] = useState([])
+  const [reportFormats, setReportFormats] = useState([])
   
   // Forms
   const [newStudent, setNewStudent] = useState({ 
@@ -32,37 +34,25 @@ export default function AdminPanel() {
   const [newAnnouncement, setNewAnnouncement] = useState({ 
     title: '', content: '', target_audience: 'all' 
   })
+  const [reportFormData, setReportFormData] = useState({
+    title: '',
+    academic_year: '',
+    file: null
+  })
+  const [uploadingReport, setUploadingReport] = useState(false)
+
+  const user = JSON.parse(localStorage.getItem('user'))
 
   const departments = ['CSE', 'AIML', 'CSD', 'IT', 'CME', 'Civil', 'Mech', 'ECE', 'EEE']
   
   const committeePosts = [
-    'Chair',
-    'Vice Chair',
-    'Secretary',
-    'Vice Secretary',
-    'CSE Head',
-    'CSE Vice Head',
-    'AIML Head',
-    'AIML Vice Head',
-    'CSD Head',
-    'CSD Vice Head',
-    'IT Head',
-    'IT Vice Head',
-    'CME Head',
-    'CME Vice Head',
-    'Civil Head',
-    'Civil Vice Head',
-    'Mech Head',
-    'Mech Vice Head',
-    'ECE Head',
-    'ECE Vice Head',
-    'EEE Head',
-    'EEE Vice Head',
-    'Executive Head',
-    'Executive Member',
-    'Representative Head',
-    'Representative Member',
-    'Developer'
+    'Chair', 'Vice Chair', 'Secretary', 'Vice Secretary',
+    'CSE Head', 'CSE Vice Head', 'AIML Head', 'AIML Vice Head',
+    'CSD Head', 'CSD Vice Head', 'IT Head', 'IT Vice Head',
+    'CME Head', 'CME Vice Head', 'Civil Head', 'Civil Vice Head',
+    'Mech Head', 'Mech Vice Head', 'ECE Head', 'ECE Vice Head',
+    'EEE Head', 'EEE Vice Head', 'Executive Head', 'Executive Member',
+    'Representative Head', 'Representative Member', 'Developer'
   ]
 
   useEffect(() => {
@@ -72,12 +62,31 @@ export default function AdminPanel() {
     if (activeTab === 'projects') fetchProjects()
     if (activeTab === 'announcements') fetchAnnouncements()
     if (activeTab === 'config') fetchConfig()
+    if (activeTab === 'reports') fetchReportFormats()
   }, [activeTab])
 
   const fetchDashboard = async () => {
     try {
-      const { data } = await api.get('/admin/dashboard')
-      setStats(data)
+      const [usersRes, eventsRes, projectsRes] = await Promise.all([
+        api.get('/users').catch(() => ({ data: [] })),
+        api.get('/events').catch(() => ({ data: [] })),
+        api.get('/projects').catch(() => ({ data: [] }))
+      ])
+
+      const users = usersRes.data || []
+      const events = eventsRes.data || []
+      const projects = projectsRes.data || []
+
+      setStats({
+        totalUsers: users.length,
+        total_users: users.length,
+        committee_members: users.filter(u => u.is_committee).length,
+        total_events: events.length,
+        total_projects: projects.length,
+        active_students: users.filter(u => u.role === 'student').length,
+        faculty_count: users.filter(u => u.role === 'faculty').length,
+        totalCourses: 0
+      })
     } catch (error) {
       console.error('Failed to fetch dashboard:', error)
     } finally {
@@ -127,6 +136,15 @@ export default function AdminPanel() {
       setConfig({ ...config, ...data })
     } catch (error) {
       console.error('Failed to fetch config:', error)
+    }
+  }
+
+  const fetchReportFormats = async () => {
+    try {
+      const { data } = await api.get('/report-formats')
+      setReportFormats(data || [])
+    } catch (error) {
+      console.error('Failed to fetch formats:', error)
     }
   }
 
@@ -311,6 +329,59 @@ export default function AdminPanel() {
     }
   }
 
+  const handleUploadReport = async (e) => {
+    e.preventDefault()
+    if (!reportFormData.file) {
+      alert('Please select a file')
+      return
+    }
+
+    setUploadingReport(true)
+    try {
+      const data = new FormData()
+      data.append('file', reportFormData.file)
+      data.append('title', reportFormData.title)
+      data.append('academic_year', reportFormData.academic_year)
+
+      await api.post('/report-formats/upload', data, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
+
+      alert('Report format uploaded successfully!')
+      setReportFormData({ title: '', academic_year: '', file: null })
+      fetchReportFormats()
+    } catch (error) {
+      console.error('Upload failed:', error)
+      alert(error.response?.data?.message || 'Failed to upload format')
+    } finally {
+      setUploadingReport(false)
+    }
+  }
+
+  const handleDeleteReport = async (id) => {
+    if (!confirm('Delete this report format?')) return
+
+    try {
+      await api.delete(`/report-formats/${id}`)
+      alert('Format deleted successfully')
+      fetchReportFormats()
+    } catch (error) {
+      console.error('Delete failed:', error)
+      alert('Failed to delete format')
+    }
+  }
+
+  const handleActivateReport = async (id) => {
+    try {
+      await api.put(`/report-formats/${id}/activate`)
+      alert('Format activated successfully')
+      fetchReportFormats()
+    } catch (error) {
+      console.error('Activate failed:', error)
+      alert('Failed to activate format')
+    }
+  }
+
   const downloadCSVTemplate = (type) => {
     let csvContent = ''
     
@@ -331,7 +402,7 @@ export default function AdminPanel() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center pt-20">
         <div className="text-white text-xl">Loading Admin Panel...</div>
       </div>
     )
@@ -340,32 +411,51 @@ export default function AdminPanel() {
   return (
     <div className="min-h-screen bg-black pt-20 px-4 pb-12">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl font-bold text-white mb-8">Admin Control Panel</h1>
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-red-500 to-pink-600 flex items-center justify-center">
+              <Shield className="w-8 h-8" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-bold text-white">Admin Control Panel</h1>
+              <p className="text-gray-400">Welcome back, {user.full_name || user.username}</p>
+            </div>
+          </div>
+        </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-gray-900 p-6 rounded-xl border border-gray-800">
-            <Users className="w-8 h-8 text-blue-400 mb-4" />
-            <h3 className="text-2xl font-bold text-white">{stats?.totalUsers || 0}</h3>
-            <p className="text-gray-400">Total Users</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-gradient-to-br from-blue-900 to-blue-800 border border-blue-700 rounded-2xl p-6">
+            <div className="flex items-center justify-between mb-2">
+              <Users className="w-8 h-8 text-blue-300" />
+              <span className="text-3xl font-bold">{stats?.total_users || 0}</span>
+            </div>
+            <h3 className="text-blue-200 font-medium">Total Users</h3>
           </div>
 
-          <div className="bg-gray-900 p-6 rounded-xl border border-gray-800">
-            <BookOpen className="w-8 h-8 text-green-400 mb-4" />
-            <h3 className="text-2xl font-bold text-white">{stats?.totalCourses || 0}</h3>
-            <p className="text-gray-400">Total Courses</p>
+          <div className="bg-gradient-to-br from-purple-900 to-purple-800 border border-purple-700 rounded-2xl p-6">
+            <div className="flex items-center justify-between mb-2">
+              <Shield className="w-8 h-8 text-purple-300" />
+              <span className="text-3xl font-bold">{stats?.committee_members || 0}</span>
+            </div>
+            <h3 className="text-purple-200 font-medium">Committee</h3>
           </div>
 
-          <div className="bg-gray-900 p-6 rounded-xl border border-gray-800">
-            <Award className="w-8 h-8 text-purple-400 mb-4" />
-            <h3 className="text-2xl font-bold text-white">{projects.length || 0}</h3>
-            <p className="text-gray-400">Projects</p>
+          <div className="bg-gradient-to-br from-green-900 to-green-800 border border-green-700 rounded-2xl p-6">
+            <div className="flex items-center justify-between mb-2">
+              <Calendar className="w-8 h-8 text-green-300" />
+              <span className="text-3xl font-bold">{stats?.total_events || 0}</span>
+            </div>
+            <h3 className="text-green-200 font-medium">Events</h3>
           </div>
 
-          <div className="bg-gray-900 p-6 rounded-xl border border-gray-800">
-            <Calendar className="w-8 h-8 text-orange-400 mb-4" />
-            <h3 className="text-2xl font-bold text-white">{events.length || 0}</h3>
-            <p className="text-gray-400">Events</p>
+          <div className="bg-gradient-to-br from-yellow-900 to-yellow-800 border border-yellow-700 rounded-2xl p-6">
+            <div className="flex items-center justify-between mb-2">
+              <Database className="w-8 h-8 text-yellow-300" />
+              <span className="text-3xl font-bold">{stats?.total_projects || 0}</span>
+            </div>
+            <h3 className="text-yellow-200 font-medium">Projects</h3>
           </div>
         </div>
 
@@ -379,6 +469,7 @@ export default function AdminPanel() {
               { id: 'announcements', label: 'Announcements', icon: Bell },
               { id: 'events', label: 'Events', icon: Calendar },
               { id: 'projects', label: 'Projects', icon: FileText },
+              { id: 'reports', label: 'Report Formats', icon: Download },
               { id: 'add-student', label: 'Add Student', icon: UserPlus },
               { id: 'add-faculty', label: 'Add Faculty', icon: UserPlus },
               { id: 'upload', label: 'Upload CSV', icon: Upload },
@@ -402,31 +493,46 @@ export default function AdminPanel() {
             {activeTab === 'overview' && (
               <div className="space-y-6">
                 <h2 className="text-2xl font-bold text-white">Dashboard Overview</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-gray-800 p-6 rounded-lg">
-                    <h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
-                    <div className="space-y-3">
-                      <button 
-                        onClick={handleGraduateStudents}
-                        className="w-full flex items-center gap-2 bg-green-600 hover:bg-green-700 px-4 py-3 rounded-lg transition"
-                      >
-                        <GraduationCap className="w-5 h-5" />
-                        Graduate All Students
-                      </button>
-                      <button className="w-full flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-4 py-3 rounded-lg transition">
-                        <FileText className="w-5 h-5" />
-                        Generate Reports
-                      </button>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="bg-gray-800 border border-gray-700 rounded-xl p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <UserCheck className="w-6 h-6 text-blue-400" />
+                      <h3 className="font-bold">Active Students</h3>
                     </div>
+                    <p className="text-3xl font-bold">{stats?.active_students || 0}</p>
                   </div>
 
-                  <div className="bg-gray-800 p-6 rounded-lg">
-                    <h3 className="text-lg font-semibold text-white mb-4">System Info</h3>
-                    <div className="space-y-2 text-sm text-gray-400">
-                      <p>Version: 2.0.0</p>
-                      <p>Database: Connected</p>
-                      <p>Last Backup: {new Date().toLocaleDateString()}</p>
+                  <div className="bg-gray-800 border border-gray-700 rounded-xl p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Award className="w-6 h-6 text-purple-400" />
+                      <h3 className="font-bold">Faculty</h3>
                     </div>
+                    <p className="text-3xl font-bold">{stats?.faculty_count || 0}</p>
+                  </div>
+
+                  <div className="bg-gray-800 border border-gray-700 rounded-xl p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Activity className="w-6 h-6 text-green-400" />
+                      <h3 className="font-bold">System Status</h3>
+                    </div>
+                    <p className="text-2xl font-bold text-green-400">Operational</p>
+                  </div>
+                </div>
+
+                <div className="bg-gray-800 border border-gray-700 rounded-xl p-6">
+                  <h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
+                  <div className="space-y-3">
+                    <button 
+                      onClick={handleGraduateStudents}
+                      className="w-full flex items-center gap-2 bg-green-600 hover:bg-green-700 px-4 py-3 rounded-lg transition"
+                    >
+                      <GraduationCap className="w-5 h-5" />
+                      Graduate All Students
+                    </button>
+                    <button className="w-full flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-4 py-3 rounded-lg transition">
+                      <FileText className="w-5 h-5" />
+                      Generate Reports
+                    </button>
                   </div>
                 </div>
               </div>
@@ -438,12 +544,11 @@ export default function AdminPanel() {
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-bold text-white">All Users ({allUsers.length})</h2>
                 </div>
-
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-gray-800">
-                        <th className="text-left py-3 px-4 text-gray-400 font-medium">Username</th>
+                        <th className="text-left py-3 px-4 text-gray-400 font-medium">User</th>
                         <th className="text-left py-3 px-4 text-gray-400 font-medium">Email</th>
                         <th className="text-left py-3 px-4 text-gray-400 font-medium">Role</th>
                         <th className="text-left py-3 px-4 text-gray-400 font-medium">Department</th>
@@ -452,14 +557,32 @@ export default function AdminPanel() {
                       </tr>
                     </thead>
                     <tbody>
-                      {allUsers.map((user) => (
-                        <tr key={user.id} className="border-b border-gray-800 hover:bg-gray-800/50">
-                          <td className="py-3 px-4 text-white">{user.username}</td>
-                          <td className="py-3 px-4 text-gray-400 text-sm">{user.email}</td>
+                      {allUsers.map((u) => (
+                        <tr key={u.id} className="border-b border-gray-800 hover:bg-gray-800/50">
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-3">
+                              {u.profile_photo_url ? (
+                                <img 
+                                  src={u.profile_photo_url} 
+                                  className="w-10 h-10 rounded-full object-cover" 
+                                  alt=""
+                                />
+                              ) : (
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center font-bold">
+                                  {u.full_name?.[0]?.toUpperCase() || u.username?.[0]?.toUpperCase()}
+                                </div>
+                              )}
+                              <div>
+                                <p className="font-medium text-white">{u.full_name || u.username}</p>
+                                <p className="text-sm text-gray-400">@{u.username}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 text-gray-400">{u.email}</td>
                           <td className="py-3 px-4">
                             <select
-                              value={user.role}
-                              onChange={(e) => handleChangeRole(user.id, e.target.value)}
+                              value={u.role}
+                              onChange={(e) => handleChangeRole(u.id, e.target.value)}
                               className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-white text-sm"
                             >
                               <option value="student">Student</option>
@@ -467,11 +590,11 @@ export default function AdminPanel() {
                               <option value="admin">Admin</option>
                             </select>
                           </td>
-                          <td className="py-3 px-4 text-gray-400 text-sm">{user.department || '-'}</td>
-                          <td className="py-3 px-4 text-gray-400 text-sm">{user.year || '-'}</td>
+                          <td className="py-3 px-4 text-gray-300">{u.department || '-'}</td>
+                          <td className="py-3 px-4 text-gray-300">{u.year || '-'}</td>
                           <td className="py-3 px-4">
                             <button
-                              onClick={() => handleDeleteUser(user.id, user.username)}
+                              onClick={() => handleDeleteUser(u.id, u.username)}
                               className="p-2 bg-red-600 hover:bg-red-700 rounded transition"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -500,21 +623,21 @@ export default function AdminPanel() {
                       </tr>
                     </thead>
                     <tbody>
-                      {allUsers.filter(u => u.role === 'student' || u.is_committee).map((user) => (
-                        <tr key={user.id} className="border-b border-gray-800 hover:bg-gray-800/50">
-                          <td className="py-3 px-4 text-white">{user.username}</td>
-                          <td className="py-3 px-4 text-gray-400 text-sm">{user.email}</td>
+                      {allUsers.filter(u => u.role === 'student' || u.is_committee).map((u) => (
+                        <tr key={u.id} className="border-b border-gray-800 hover:bg-gray-800/50">
+                          <td className="py-3 px-4 text-white">{u.username}</td>
+                          <td className="py-3 px-4 text-gray-400 text-sm">{u.email}</td>
                           <td className="py-3 px-4 text-gray-400">
-                            {user.committee_post ? (
-                              <span className="px-2 py-1 bg-green-600 rounded text-sm">{user.committee_post}</span>
+                            {u.committee_post ? (
+                              <span className="px-2 py-1 bg-green-600 rounded text-sm">{u.committee_post}</span>
                             ) : (
                               'None'
                             )}
                           </td>
                           <td className="py-3 px-4">
                             <select
-                              value={user.committee_post || ''}
-                              onChange={(e) => handleAssignCommitteePost(user.id, e.target.value || null)}
+                              value={u.committee_post || ''}
+                              onChange={(e) => handleAssignCommitteePost(u.id, e.target.value || null)}
                               className="bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white text-sm"
                             >
                               <option value="">None</option>
@@ -650,6 +773,144 @@ export default function AdminPanel() {
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {/* Report Formats Tab */}
+            {activeTab === 'reports' && (
+              <div>
+                <h2 className="text-2xl font-bold text-white mb-6">Project Report Formats</h2>
+
+                {/* Upload Form */}
+                <div className="bg-gray-800 border border-gray-700 rounded-xl p-6 mb-8">
+                  <h3 className="text-xl font-bold mb-4">Upload New Format</h3>
+                  <form onSubmit={handleUploadReport} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Format Title
+                      </label>
+                      <input
+                        type="text"
+                        value={reportFormData.title}
+                        onChange={(e) => setReportFormData({...reportFormData, title: e.target.value})}
+                        className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white"
+                        placeholder="e.g., Project Report Format 2026"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Academic Year
+                      </label>
+                      <input
+                        type="text"
+                        value={reportFormData.academic_year}
+                        onChange={(e) => setReportFormData({...reportFormData, academic_year: e.target.value})}
+                        className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white"
+                        placeholder="e.g., 2025-2026"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Upload Document (.doc or .docx)
+                      </label>
+                      <input
+                        type="file"
+                        accept=".doc,.docx"
+                        onChange={(e) => setReportFormData({...reportFormData, file: e.target.files[0]})}
+                        className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white"
+                        required
+                      />
+                      {reportFormData.file && (
+                        <p className="text-sm text-gray-400 mt-2">
+                          Selected: {reportFormData.file.name}
+                        </p>
+                      )}
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={uploadingReport}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg disabled:opacity-50 flex items-center gap-2"
+                    >
+                      <Upload className="w-4 h-4" />
+                      {uploadingReport ? 'Uploading...' : 'Upload Format'}
+                    </button>
+                  </form>
+                </div>
+
+                {/* Formats List */}
+                <div className="bg-gray-800 border border-gray-700 rounded-xl">
+                  <div className="p-6 border-b border-gray-700">
+                    <h3 className="text-xl font-bold">Uploaded Formats</h3>
+                  </div>
+                  <div className="divide-y divide-gray-700">
+                    {reportFormats.length === 0 ? (
+                      <div className="p-8 text-center text-gray-400">
+                        No report formats uploaded yet
+                      </div>
+                    ) : (
+                      reportFormats.map((format) => (
+                        <div
+                          key={format.id}
+                          className="p-6 flex items-center justify-between hover:bg-gray-750"
+                        >
+                          <div className="flex items-center gap-4">
+                            <FileText className="w-8 h-8 text-blue-400" />
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h4 className="font-bold text-white">{format.title}</h4>
+                                {format.is_active && (
+                                  <span className="bg-green-900/50 text-green-400 text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                                    <Check className="w-3 h-3" />
+                                    Active
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-4 text-sm text-gray-400 mt-1">
+                                <span className="flex items-center gap-1">
+                                  <Calendar className="w-4 h-4" />
+                                  {format.academic_year}
+                                </span>
+                                <span>{format.file_name}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <a
+                              href={format.file_url}
+                              download
+                              className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
+                            >
+                              <Download className="w-4 h-4" />
+                              Download
+                            </a>
+                            {!format.is_active && (
+                              <button
+                                onClick={() => handleActivateReport(format.id)}
+                                className="bg-green-900/50 hover:bg-green-900/70 text-green-400 px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
+                              >
+                                <Check className="w-4 h-4" />
+                                Set Active
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleDeleteReport(format.id)}
+                              className="bg-red-900/50 hover:bg-red-900/70 text-red-400 px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
                 </div>
               </div>
             )}
