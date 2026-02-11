@@ -21,6 +21,15 @@ const eventsRoutes = require('./routes/events');
 const permissionsRoutes = require('./routes/permissions');
 const departmentsRoutes = require('./routes/departments');
 
+// Add after existing route imports
+const configRoutes = require('./routes/config')
+const announcementRoutes = require('./routes/announcements')
+const courseRoutes = require('./routes/courses')
+const reportFormatRoutes = require('./routes/reportFormats')
+const publicRoutes = require('./routes/public')
+
+
+
 // Health check
 app.get('/', (req, res) => {
   res.json({ message: 'Science & Tech Club API', status: 'running' });
@@ -38,6 +47,13 @@ app.use('/api/queries', queriesRoutes);
 app.use('/api/events', eventsRoutes);
 app.use('/api/permissions', permissionsRoutes);
 app.use('/api/departments', departmentsRoutes);
+// Add after existing app.use() statements
+app.use('/api/config', configRoutes)
+app.use('/api/announcements', announcementRoutes)
+app.use('/api/courses', courseRoutes)
+app.use('/api/report-formats', reportFormatRoutes)
+app.use('/api/public', publicRoutes)
+
 
 // 404 handler
 app.use((req, res) => {
