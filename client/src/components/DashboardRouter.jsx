@@ -20,7 +20,7 @@ export default function DashboardRouter() {
 
   // Admin gets admin dashboard
   if (user.role === 'admin') {
-    return <AdminDashboard />
+    return <AdminPanel />
   }
 
   // Committee members get role-specific dashboards
