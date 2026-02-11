@@ -1,37 +1,65 @@
-const express = require('express')
-const router = express.Router()
+const express = require('express');
+const router = express.Router();
+const supabase = require('../config/supabase');
+const auth = require('../middleware/auth');
 
 // Get site config
 router.get('/', async (req, res) => {
   try {
-    // Return default config for now
-    res.json({
-      site_name: 'Science & Tech Club',
-      logo_url: 'https://i.ibb.co/v6WM95xK/2.jpg',
-      mecs_logo_url: 'https://i.ibb.co/sptF2qvk/mecs-logo.jpg',
-      theme_mode: 'dark',
-      primary_color: '#3b82f6',
-      watermark_opacity: '0.25'
-    })
+    const { data, error } = await supabase
+      .from('site_config')
+      .select('*')
+      .single();
+
+    if (error) {
+      // Return default config if not found
+      return res.json({
+        site_name: 'Science & Tech Club',
+        logo_url: 'https://i.ibb.co/v6WM95xK/2.jpg',
+        mecs_logo_url: 'https://i.ibb.co/sptF2qvk/mecs-logo.jpg',
+        theme_mode: 'dark',
+        primary_color: '#3b82f6',
+        watermark_opacity: '0.25'
+      });
+    }
+
+    res.json(data);
   } catch (error) {
-    console.error('Config error:', error)
-    res.status(500).json({ error: 'Failed to fetch config' })
+    console.error('❌ Config error:', error);
+    res.status(500).json({ message: 'Failed to fetch config', error: error.message });
   }
-})
+});
 
 // Update site config (admin only)
-router.put('/', async (req, res) => {
+router.put('/', auth, async (req, res) => {
   try {
     if (req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Admin access required' })
+      return res.status(403).json({ message: 'Admin access required' });
     }
-    
-    // For now, just return success
-    res.json({ message: 'Config updated successfully' })
-  } catch (error) {
-    console.error('Config update error:', error)
-    res.status(500).json({ error: 'Failed to update config' })
-  }
-})
 
-module.exports = router
+    const { site_name, logo_url, mecs_logo_url, theme_mode, primary_color, watermark_opacity } = req.body;
+
+    const { data, error } = await supabase
+      .from('site_config')
+      .upsert({
+        id: 1,
+        site_name,
+        logo_url,
+        mecs_logo_url,
+        theme_mode,
+        primary_color,
+        watermark_opacity,
+        updated_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.json(data);
+  } catch (error) {
+    console.error('❌ Config update error:', error);
+    res.status(500).json({ message: 'Failed to update config', error: error.message });
+  }
+});
+
+module.exports = router;
