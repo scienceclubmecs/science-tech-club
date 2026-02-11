@@ -35,7 +35,7 @@ body {
   overflow-x: hidden;
 }
 
-/* Watermark Logo */
+/* Watermark Logo - MAXIMUM BRIGHTNESS */
 body::before {
   content: '';
   position: fixed;
@@ -53,7 +53,7 @@ body::before {
   pointer-events: none;
   z-index: 0;
   mix-blend-mode: lighten;
-  filter: brightness(3);
+  filter: brightness(5);
 }
 
 /* Page content layer */
