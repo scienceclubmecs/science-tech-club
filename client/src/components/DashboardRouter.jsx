@@ -9,7 +9,7 @@ import DeptViceHeadDashboard from '../pages/DeptViceHeadDashboard'
 import DeveloperDashboard from '../pages/DeveloperDashboard'
 import ExecutiveDashboard from '../pages/ExecutiveDashboard'
 import RepresentativeDashboard from '../pages/RepresentativeDashboard'
-import AdminDashboard from '../pages/AdminDashboard'
+import AdminPanel from '../pages/AdminPanel'
 
 export default function DashboardRouter() {
   const user = JSON.parse(localStorage.getItem('user') || '{}')
