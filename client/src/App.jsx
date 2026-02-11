@@ -16,7 +16,6 @@ import EventsPage from './pages/EventsPage'
 import CreateEventPage from './pages/CreateEventPage'
 import TeamViewPage from './pages/TeamViewPage'
 import DeveloperPanel from './pages/DeveloperPanel'
-import RegisterPage from './pages/RegisterPage'
 import DashboardRouter from './components/DashboardRouter'
 import ProfilePage from './pages/ProfilePage'
 import ChatbotButton from './components/ChatbotButton'
@@ -26,7 +25,7 @@ import TasksPage from './pages/TasksPage'
 import MessagesPage from './pages/MessagesPage'
 import TasksFloatingButton from './components/TasksFloatingButton'
 import MyProjectsPage from './pages/MyProjectsPage'
-import AdminDashboard from './pages/AdminDashboard'
+
 
 // Import all role-specific dashboards
 import ChairDashboard from './pages/ChairDashboard'
