@@ -54,6 +54,13 @@ app.use('/api/courses', courseRoutes)
 app.use('/api/report-formats', reportFormatRoutes)
 app.use('/api/public', publicRoutes)
 
+console.log('✅ Routes registered:', {
+  config: !!configRoutes,
+  announcements: !!announcementRoutes,
+  courses: !!courseRoutes,
+  reportFormats: !!reportFormatRoutes,
+  public: !!publicRoutes
+})
 
 // 404 handler
 app.use((req, res) => {
