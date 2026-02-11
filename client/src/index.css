@@ -29,7 +29,7 @@
 
 /* Body should be SOLID BLACK */
 body {
-  background: #000000;
+  background: #454545;
   color: var(--text-primary);
   position: relative;
   overflow-x: hidden;
@@ -57,7 +57,7 @@ body::before {
 }
 
 /* Page content layer */
-#root {
+#root > * {
   position: relative;
   z-index: 1;
   min-height: 100vh;
