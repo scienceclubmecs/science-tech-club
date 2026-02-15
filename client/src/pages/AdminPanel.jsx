@@ -95,45 +95,47 @@ export default function AdminPanel() {
     }
   }
 
-  const handleGenerateReport = async () => {
-    setGeneratingReport(true)
-    try {
-      const response = await api.get('/reports/generate-statistics', {
-        responseType: 'blob' // Important for PDF download
-      })
+  // ✅ FIXED - Complete handleGenerateReport function
+const handleGenerateReport = async () => {
+  setGeneratingReport(true)
+  try {
+    const response = await api.get('/reports/generate-statistics', {
+      responseType: 'blob' // Important for PDF download
+    })
 
-  const fetchAllUsers = async () => {
-    try {
-      const { data } = await api.get('/users')
-      setAllUsers(data)
-    } catch (error) {
-      console.error('Failed to fetch users:', error)
-    }
+    // Create blob from response
+    const blob = new Blob([response.data], { type: 'application/pdf' })
+    const url = window.URL.createObjectURL(blob)
+    
+    // Create temporary link and trigger download
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `club-statistics-report-${Date.now()}.pdf`
+    document.body.appendChild(link)
+    link.click()
+    
+    // Cleanup
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+    
+    alert('✅ Report generated successfully!')
+  } catch (error) {
+    console.error('Generate report error:', error)
+    alert(error.response?.data?.message || 'Failed to generate report')
+  } finally {
+    setGeneratingReport(false)
   }
+}
 
-  const blob = new Blob([response.data], { type: 'application/pdf' })
-      const url = window.URL.createObjectURL(blob)
-      
-      // Create temporary link and trigger download
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `club-statistics-report-${Date.now()}.pdf`
-      document.body.appendChild(link)
-      link.click()
-      
-      // Cleanup
-      document.body.removeChild(link)
-      window.URL.revokeObjectURL(url)
-      
-      alert('✅ Report generated successfully!')
-    } catch (error) {
-      console.error('Generate report error:', error)
-      alert(error.response?.data?.message || 'Failed to generate report')
-    } finally {
-      setGeneratingReport(false)
-    }
+// ✅ NOW define fetchAllUsers AFTER handleGenerateReport
+const fetchAllUsers = async () => {
+  try {
+    const { data } = await api.get('/users')
+    setAllUsers(data)
+  } catch (error) {
+    console.error('Failed to fetch users:', error)
   }
-
+}
   const fetchEvents = async () => {
     try {
       const { data } = await api.get('/events')
