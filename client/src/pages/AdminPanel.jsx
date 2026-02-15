@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { 
   Users, BookOpen, Upload, UserPlus, Key, Trash2, GraduationCap,
   Settings, Calendar, Award, FileText, Bell, Download, Shield,
-  Database, Activity, UserCheck, Check
+  Database, Activity, UserCheck, Check,Award,UserCheck, FileDown
 } from 'lucide-react'
 import api from '../services/api'
 
@@ -15,6 +15,7 @@ export default function AdminPanel() {
   const [projects, setProjects] = useState([])
   const [announcements, setAnnouncements] = useState([])
   const [reportFormats, setReportFormats] = useState([])
+  const [generatingReport, setGeneratingReport] = useState(false)
   
   // Forms
   const [newStudent, setNewStudent] = useState({ 
@@ -94,12 +95,42 @@ export default function AdminPanel() {
     }
   }
 
+  const handleGenerateReport = async () => {
+    setGeneratingReport(true)
+    try {
+      const response = await api.get('/api/reports/generate-statistics', {
+        responseType: 'blob' // Important for PDF download
+      })
+
   const fetchAllUsers = async () => {
     try {
       const { data } = await api.get('/users')
       setAllUsers(data)
     } catch (error) {
       console.error('Failed to fetch users:', error)
+    }
+  }
+
+  const blob = new Blob([response.data], { type: 'application/pdf' })
+      const url = window.URL.createObjectURL(blob)
+      
+      // Create temporary link and trigger download
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `club-statistics-report-${Date.now()}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      
+      // Cleanup
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+      
+      alert('✅ Report generated successfully!')
+    } catch (error) {
+      console.error('Generate report error:', error)
+      alert(error.response?.data?.message || 'Failed to generate report')
+    } finally {
+      setGeneratingReport(false)
     }
   }
 
@@ -529,10 +560,23 @@ export default function AdminPanel() {
                       <GraduationCap className="w-5 h-5" />
                       Graduate All Students
                     </button>
-                    <button className="w-full flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-4 py-3 rounded-lg transition">
-                      <FileText className="w-5 h-5" />
-                      Generate Reports
-                    </button>
+                     <button
+                  onClick={handleGenerateReport}
+                  disabled={generatingReport}
+                  className="w-full flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white px-4 py-3 rounded-lg font-medium transition-colors"
+                >
+                  {generatingReport ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+                      Generating Report...
+                    </>
+                  ) : (
+                    <>
+                      <FileDown className="w-5 h-5" />
+                      Generate Statistics Report (PDF)
+                    </>
+                  )}
+                </button>
                   </div>
                 </div>
               </div>
