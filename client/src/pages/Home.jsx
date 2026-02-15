@@ -101,7 +101,7 @@ export default function Home() {
           <div className="mb-8">
             <div className="inline-flex items-center gap-2 bg-gray-900 border border-gray-800 px-4 py-2 rounded-full">
               <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-              <span className="text-sm text-gray-400">WELCOME TO INNOVATION</span>
+              <span className="text-sm text-gray-400">INNOVATION IN PROGRESS</span>
             </div>
           </div>
 
@@ -111,10 +111,6 @@ export default function Home() {
             </span>
           </h1>
           
-          <h2 className="text-2xl text-gray-400 mb-8">
-            Innovation In Progress
-          </h2>
-
           <p className="text-xl text-gray-400 mb-8 max-w-3xl mx-auto leading-relaxed">Greetings from the MECS Tech Community
 where every idea has the potential to become a reality and innovation meets opportunity.
 Our community was founded by Mathsa Naveen Kumar, a 2022 batch BE ECE student, and is dedicated to empowering the next generation of technology leaders through practical innovation, teamwork, and access to cutting-edge technology.
