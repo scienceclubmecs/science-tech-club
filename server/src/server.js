@@ -23,11 +23,11 @@ const departmentsRoutes = require('./routes/departments');
 const reportsRoutes = require('./routes/reports'); 
 
 // Add after existing route imports
-const configRoutes = require('./routes/config')
-const announcementRoutes = require('./routes/announcements')
-const courseRoutes = require('./routes/courses')
-const reportFormatRoutes = require('./routes/reportFormats')
-const publicRoutes = require('./routes/public')
+const configRoutes = require('./routes/config');
+const announcementRoutes = require('./routes/announcements');
+const courseRoutes = require('./routes/courses');
+const reportFormatRoutes = require('./routes/reportFormats');
+const publicRoutes = require('./routes/public');
 
 
 
