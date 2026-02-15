@@ -1,8 +1,16 @@
 const express = require('express');
 const router = express.Router();
 const PDFDocument = require('pdfkit');
-const { supabase } = require('../config/supabase');
-const { auth } = require('../middleware/auth');
+const { createClient } = require('@supabase/supabase-js');
+
+// ✅ FIX: Import auth middleware correctly
+const auth = require('../middleware/auth');
+
+// ✅ Initialize Supabase client
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY
+);
 
 // Generate statistics report (Admin only)
 router.get('/generate-statistics', auth, async (req, res) => {
@@ -151,14 +159,18 @@ function generatePDFContent(doc, stats, users, events, projects) {
   doc.fontSize(11)
      .fillColor('#000000');
 
-  Object.entries(stats.departments).forEach(([dept, count]) => {
-    const percentage = ((count / stats.totalUsers) * 100).toFixed(1);
-    doc.text(`${dept}:`, 70, doc.y, { continued: true, width: 200 })
-       .font('Helvetica-Bold')
-       .text(`${count} (${percentage}%)`, { align: 'right' })
-       .font('Helvetica')
-       .moveDown(0.3);
-  });
+  if (Object.keys(stats.departments).length > 0) {
+    Object.entries(stats.departments).forEach(([dept, count]) => {
+      const percentage = ((count / stats.totalUsers) * 100).toFixed(1);
+      doc.text(`${dept}:`, 70, doc.y, { continued: true, width: 200 })
+         .font('Helvetica-Bold')
+         .text(`${count} (${percentage}%)`, { align: 'right' })
+         .font('Helvetica')
+         .moveDown(0.3);
+    });
+  } else {
+    doc.text('No department data available.', 70);
+  }
 
   doc.moveDown(1.5);
 
