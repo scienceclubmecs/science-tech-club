@@ -98,7 +98,7 @@ export default function AdminPanel() {
   const handleGenerateReport = async () => {
     setGeneratingReport(true)
     try {
-      const response = await api.get('/api/reports/generate-statistics', {
+      const response = await api.get('/reports/generate-statistics', {
         responseType: 'blob' // Important for PDF download
       })
 
