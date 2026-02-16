@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import Calendar from 'react-calendar'
+import 'react-calendar/dist/Calendar.css'
 import api from '../services/api'
 import { 
   Sparkles, ArrowRight, ChevronLeft, ChevronRight, 
-  BookOpen, Award, Calendar, Users, Code, Lightbulb,
+  BookOpen, Award, Calendar as CalendarIcon, Users, Code, Lightbulb,
   Trophy, GraduationCap, ExternalLink
 } from 'lucide-react'
 
@@ -31,9 +33,13 @@ function FeatureCard({ icon, title, description, color, items }) {
 export default function Home() {
   const [committee, setCommittee] = useState([])
   const [scrollPosition, setScrollPosition] = useState(0)
+  const [events, setEvents] = useState([])
+  const [stats, setStats] = useState({ students: 0, teachers: 0 })
+  const [selectedDate, setSelectedDate] = useState(new Date())
 
   useEffect(() => {
     fetchCommittee()
+    fetchHomeData()
   }, [])
 
   const fetchCommittee = async () => {
@@ -42,6 +48,25 @@ export default function Home() {
       setCommittee(data)
     } catch (error) {
       console.error('Failed to fetch committee:', error)
+    }
+  }
+
+  const fetchHomeData = async () => {
+    try {
+      const [eventsRes, usersRes] = await Promise.all([
+        api.get('/events').catch(() => ({ data: [] })),
+        api.get('/users').catch(() => ({ data: [] }))
+      ])
+
+      setEvents(eventsRes.data || [])
+      
+      const users = usersRes.data || []
+      setStats({
+        students: users.filter(u => u.role === 'student').length,
+        teachers: users.filter(u => u.role === 'faculty').length
+      })
+    } catch (error) {
+      console.error('Failed to fetch home data:', error)
     }
   }
 
@@ -56,6 +81,45 @@ export default function Home() {
     
     container.scrollTo({ left: newPosition, behavior: 'smooth' })
     setScrollPosition(newPosition)
+  }
+
+  // Get events for a specific date
+  const getEventsForDate = (date) => {
+    return events.filter(event => {
+      if (!event.event_date) return false
+      const eventDate = new Date(event.event_date)
+      return (
+        eventDate.getDate() === date.getDate() &&
+        eventDate.getMonth() === date.getMonth() &&
+        eventDate.getFullYear() === date.getFullYear()
+      )
+    })
+  }
+
+  // Tile content for calendar
+  const tileContent = ({ date, view }) => {
+    if (view === 'month') {
+      const dayEvents = getEventsForDate(date)
+      if (dayEvents.length > 0) {
+        return (
+          <div className="flex justify-center items-center mt-1">
+            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+          </div>
+        )
+      }
+    }
+    return null
+  }
+
+  // Tile class name for styling
+  const tileClassName = ({ date, view }) => {
+    if (view === 'month') {
+      const dayEvents = getEventsForDate(date)
+      if (dayEvents.length > 0) {
+        return 'has-events'
+      }
+    }
+    return null
   }
 
   return (
@@ -77,6 +141,8 @@ export default function Home() {
             </div>
             <div className="hidden md:flex gap-6">
               <a href="#home" className="text-gray-400 hover:text-white transition">Home</a>
+              <a href="#stats" className="text-gray-400 hover:text-white transition">Stats</a>
+              <a href="#calendar" className="text-gray-400 hover:text-white transition">Events</a>
               <a href="#about" className="text-gray-400 hover:text-white transition">About</a>
               <a href="#features" className="text-gray-400 hover:text-white transition">Features</a>
               <a href="#team" className="text-gray-400 hover:text-white transition">Team</a>
@@ -111,12 +177,11 @@ export default function Home() {
             </span>
           </h1>
           
-          <p className="text-xl text-gray-400 mb-8 max-w-3xl mx-auto leading-relaxed">Greetings from the MECS Tech Community
-where every idea has the potential to become a reality and innovation meets opportunity.
-Our community was founded by Mathsa Naveen Kumar, a 2022 batch BE ECE student, and is dedicated to empowering the next generation of technology leaders through practical innovation, teamwork, and access to cutting-edge technology.
-You're in the right place whether you're a novice making your first foray into the tech industry or an experienced inventor hoping to develop the next big thing. Come along with us as we shape the future, one innovation and project at a time.
+          <p className="text-xl text-gray-400 mb-8 max-w-3xl mx-auto leading-relaxed">
+            Greetings from the MECS Tech Community where every idea has the potential to become a reality and innovation meets opportunity.
+            Our community was founded by Mathsa Naveen Kumar, a 2022 batch BE ECE student, and is dedicated to empowering the next generation of technology leaders through practical innovation, teamwork, and access to cutting-edge technology.
+            You're in the right place whether you're a novice making your first foray into the tech industry or an experienced inventor hoping to develop the next big thing. Come along with us as we shape the future, one innovation and project at a time.
           </p>
-          
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             <Link to="/login" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-8 py-4 rounded-lg font-medium transition inline-flex items-center justify-center gap-2 shadow-lg shadow-blue-500/30">
@@ -127,6 +192,155 @@ You're in the right place whether you're a novice making your first foray into t
               Learn More
             </a>
           </div>
+        </div>
+      </section>
+
+      {/* Stats Section - NEW */}
+      <section id="stats" className="py-20 px-4 bg-gray-950">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+              Our Community
+            </h2>
+            <p className="text-gray-400 text-lg">Growing stronger together</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="bg-gradient-to-br from-blue-900/50 to-blue-800/30 border border-blue-700/50 rounded-2xl p-10 backdrop-blur-sm hover:scale-105 transition-transform">
+              <div className="flex items-center gap-6">
+                <div className="w-20 h-20 bg-blue-600/30 rounded-2xl flex items-center justify-center">
+                  <Users className="w-10 h-10 text-blue-400" />
+                </div>
+                <div>
+                  <div className="text-5xl font-bold text-blue-400 mb-2">{stats.students}</div>
+                  <div className="text-xl text-gray-300 font-medium">Active Students</div>
+                </div>
+              </div>
+              <p className="text-sm text-gray-400 mt-4">
+                Members actively participating in club activities and projects
+              </p>
+            </div>
+
+            <div className="bg-gradient-to-br from-purple-900/50 to-purple-800/30 border border-purple-700/50 rounded-2xl p-10 backdrop-blur-sm hover:scale-105 transition-transform">
+              <div className="flex items-center gap-6">
+                <div className="w-20 h-20 bg-purple-600/30 rounded-2xl flex items-center justify-center">
+                  <GraduationCap className="w-10 h-10 text-purple-400" />
+                </div>
+                <div>
+                  <div className="text-5xl font-bold text-purple-400 mb-2">{stats.teachers}</div>
+                  <div className="text-xl text-gray-300 font-medium">Faculty Mentors</div>
+                </div>
+              </div>
+              <p className="text-sm text-gray-400 mt-4">
+                Expert faculty members guiding and mentoring students
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Event Calendar Section - NEW */}
+      <section id="calendar" className="py-20 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 bg-green-600/20 border border-green-500/30 rounded-full px-6 py-2 mb-4">
+              <CalendarIcon className="w-4 h-4 text-green-400" />
+              <span className="text-green-400 text-sm font-medium">Event Calendar</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+              Upcoming Events
+            </h2>
+            <p className="text-gray-400 text-lg">Stay updated with our latest workshops and activities</p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Calendar */}
+            <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6 backdrop-blur-sm">
+              <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <CalendarIcon className="w-5 h-5 text-blue-400" />
+                Event Calendar
+              </h3>
+              <div className="calendar-container">
+                <Calendar
+                  onChange={setSelectedDate}
+                  value={selectedDate}
+                  tileContent={tileContent}
+                  tileClassName={tileClassName}
+                  className="custom-calendar"
+                />
+              </div>
+              <div className="mt-4 flex items-center gap-2 text-sm text-gray-400">
+                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <span>Events scheduled</span>
+              </div>
+            </div>
+
+            {/* Event List */}
+            <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6 backdrop-blur-sm">
+              <h3 className="text-xl font-bold mb-4">
+                Events on {selectedDate.toLocaleDateString('en-IN', { month: 'long', day: 'numeric', year: 'numeric' })}
+              </h3>
+              
+              {getEventsForDate(selectedDate).length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <CalendarIcon className="w-16 h-16 mx-auto mb-4 text-gray-700" />
+                  <p>No events scheduled for this date</p>
+                </div>
+              ) : (
+                <div className="space-y-4 max-h-96 overflow-y-auto scrollbar-hide">
+                  {getEventsForDate(selectedDate).map((event) => (
+                    <div key={event.id} className="bg-gray-900/50 border border-gray-700 rounded-xl p-4 hover:border-blue-500/50 transition-all">
+                      <h4 className="font-bold text-lg mb-2">{event.title}</h4>
+                      {event.description && (
+                        <p className="text-gray-400 text-sm mb-3 line-clamp-2">{event.description}</p>
+                      )}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-sm">
+                          <CalendarIcon className="w-4 h-4 text-blue-400" />
+                          <span className="text-gray-400">
+                            {new Date(event.event_date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                        {event.location && (
+                          <span className="text-sm text-gray-500">{event.location}</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Upcoming Events Grid */}
+          {events.filter(e => new Date(e.event_date) >= new Date()).slice(0, 6).length > 0 && (
+            <div className="mt-12 bg-gray-900/50 border border-gray-800 rounded-2xl p-6 backdrop-blur-sm">
+              <h3 className="text-2xl font-bold mb-6">Upcoming Events</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {events
+                  .filter(e => new Date(e.event_date) >= new Date())
+                  .slice(0, 6)
+                  .map((event) => (
+                    <div key={event.id} className="bg-gray-900/50 border border-gray-700 rounded-xl p-4 hover:border-blue-500/50 transition-all">
+                      <div className="flex items-start justify-between mb-2">
+                        <h4 className="font-bold line-clamp-1">{event.title}</h4>
+                        <span className="px-2 py-1 bg-green-600/20 text-green-400 text-xs rounded-full whitespace-nowrap">
+                          {event.status}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-400 mb-3 line-clamp-2">{event.description}</p>
+                      <div className="text-xs text-gray-500">
+                        {new Date(event.event_date).toLocaleDateString('en-IN', { 
+                          month: 'short', 
+                          day: 'numeric',
+                          year: 'numeric'
+                        })}
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
@@ -196,7 +410,7 @@ You're in the right place whether you're a novice making your first foray into t
               items={['Expert-led courses', 'Hands-on tutorials', 'Certification programs', 'Career guidance']}
             />
             <FeatureCard 
-              icon={<Calendar />}
+              icon={<CalendarIcon />}
               title="Events & Workshops"
               description="Participate in hackathons, workshops, tech talks, and networking events throughout the year."
               color="from-green-600 to-teal-600"
@@ -313,10 +527,10 @@ You're in the right place whether you're a novice making your first foray into t
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link 
-              to="/register" 
+              to="/login" 
               className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-10 py-4 rounded-lg font-medium transition inline-flex items-center justify-center gap-2 shadow-lg shadow-blue-500/30"
             >
-              Register Now
+              Get Started
               <ArrowRight className="w-5 h-5" />
             </Link>
             <Link 
@@ -354,6 +568,8 @@ You're in the right place whether you're a novice making your first foray into t
               <h4 className="font-bold mb-3 text-sm">Quick Links</h4>
               <ul className="space-y-2 text-sm text-gray-500">
                 <li><a href="#home" className="hover:text-white transition">Home</a></li>
+                <li><a href="#stats" className="hover:text-white transition">Stats</a></li>
+                <li><a href="#calendar" className="hover:text-white transition">Events</a></li>
                 <li><a href="#about" className="hover:text-white transition">About</a></li>
                 <li><a href="#features" className="hover:text-white transition">Features</a></li>
                 <li><a href="#team" className="hover:text-white transition">Team</a></li>
@@ -384,6 +600,78 @@ You're in the right place whether you're a novice making your first foray into t
           </div>
         </div>
       </footer>
+
+      {/* Custom Calendar Styles */}
+      <style>{`
+        .custom-calendar {
+          width: 100%;
+          background: transparent;
+          border: none;
+          color: white;
+        }
+        
+        .custom-calendar .react-calendar__navigation {
+          margin-bottom: 1rem;
+        }
+        
+        .custom-calendar .react-calendar__navigation button {
+          color: white;
+          font-size: 1rem;
+          font-weight: 600;
+          background: rgba(59, 130, 246, 0.1);
+          border: 1px solid rgba(59, 130, 246, 0.3);
+          border-radius: 0.5rem;
+          padding: 0.5rem;
+        }
+        
+        .custom-calendar .react-calendar__navigation button:hover {
+          background: rgba(59, 130, 246, 0.2);
+        }
+        
+        .custom-calendar .react-calendar__month-view__weekdays {
+          color: #9ca3af;
+          font-size: 0.875rem;
+          font-weight: 600;
+          text-transform: uppercase;
+        }
+        
+        .custom-calendar .react-calendar__tile {
+          color: white;
+          background: transparent;
+          border-radius: 0.5rem;
+          padding: 0.75rem;
+          font-size: 0.875rem;
+        }
+        
+        .custom-calendar .react-calendar__tile:hover {
+          background: rgba(59, 130, 246, 0.2);
+        }
+        
+        .custom-calendar .react-calendar__tile--active {
+          background: rgba(59, 130, 246, 0.4) !important;
+          border: 1px solid rgba(59, 130, 246, 0.6);
+        }
+        
+        .custom-calendar .react-calendar__tile--now {
+          background: rgba(147, 51, 234, 0.2);
+        }
+        
+        .custom-calendar .react-calendar__tile.has-events {
+          font-weight: 600;
+        }
+        
+        .custom-calendar .react-calendar__month-view__days__day--neighboringMonth {
+          color: #4b5563;
+        }
+
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
     </div>
   )
 }
