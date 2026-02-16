@@ -5,6 +5,7 @@ import {
   Database, Activity, UserCheck, Check
 } from 'lucide-react'
 import api from '../services/api'
+import { generateStatisticsReport } from '../utils/reportGenerator'
 
 export default function AdminPanel() {
   const [stats, setStats] = useState(null)
@@ -15,7 +16,8 @@ export default function AdminPanel() {
   const [projects, setProjects] = useState([])
   const [announcements, setAnnouncements] = useState([])
   const [reportFormats, setReportFormats] = useState([])
-  
+  const [generatingReport, setGeneratingReport] = useState(false)
+
   // Forms
   const [newStudent, setNewStudent] = useState({ 
     username: '', email: '', department: '', year: 1, password: '', roll_number: '', dob: '' 
@@ -382,6 +384,38 @@ export default function AdminPanel() {
     }
   }
 
+  const handleGenerateReport = async () => {
+  setGeneratingReport(true)
+  try {
+    // Fetch fresh data
+    const [usersRes, eventsRes, projectsRes] = await Promise.all([
+      api.get('/users'),
+      api.get('/events'),
+      api.get('/projects')
+    ])
+
+    const users = usersRes.data || []
+    const events = eventsRes.data || []
+    const projects = projectsRes.data || []
+
+    const reportStats = {
+      total_users: users.length,
+      committee_members: users.filter(u => u.is_committee).length,
+      active_students: users.filter(u => u.role === 'student').length,
+      faculty_count: users.filter(u => u.role === 'faculty').length,
+      total_events: events.length,
+      total_projects: projects.length
+    }
+
+    await generateStatisticsReport(reportStats, users, events, projects)
+    alert('Report generated successfully!')
+  } catch (error) {
+    console.error('Failed to generate report:', error)
+    alert('Failed to generate report. Please try again.')
+  } finally {
+    setGeneratingReport(false)
+  }
+}
   const downloadCSVTemplate = (type) => {
     let csvContent = ''
     
@@ -529,10 +563,15 @@ export default function AdminPanel() {
                       <GraduationCap className="w-5 h-5" />
                       Graduate All Students
                     </button>
-                    <button className="w-full flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-4 py-3 rounded-lg transition">
-                      <FileText className="w-5 h-5" />
-                      Generate Reports
-                    </button>
+                    <button
+  onClick={handleGenerateReport}
+  disabled={generatingReport}
+  className="w-full flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-4 py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+>
+  <FileText className="w-5 h-5" />
+  {generatingReport ? 'Generating...' : 'Generate Statistics Report'}
+</button>
+
                   </div>
                 </div>
               </div>
