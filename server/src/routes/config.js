@@ -42,33 +42,67 @@ router.get('/', async (req, res) => {
 // Update site config (admin only)
 router.put('/', auth, async (req, res) => {
   try {
-    if (req.user.role !== 'admin') {
+    // Fetch user role from database
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', req.user.id)
+      .single();
+
+    if (userError || !user || user.role !== 'admin') {
       return res.status(403).json({ message: 'Admin access required' });
     }
 
     const { site_name, logo_url, mecs_logo_url, theme_mode, primary_color, watermark_opacity } = req.body;
 
-    const { data, error } = await supabase
+    // Check if config exists
+    const { data: existing } = await supabase
       .from('site_config')
-      .upsert({
-        id: 1,
-        site_name,
-        logo_url,
-        mecs_logo_url,
-        theme_mode,
-        primary_color,
-        watermark_opacity,
-        updated_at: new Date().toISOString()
-      })
-      .select()
+      .select('id')
+      .limit(1)
       .single();
 
-    if (error) {
-      console.error('❌ Upsert error:', error);
-      throw error;
+    let result;
+    
+    if (existing) {
+      // Update existing config
+      const { data, error } = await supabase
+        .from('site_config')
+        .update({
+          site_name,
+          logo_url,
+          mecs_logo_url,
+          theme_mode,
+          primary_color,
+          watermark_opacity,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existing.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      result = data;
+    } else {
+      // Insert new config
+      const { data, error } = await supabase
+        .from('site_config')
+        .insert([{
+          site_name,
+          logo_url,
+          mecs_logo_url,
+          theme_mode,
+          primary_color,
+          watermark_opacity
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      result = data;
     }
     
-    res.json(data);
+    res.json(result);
   } catch (error) {
     console.error('❌ Config update error:', error);
     res.status(500).json({ message: 'Failed to update config', error: error.message });
