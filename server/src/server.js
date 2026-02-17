@@ -27,6 +27,9 @@ const announcementRoutes = require('./routes/announcements')
 const courseRoutes = require('./routes/courses')
 const reportFormatRoutes = require('./routes/reportFormats')
 const publicRoutes = require('./routes/public')
+const multer = require('multer');
+
+
 
 
 
@@ -47,12 +50,12 @@ app.use('/api/queries', queriesRoutes);
 app.use('/api/events', eventsRoutes);
 app.use('/api/permissions', permissionsRoutes);
 app.use('/api/departments', departmentsRoutes);
-// Add after existing app.use() statements
 app.use('/api/config', configRoutes)
 app.use('/api/announcements', announcementRoutes)
 app.use('/api/courses', courseRoutes)
 app.use('/api/report-formats', reportFormatRoutes)
 app.use('/api/public', publicRoutes)
+
 
 console.log('✅ Routes registered:', {
   config: !!configRoutes,
