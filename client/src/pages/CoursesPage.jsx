@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Upload, Play, MessageCircle, ThumbsUp, Heart, Laugh, Send, User } from 'lucide-react'
 import api from '../services/api'
-import { useAuth } from '../contexts/AuthContext'
 
 export default function CoursesPage() {
-  const { user } = useAuth()
+  const [user, setUser] = useState(null)
   const [videos, setVideos] = useState([])
   const [comments, setComments] = useState([])
   const [selectedVideo, setSelectedVideo] = useState(null)
@@ -13,6 +12,12 @@ export default function CoursesPage() {
   const [loadingComments, setLoadingComments] = useState(false)
 
   useEffect(() => {
+    // Get current user from localStorage
+    const token = localStorage.getItem('token')
+    const storedUser = localStorage.getItem('user')
+    if (token && storedUser) {
+      setUser(JSON.parse(storedUser))
+    }
     fetchVideos()
   }, [])
 
